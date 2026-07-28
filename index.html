@@ -310,6 +310,16 @@
   .workload-seg{ flex:1; text-align:center; padding:10px 4px; border-radius:var(--radius-sm); background:var(--surface-sunk); }
   .workload-seg .role{ font-size:10px; color:var(--ink-faint); font-weight:600; }
   .workload-seg .val{ font-family:'IBM Plex Mono'; font-size:15px; font-weight:700; margin-top:2px; }
+  .workload-seg .workload-sub{ font-size:9px; color:var(--ink-faint); margin-top:2px; }
+
+  .capacity-strip{ display:flex; gap:2px; padding:0 20px 14px; }
+  .capacity-seg{ flex:1; text-align:center; padding:8px 4px; border-radius:var(--radius-sm); background:var(--surface-sunk); }
+  .capacity-seg .role{ font-size:10px; color:var(--ink-faint); font-weight:600; margin-bottom:5px; }
+  .capacity-seg input{
+    width:48px; padding:4px 3px; text-align:center; border:1px solid var(--border); border-radius:5px;
+    font-family:'IBM Plex Mono'; font-size:13px; font-weight:700; color:var(--primary);
+  }
+  .capacity-seg input:focus{ outline:none; border-color:var(--primary); }
   .workload-seg.workload-total{ background:var(--primary-bg); flex:1.15; }
   .workload-seg.workload-total .role{ color:var(--primary); font-weight:700; }
   .workload-seg.workload-total .val{ color:var(--primary); font-size:16px; }
@@ -905,15 +915,21 @@ function applyRecommendedEpicOrder(){
   if(document.getElementById('ogContainer')) renderOutlineGantt();
 }
 
+const DEFAULT_CAPACITY = { po_ba:1, tech_lead:1, dev:7, qa_lead:1, qa:3, pm:1, dm:1 };
+
 function defaultScenario(name){
-  return { name: name||'แผนเริ่มต้น', projectStart:'', targetEnd:'', tasks:{}, hidden:{}, epicOrder:[], featureOrder:{}, taskOrder:{} };
+  return { name: name||'แผนเริ่มต้น', projectStart:'', targetEnd:'', tasks:{}, hidden:{}, epicOrder:[], featureOrder:{}, taskOrder:{}, capacity: Object.assign({}, DEFAULT_CAPACITY) };
 }
 function defaultPlanState(){
   return { activeScenarioId:'default', scenarios: { default: defaultScenario('แผนเริ่มต้น') } };
 }
 function migratePlanState(data){
   if(!data) return defaultPlanState();
-  if(data.scenarios) return data; // already new (multi-scenario) format
+  if(data.scenarios){
+    // เติม capacity ให้ scenario เก่าที่สร้างก่อนมีฟีเจอร์นี้
+    Object.values(data.scenarios).forEach(s=>{ if(!s.capacity) s.capacity = Object.assign({}, DEFAULT_CAPACITY); });
+    return data;
+  }
   // ของเก่า (flat, ก่อนมี scenario) — ห่อเข้า scenario เดียวเพื่อไม่ให้ข้อมูลเดิมหาย
   return {
     activeScenarioId: 'default',
@@ -923,6 +939,7 @@ function migratePlanState(data){
         projectStart: data.projectStart||'', targetEnd: data.targetEnd||'',
         tasks: data.tasks||{}, hidden: data.hidden||{},
         epicOrder: data.epicOrder||[], featureOrder: data.featureOrder||{}, taskOrder: data.taskOrder||{},
+        capacity: Object.assign({}, DEFAULT_CAPACITY, data.capacity||{}),
       }
     }
   };
@@ -934,6 +951,11 @@ function currentScenario(){
     planState.activeScenarioId = Object.keys(planState.scenarios)[0];
   }
   return planState.scenarios[planState.activeScenarioId];
+}
+function getCapacity(){
+  const s = currentScenario();
+  s.capacity = Object.assign({}, DEFAULT_CAPACITY, s.capacity||{});
+  return s.capacity;
 }
 
 function loadPlanState(){
@@ -1032,12 +1054,13 @@ function flattenScheduleOrder(tree){
     if(epicNode.hidden) return;
     epicNode.features.forEach(featNode=>{
       if(featNode.hidden) return;
+      const featureKey = `${featNode.epicId}::${featNode.featureId}`;
       featNode.tasks.forEach(taskNode=>{
         if(taskNode.hidden) return;
-        seq.push({ key:taskNode.planKey, task:taskNode.data, isSub:false });
+        seq.push({ key:taskNode.planKey, task:taskNode.data, isSub:false, featureKey });
         taskNode.subs.forEach(subNode=>{
           if(subNode.hidden) return;
-          seq.push({ key:subNode.planKey, task:subNode.data, isSub:true });
+          seq.push({ key:subNode.planKey, task:subNode.data, isSub:true, featureKey });
         });
       });
     });
@@ -1045,21 +1068,78 @@ function flattenScheduleOrder(tree){
   return seq;
 }
 
+// ============================================================================
+// Resource-constrained scheduler (simplified list scheduling / SGS heuristic)
+//
+// Assumption (stated explicitly — this is the key modeling limitation):
+//   - Tasks within the SAME feature run strictly in the order shown (safest
+//     proxy we have for real dependency, since Dependency is free text and
+//     not machine-parseable).
+//   - Tasks in DIFFERENT features/epics are treated as independent and may
+//     run in PARALLEL, as long as there is enough Team Capacity (headcount
+//     per role) free across every day the task spans.
+//   - Real cross-feature/epic dependencies (e.g. "Identity & Auth must be
+//     done before Credit Transfer submission") are NOT auto-detected — check
+//     the computed schedule against each epic's own epicDeps list manually.
+// ============================================================================
 function computeSchedule(){
   const tree = buildOrderedTree();
   const order = flattenScheduleOrder(tree);
-  const start = currentScenario().projectStart ? nextBusinessDay(new Date(currentScenario().projectStart)) : null;
-  let cursor = start;
+  const capacity = getCapacity();
+  const projStart = currentScenario().projectStart ? nextBusinessDay(new Date(currentScenario().projectStart)) : null;
   const scheduleMap = {};
+
+  if(!projStart){
+    order.forEach(item=>{ scheduleMap[item.key] = { start:null, end:null, duration:0, plan:getTaskPlan(item.key) }; });
+    return { tree, order, scheduleMap, projectEnd: null };
+  }
+
+  const dayIndexToDate = idx => addBusinessDays(projStart, idx); // idx=0 → projStart itself
+  const roleUsage = {}; ROLES.forEach(r=> roleUsage[r.key] = new Map()); // role -> Map(dayIndex -> used amount)
+  const featureCursor = {}; // featureKey -> earliest day-index the NEXT task in that feature may start
+
+  function feasible(startIdx, duration, perDayReq){
+    for(let d=startIdx; d<startIdx+duration; d++){
+      for(const r of ROLES){
+        if((roleUsage[r.key].get(d)||0) + perDayReq[r.key] > capacity[r.key] + 1e-9) return false;
+      }
+    }
+    return true;
+  }
+  function commit(startIdx, duration, perDayReq){
+    for(let d=startIdx; d<startIdx+duration; d++){
+      for(const r of ROLES) roleUsage[r.key].set(d, (roleUsage[r.key].get(d)||0) + perDayReq[r.key]);
+    }
+  }
+
+  let maxEndIdx = 0;
   order.forEach(item=>{
     const p = getTaskPlan(item.key);
-    const duration = Math.ceil(Math.max(0, ...Object.values(p.manday||{}), 0));
-    let s=null, e=null;
-    if(cursor){ s = new Date(cursor); e = duration>0 ? addBusinessDays(cursor, duration) : new Date(cursor); if(duration>0) cursor = e; }
-    scheduleMap[item.key] = { start:s, end:e, duration, plan:p };
+    const manday = p.manday || {};
+    const hasEffort = ROLES.some(r=> Number(manday[r.key]||0) > 0);
+    const cursorIdx = featureCursor[item.featureKey] || 0;
+
+    if(!hasEffort){
+      scheduleMap[item.key] = { start: dayIndexToDate(cursorIdx), end: dayIndexToDate(cursorIdx), duration:0, plan:p };
+      return;
+    }
+
+    const duration = Math.max(1, Math.ceil(Math.max(0, ...ROLES.map(r=>Number(manday[r.key]||0)))));
+    const perDayReq = {}; ROLES.forEach(r=> perDayReq[r.key] = Number(manday[r.key]||0)/duration);
+
+    let startIdx = cursorIdx, guard = 0;
+    while(!feasible(startIdx, duration, perDayReq) && guard < 5000){ startIdx++; guard++; }
+    commit(startIdx, duration, perDayReq);
+
+    const endIdx = startIdx + duration;
+    featureCursor[item.featureKey] = endIdx;
+    scheduleMap[item.key] = { start: dayIndexToDate(startIdx), end: dayIndexToDate(endIdx), duration, plan:p };
+    if(endIdx > maxEndIdx) maxEndIdx = endIdx;
   });
-  return { tree, order, scheduleMap, projectEnd: cursor };
+
+  return { tree, order, scheduleMap, projectEnd: maxEndIdx>0 ? dayIndexToDate(maxEndIdx) : projStart };
 }
+
 
 function computeRollups(tree, scheduleMap){
   const taskRange = {}, featureRange = {}, epicRange = {};
@@ -1117,6 +1197,10 @@ function renderTimeline(){
         <button class="btn" id="applyRecommendedOrder">📐 ใช้ลำดับ Epic ที่แนะนำ (ตาม dependency)</button>
       </div>
       <div class="timeline-hint" style="padding-top:6px;">Mock estimate เดาจาก keyword ใน task/description + clarity (🟢🟡🔴) — เป็นตัวเลขตั้งต้น ไม่ใช่ estimate จริง ควรให้ Tech Lead/Dev ยืนยันก่อน commit sprint จริง · ทุกอย่างในหน้านี้ผูกกับ approach ที่เลือกอยู่ด้านบนเท่านั้น</div>
+
+      <div class="timeline-hint" style="padding-bottom:4px; font-weight:600; color:var(--ink-soft);">Team Capacity — จำนวนคนต่อ role (task คนละ feature/epic จะขนานกันได้อัตโนมัติถ้ากำลังคนพอ)</div>
+      <div class="capacity-strip" id="capacityStrip"></div>
+
       <div class="workload-strip" id="workloadStrip"></div>
       <div class="timeline-hint" style="padding-bottom:6px;">รวม manday ต่อ Epic (ทุก role รวมกัน) — เรียงจากมากไปน้อย</div>
       <div class="epic-workload-strip" id="epicWorkloadStrip"></div>
@@ -1128,12 +1212,13 @@ function renderTimeline(){
         <button class="btn ghost-dashed" id="collapseAllPlan">ยุบทั้งหมด</button>
         <button class="btn ghost-dashed" id="expandAllPlan">ขยายทั้งหมด</button>
       </div>
-      <div class="timeline-hint">ลาก ☰ เพื่อจัดลำดับใหม่ (ในกลุ่มเดียวกันเท่านั้น) · กด 👁 เพื่อซ่อน/แสดง · คลิกชื่อ task เพื่อดูรายละเอียด + กรอก manday · ข้อมูลบันทึกอัตโนมัติในเบราว์เซอร์นี้</div>
+      <div class="timeline-hint">ลาก ☰ เพื่อจัดลำดับใหม่ (ในกลุ่มเดียวกันเท่านั้น) · กด 👁 เพื่อซ่อน/แสดง · คลิกชื่อ task เพื่อดูรายละเอียด + กรอก manday · ข้อมูลบันทึกอัตโนมัติในเบราว์เซอร์นี้<br>⚙️ Task ใน feature เดียวกันเรียงต่อกันเสมอ · task คนละ feature/epic จะขนานกันอัตโนมัติถ้า Team Capacity พอ · <b>dependency ข้าม feature/epic ไม่ได้ตรวจสอบอัตโนมัติ</b> — เช็คกับ epic-level dependencies เองด้วย</div>
       <div class="og-scroll"><div id="ogContainer"></div></div>
     </div>
   `;
 
   renderScenarioTabs();
+  renderCapacityStrip();
 
   createDatePicker(document.getElementById('projectStartPicker'), {
     value: currentScenario().projectStart,
@@ -1255,6 +1340,25 @@ function renderScenarioTabs(){
   });
 }
 
+function renderCapacityStrip(){
+  const el = document.getElementById('capacityStrip');
+  if(!el) return;
+  const cap = getCapacity();
+  el.innerHTML = ROLES.map(r=>`
+    <div class="capacity-seg">
+      <div class="role">${r.label}</div>
+      <input type="number" min="1" step="1" value="${cap[r.key]}" data-cap-role="${r.key}">
+    </div>
+  `).join('');
+  el.querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('change', e=>{
+      getCapacity()[e.target.dataset.capRole] = Math.max(1, Math.round(Number(e.target.value)||1));
+      savePlanState();
+      renderOutlineGantt();
+    });
+  });
+}
+
 // ============================================================================
 // Lightweight custom date picker (native <input type=date> shows the format
 // controlled by the OS/browser locale, which we can't override — this gives
@@ -1352,10 +1456,12 @@ function renderOutlineGantt(){
     epicTotals[epicId] = (epicTotals[epicId]||0) + rowTotal;
   });
   const grandTotal = Object.values(totals).reduce((a,b)=>a+b,0);
+  const cap = getCapacity();
 
-  document.getElementById('workloadStrip').innerHTML = ROLES.map((r,i)=>`
-    <div class="workload-seg"><div class="role">${r.label}</div><div class="val" style="color:${ROLE_COLORS[i]}">${totals[r.key]||0}</div></div>
-  `).join('') + `
+  document.getElementById('workloadStrip').innerHTML = ROLES.map((r,i)=>{
+    const minDays = totals[r.key] ? (totals[r.key]/(cap[r.key]||1)).toFixed(1) : '0';
+    return `<div class="workload-seg"><div class="role">${r.label}</div><div class="val" style="color:${ROLE_COLORS[i]}">${totals[r.key]||0}</div><div class="workload-sub">÷${cap[r.key]||1} = ${minDays}d min</div></div>`;
+  }).join('') + `
     <div class="workload-seg workload-total"><div class="role">รวมทั้งหมด</div><div class="val">${grandTotal}</div></div>
   `;
 
