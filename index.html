@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NCBS Breakdown Ledger — Credit Transfer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#E9EFDF;
+    --paper-card:#F5F8EF;
+    --paper-deep:#DDE6CD;
+    --ink:#1E2B22;
+    --ink-soft:#516153;
+    --ink-faint:#7D8C7E;
+    --rule:#BFCBAE;
+    --rule-strong:#9FAF8C;
+    --teal:#1F5C57;
+    --teal-soft:#DCEAE7;
+    --green:#2F6B4F;
+    --green-bg:#DCEBDF;
+    --amber:#95681E;
+    --amber-bg:#F3E6C8;
+    --red:#8C2E2C;
+    --red-bg:#F3DCD7;
+    --shadow: 0 1px 2px rgba(30,43,34,0.06), 0 4px 14px rgba(30,43,34,0.08);
+    --radius: 3px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    background-image:
+      repeating-linear-gradient(180deg, rgba(159,175,140,0.10) 0px, rgba(159,175,140,0.10) 1px, transparent 1px, transparent 34px);
+    color:var(--ink);
+    font-family:'Sarabun', sans-serif;
+    font-size:14.5px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{ background:var(--amber-bg); }
+  a{ color:var(--teal); text-decoration:none; border-bottom:1px solid rgba(31,92,87,0.3); }
+  a:hover{ border-bottom-color:var(--teal); }
+
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  /* ---------- Header ---------- */
+  header{
+    position:sticky; top:0; z-index:40;
+    background:linear-gradient(180deg, var(--paper) 60%, rgba(233,239,223,0.85));
+    backdrop-filter:blur(6px);
+    border-bottom:1.5px solid var(--rule-strong);
+    padding:18px 28px 14px;
+  }
+  .header-top{ display:flex; align-items:baseline; justify-content:space-between; gap:20px; flex-wrap:wrap; }
+  .brand{ display:flex; align-items:baseline; gap:12px; }
+  .brand .stamp-mark{
+    font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:600;
+    border:1.5px solid var(--ink); color:var(--ink); padding:2px 7px; border-radius:2px;
+    letter-spacing:0.06em; transform:rotate(-2deg); white-space:nowrap;
+  }
+  h1{
+    font-size:22px; font-weight:700; margin:0; letter-spacing:-0.01em;
+  }
+  h1 .thai{ font-weight:600; color:var(--ink-soft); font-size:15px; display:block; margin-top:2px;}
+  .subtitle{ color:var(--ink-soft); font-size:13px; margin-top:4px; max-width:640px; }
+
+  .ledger-folio{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-faint); text-align:right; line-height:1.5;}
+  .ledger-folio b{ color:var(--ink); font-size:13px; }
+
+  .controls{ display:flex; align-items:center; gap:10px; margin-top:14px; flex-wrap:wrap; }
+  .search-wrap{ position:relative; flex:1; min-width:220px; max-width:360px; }
+  .search-wrap input{
+    width:100%; padding:8px 12px 8px 30px; border:1.5px solid var(--rule-strong); border-radius:2px;
+    background:var(--paper-card); font-family:'Sarabun'; font-size:13.5px; color:var(--ink);
+  }
+  .search-wrap input:focus{ outline:none; border-color:var(--teal); }
+  .search-wrap::before{
+    content:"⌕"; position:absolute; left:9px; top:50%; transform:translateY(-50%); color:var(--ink-faint); font-size:15px;
+  }
+  .chip{
+    font-family:'JetBrains Mono',monospace; font-size:11.5px; font-weight:500; padding:6px 11px;
+    border:1.5px solid var(--rule-strong); border-radius:20px; background:var(--paper-card); cursor:pointer;
+    display:flex; align-items:center; gap:6px; color:var(--ink-soft); user-select:none; transition:all .12s ease;
+  }
+  .chip:hover{ border-color:var(--ink-soft); }
+  .chip.active{ background:var(--ink); color:var(--paper-card); border-color:var(--ink); }
+  .chip .dot{ width:8px; height:8px; border-radius:50%; display:inline-block; }
+  .chip[data-c="green"] .dot{ background:var(--green); }
+  .chip[data-c="yellow"] .dot{ background:var(--amber); }
+  .chip[data-c="red"] .dot{ background:var(--red); }
+  .chip-count{ font-size:10px; opacity:.75; }
+  .btn-ghost{
+    font-family:'JetBrains Mono',monospace; font-size:11.5px; padding:6px 11px; border-radius:20px;
+    border:1.5px dashed var(--rule-strong); background:transparent; color:var(--ink-soft); cursor:pointer;
+  }
+  .btn-ghost:hover{ border-color:var(--ink-soft); color:var(--ink); }
+
+  /* ---------- Layout ---------- */
+  .layout{ display:grid; grid-template-columns:230px 1fr; gap:0; max-width:1400px; margin:0 auto; }
+  @media (max-width:880px){ .layout{ grid-template-columns:1fr; } .rail{ display:none; } }
+
+  /* ---------- Left rail: ledger tab index ---------- */
+  .rail{
+    position:sticky; top:150px; align-self:start; height:calc(100vh - 170px); overflow-y:auto;
+    padding:22px 0 40px 24px;
+  }
+  .rail-label{ font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:10px; font-family:'JetBrains Mono'; }
+  .tab-item{
+    display:flex; align-items:center; gap:9px; padding:8px 10px 8px 12px; margin-bottom:3px;
+    border-radius:2px 0 0 2px; cursor:pointer; border-left:3px solid transparent; transition:.12s ease;
+    font-size:13px;
+  }
+  .tab-item:hover{ background:var(--paper-card); }
+  .tab-item.current{ background:var(--paper-card); border-left-color:var(--teal); font-weight:600; }
+  .tab-num{ font-family:'JetBrains Mono'; font-size:11px; color:var(--ink-faint); width:20px; flex-shrink:0; }
+  .tab-status{ margin-left:auto; display:flex; gap:3px; }
+  .tab-status i{ width:6px; height:6px; border-radius:50%; display:block; }
+  .rail-divider{ height:1px; background:var(--rule); margin:16px 0; }
+  .rail-note{ font-size:11.5px; color:var(--ink-faint); padding:0 10px; line-height:1.6; }
+
+  /* ---------- Main ---------- */
+  main{ padding:26px 32px 80px; min-width:0; }
+
+  .epic-deps{
+    background:var(--paper-card); border:1px solid var(--rule); border-radius:var(--radius);
+    padding:16px 18px; margin-bottom:26px; box-shadow:var(--shadow);
+  }
+  .epic-deps summary{ cursor:pointer; font-weight:600; font-size:13.5px; list-style:none; display:flex; align-items:center; gap:8px;}
+  .epic-deps summary::-webkit-details-marker{ display:none; }
+  .epic-deps summary::before{ content:"▸"; color:var(--ink-faint); transition:.15s; font-size:11px; }
+  .epic-deps[open] summary::before{ transform:rotate(90deg); }
+  .dep-grid{ margin-top:12px; display:grid; grid-template-columns:1fr; gap:1px; background:var(--rule); border:1px solid var(--rule); border-radius:2px; overflow:hidden;}
+  .dep-row{ display:grid; grid-template-columns:260px 1fr; background:var(--paper-card); font-size:12.8px; }
+  .dep-row > div{ padding:9px 12px; }
+  .dep-row .name{ font-weight:600; border-right:1px solid var(--rule); }
+  .dep-row.blocker .name{ color:var(--red); }
+
+  section.feature{ margin-bottom:8px; border:1px solid var(--rule); border-radius:var(--radius); background:var(--paper-card); box-shadow:var(--shadow); overflow:hidden; margin-bottom:22px;}
+  .feature-head{
+    display:flex; align-items:center; gap:14px; padding:15px 18px; cursor:pointer; user-select:none;
+    background:linear-gradient(90deg, var(--paper-deep), var(--paper-card) 55%);
+    border-bottom:1px solid var(--rule);
+  }
+  .feature-head .fnum{ font-family:'JetBrains Mono'; font-weight:700; font-size:13px; color:var(--teal); flex-shrink:0; }
+  .feature-head h2{ font-size:15.5px; margin:0; font-weight:700; flex:1; min-width:0; }
+  .feature-head .caret{ color:var(--ink-faint); font-size:12px; transition:.15s ease; flex-shrink:0; }
+  .feature-head.collapsed .caret{ transform:rotate(-90deg); }
+  .feature-tally{ display:flex; gap:6px; flex-shrink:0; }
+  .feature-tally span{ font-family:'JetBrains Mono'; font-size:11px; padding:2px 6px; border-radius:10px; }
+  .tally-green{ background:var(--green-bg); color:var(--green); }
+  .tally-yellow{ background:var(--amber-bg); color:var(--amber); }
+  .tally-red{ background:var(--red-bg); color:var(--red); }
+
+  .feature-source{ padding:9px 18px; font-size:12px; color:var(--ink-soft); border-bottom:1px solid var(--rule); background:rgba(255,255,255,0.35); }
+  .feature-source b{ color:var(--ink-soft); font-weight:600; }
+  .feature-note{ padding:10px 18px; font-size:12.3px; color:var(--ink-soft); background:var(--amber-bg); border-bottom:1px solid var(--rule); }
+
+  .feature-body{ overflow-x:auto; }
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  thead th{
+    text-align:left; padding:9px 12px; font-family:'JetBrains Mono'; font-size:10.5px; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--ink-faint); border-bottom:1.5px solid var(--rule-strong); white-space:nowrap;
+    position:sticky; top:0; background:var(--paper-card);
+  }
+  tbody tr{ border-bottom:1px solid var(--rule); transition:background .1s ease; }
+  tbody tr:hover{ background:rgba(31,92,87,0.045); }
+  tbody tr.dim{ display:none; }
+  tbody tr.sub td:first-child{ color:var(--ink-faint); }
+  td{ padding:10px 12px; vertical-align:top; }
+  td.id{ font-family:'JetBrains Mono'; font-weight:600; color:var(--ink-soft); white-space:nowrap; }
+  tr.sub td.id{ padding-left:22px; font-weight:400; }
+  tr.sub td.id::before{ content:"└ "; color:var(--rule-strong); }
+  td.task{ font-weight:600; min-width:190px; }
+  tr.sub td.task{ font-weight:500; font-size:12.6px; color:var(--ink-soft); }
+  td.desc{ color:var(--ink-soft); font-size:12.6px; min-width:200px; }
+  td.dep{ font-size:12px; color:var(--ink-soft); min-width:140px; }
+  td.src{ font-size:12px; min-width:140px; }
+  td.src .mono{ font-size:11.3px; }
+  td.clarity{ min-width:200px; }
+
+  mark.hit{ background:var(--amber-bg); padding:0 1px; border-radius:2px; }
+
+  .stamp{
+    display:inline-flex; align-items:center; gap:7px; font-size:12px;
+  }
+  .stamp .badge{
+    width:15px; height:15px; border-radius:50%; flex-shrink:0; position:relative; display:inline-block;
+    border:2px solid; box-shadow:inset 0 0 0 2px var(--paper-card);
+  }
+  .stamp.green .badge{ border-color:var(--green); background:var(--green-bg); }
+  .stamp.yellow .badge{ border-color:var(--amber); background:var(--amber-bg); }
+  .stamp.red .badge{ border-color:var(--red); background:var(--red-bg); transform:rotate(-6deg); box-shadow: inset 0 0 0 2px var(--paper-card), 0 0 0 2px var(--red-bg); }
+  .stamp-text{ color:var(--ink-soft); font-size:12px; }
+  .stamp.red .stamp-text{ color:var(--red); font-weight:600; }
+  .stamp.yellow .stamp-text{ color:var(--amber); }
+
+  /* ---------- Priority + Flags ---------- */
+  .panel{
+    background:var(--paper-card); border:1px solid var(--rule); border-radius:var(--radius);
+    padding:20px 22px; margin-bottom:22px; box-shadow:var(--shadow);
+  }
+  .panel h3{ font-size:14.5px; margin:0 0 4px; display:flex; align-items:center; gap:9px; }
+  .panel .stamp-mark-mini{
+    font-family:'JetBrains Mono'; font-size:10px; border:1.5px solid var(--ink-faint); color:var(--ink-faint);
+    padding:1px 6px; border-radius:2px; letter-spacing:.05em;
+  }
+  .panel .hint{ font-size:12px; color:var(--ink-faint); margin-bottom:14px; }
+  ol.priority{ margin:0; padding-left:22px; }
+  ol.priority li{ margin-bottom:8px; font-size:13px; }
+  ol.priority b{ font-family:'JetBrains Mono'; font-size:12.3px; color:var(--teal); }
+
+  .flags-panel{ border-left:4px solid var(--red); }
+  ol.flags{ margin:0; padding-left:0; list-style:none; counter-reset:flag; }
+  ol.flags li{
+    counter-increment:flag; margin-bottom:12px; padding:12px 14px 12px 42px; position:relative;
+    background:rgba(140,46,44,0.045); border-radius:2px; font-size:12.8px; line-height:1.6;
+  }
+  ol.flags li::before{
+    content:counter(flag); position:absolute; left:12px; top:11px;
+    font-family:'JetBrains Mono'; font-weight:700; font-size:12px; color:var(--red);
+    background:var(--red-bg); width:20px; height:20px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; border:1.5px solid var(--red);
+  }
+  ol.flags b{ color:var(--ink); }
+
+  footer{ text-align:center; padding:30px; color:var(--ink-faint); font-size:11.5px; font-family:'JetBrains Mono'; }
+
+  .empty-state{ padding:40px; text-align:center; color:var(--ink-faint); font-size:13px; display:none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="brand">
+      <div>
+        <h1>NCBS Breakdown Ledger<span class="thai">บันทึกแตกงาน — โครงการเทียบโอนหน่วยกิต (Credit Transfer)</span></h1>
+        <div class="subtitle">สถานะปัจจุบัน: Data/Service Foundation เริ่มพัฒนาบางส่วน · business logic ยังไม่เริ่มพัฒนาเต็มรูปแบบ · เอกสารนี้ synthesize จาก ncbs-wiki (ไม่ผูกกับ commit ของ wiki)</div>
+      </div>
+    </div>
+    <div class="ledger-folio">
+      Epic <b>Credit Transfer</b><br>
+      7 Features · <span id="totalTaskCount">–</span> tasks
+    </div>
+  </div>
+  <div class="controls">
+    <div class="search-wrap"><input id="searchBox" type="text" placeholder="ค้นหา task, source, dependency…"></div>
+    <div class="chip active" data-c="all">ทั้งหมด <span class="chip-count" id="cnt-all"></span></div>
+    <div class="chip active" data-c="green"><span class="dot"></span>พร้อม dev<span class="chip-count" id="cnt-green"></span></div>
+    <div class="chip active" data-c="yellow"><span class="dot"></span>ต้องเช็คก่อน<span class="chip-count" id="cnt-yellow"></span></div>
+    <div class="chip active" data-c="red"><span class="dot"></span>ยังเป็นแค่ proposed<span class="chip-count" id="cnt-red"></span></div>
+    <button class="btn-ghost" id="toggleAll">ยุบ/ขยายทั้งหมด</button>
+    <button class="btn-ghost" id="exportCsv" title="Export เฉพาะแถวที่กรองอยู่บนจอตอนนี้ — ล้างตัวกรองก่อนถ้าต้องการ export ทั้งหมด" style="border-style:solid; color:var(--teal); border-color:var(--teal);">⇩ Export CSV</button>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="rail">
+    <div class="rail-label">Feature Index</div>
+    <div id="railList"></div>
+    <div class="rail-divider"></div>
+    <div class="rail-note">แตะชิปด้านบนเพื่อกรองตามสถานะ spec clarity · แถบสีขวาของแต่ละ feature คือสัดส่วน 🟢/🟡/🔴</div>
+  </nav>
+
+  <main>
+    <details class="epic-deps" open>
+      <summary>Epic-level dependencies — Epic อื่นที่ต้องมาก่อน (ยังไม่ breakdown ในรอบนี้)</summary>
+      <div class="dep-grid" id="epicDeps"></div>
+    </details>
+
+    <div id="featureContainer"></div>
+    <div class="empty-state" id="emptyState">ไม่พบ task ที่ตรงกับตัวกรอง — ลองล้างคำค้นหรือเปิดสถานะเพิ่ม</div>
+
+    <div class="panel">
+      <h3>ลำดับความสำคัญภายใน Epic <span class="stamp-mark-mini">by technical dependency</span></h3>
+      <div class="hint">เรียงตามสิ่งที่ต้องเสร็จก่อนในเชิงเทคนิค ไม่ใช่ลำดับตาม business value</div>
+      <ol class="priority" id="priorityList"></ol>
+    </div>
+
+    <div class="panel flags-panel">
+      <h3>Flags รวม <span class="stamp-mark-mini">confirm ก่อนประเมิน manday จริง</span></h3>
+      <div class="hint">จุดที่ spec ยังขัดกันเอง เป็น regulatory blocker หรือยังไม่มีดีไซน์ — ควรถามทีม/PM ก่อนตัดสินใจ commit sprint</div>
+      <ol class="flags" id="flagsList"></ol>
+    </div>
+  </main>
+</div>
+
+<footer>ncbs-breakdown · prototype dashboard · ข้อมูล derive จาก ncbs-wiki ผ่าน Claude Code session (auto mode) · ไม่ commit กลับ wiki repo</footer>
+
+<script src="data/credit-transfer.js"></script>
+<script>
+
+// ---------- render ----------
+const clarityLabel = { green:"พร้อม dev", yellow:"ต้องเช็คก่อน confirm", red:"ยังเป็นแค่ proposed / block" };
+
+function stamp(c, note){
+  return `<span class="stamp ${c}"><span class="badge"></span><span class="stamp-text">${clarityLabel[c]}${note ? " — " + note : ""}</span></span>`;
+}
+
+function taskRow(t, isSub){
+  return `<tr class="${isSub ? 'sub':''}" data-c="${t.c}" data-text="${(t.task+' '+(t.desc||'')+' '+(t.dep||'')+' '+(t.src||'')+' '+(t.note||'')).toLowerCase()}">
+    <td class="id">${t.id}</td>
+    <td class="task">${t.task}</td>
+    <td class="desc">${t.desc||''}</td>
+    <td class="dep">${t.dep||''}</td>
+    <td class="src mono">${t.src||''}</td>
+    <td class="clarity">${stamp(t.c, t.note)}</td>
+  </tr>`;
+}
+
+let totalTasks = 0;
+const counts = { green:0, yellow:0, red:0 };
+
+function featureTally(f){
+  const t = { green:0, yellow:0, red:0 };
+  f.tasks.forEach(x=>{ t[x.c]++; if(x.subs) x.subs.forEach(s=>t[s.c]++); });
+  return t;
+}
+
+const container = document.getElementById('featureContainer');
+const railList = document.getElementById('railList');
+
+DATA.features.forEach((f, idx)=>{
+  const tally = featureTally(f);
+  totalTasks += tally.green + tally.yellow + tally.red;
+  counts.green += tally.green; counts.yellow += tally.yellow; counts.red += tally.red;
+
+  let rows = '';
+  f.tasks.forEach(t=>{
+    rows += taskRow(t,false);
+    if(t.subs) t.subs.forEach(s=> rows += taskRow(s,true));
+  });
+
+  const section = document.createElement('section');
+  section.className = 'feature';
+  section.id = f.id;
+  section.innerHTML = `
+    <div class="feature-head" data-target="${f.id}">
+      <span class="fnum">${f.id}</span>
+      <h2>${f.name}</h2>
+      <div class="feature-tally">
+        <span class="tally-green">${tally.green}</span>
+        <span class="tally-yellow">${tally.yellow}</span>
+        <span class="tally-red">${tally.red}</span>
+      </div>
+      <span class="caret">▾</span>
+    </div>
+    ${f.sources && f.sources.length ? `<div class="feature-source"><b>Source หลัก:</b> ${f.sources.join(' · ')}</div>` : ''}
+    ${f.note ? `<div class="feature-note">${f.note}</div>` : ''}
+    <div class="feature-body">
+      <table>
+        <thead><tr><th>#</th><th>Task</th><th>คำอธิบาย</th><th>Dependency</th><th>Source</th><th>Clarity</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+  container.appendChild(section);
+
+  const tabItem = document.createElement('div');
+  tabItem.className = 'tab-item' + (idx===0 ? ' current' : '');
+  tabItem.dataset.target = f.id;
+  tabItem.innerHTML = `<span class="tab-num">${f.id}</span><span>${f.name.split('(')[0].trim()}</span>
+    <span class="tab-status">
+      ${tally.green ? '<i style="background:var(--green)"></i>' : ''}
+      ${tally.yellow ? '<i style="background:var(--amber)"></i>' : ''}
+      ${tally.red ? '<i style="background:var(--red)"></i>' : ''}
+    </span>`;
+  railList.appendChild(tabItem);
+});
+
+document.getElementById('totalTaskCount').textContent = totalTasks;
+document.getElementById('cnt-all').textContent = totalTasks;
+document.getElementById('cnt-green').textContent = counts.green;
+document.getElementById('cnt-yellow').textContent = counts.yellow;
+document.getElementById('cnt-red').textContent = counts.red;
+
+// epic deps
+const epicDepsEl = document.getElementById('epicDeps');
+DATA.epicDeps.forEach(d=>{
+  const row = document.createElement('div');
+  row.className = 'dep-row' + (d.blocker ? ' blocker' : '');
+  row.innerHTML = `<div class="name">${d.name}</div><div>${d.why}</div>`;
+  epicDepsEl.appendChild(row);
+});
+
+// priority
+const priorityList = document.getElementById('priorityList');
+DATA.priority.forEach(p=>{
+  const li = document.createElement('li'); li.innerHTML = p; priorityList.appendChild(li);
+});
+
+// flags
+const flagsList = document.getElementById('flagsList');
+DATA.flags.forEach(f=>{
+  const li = document.createElement('li'); li.innerHTML = f; flagsList.appendChild(li);
+});
+
+// ---------- interactions ----------
+// collapse/expand feature
+container.addEventListener('click', (e)=>{
+  const head = e.target.closest('.feature-head');
+  if(!head) return;
+  const section = document.getElementById(head.dataset.target);
+  const body = section.querySelector('.feature-body');
+  const src = section.querySelector('.feature-source');
+  const note = section.querySelector('.feature-note');
+  const collapsed = head.classList.toggle('collapsed');
+  body.style.display = collapsed ? 'none' : '';
+  if(src) src.style.display = collapsed ? 'none' : '';
+  if(note) note.style.display = collapsed ? 'none' : '';
+});
+
+// rail click -> scroll + collapse/expand nothing, just navigate
+railList.addEventListener('click', (e)=>{
+  const item = e.target.closest('.tab-item');
+  if(!item) return;
+  document.querySelectorAll('.tab-item').forEach(i=>i.classList.remove('current'));
+  item.classList.add('current');
+  const target = document.getElementById(item.dataset.target);
+  const head = target.querySelector('.feature-head');
+  if(head.classList.contains('collapsed')){ head.click(); }
+  target.scrollIntoView({behavior:'smooth', block:'start'});
+});
+
+// filter chips
+const chips = document.querySelectorAll('.chip');
+let activeFilters = new Set(['green','yellow','red']);
+chips.forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    const c = chip.dataset.c;
+    if(c === 'all'){
+      activeFilters = new Set(['green','yellow','red']);
+      chips.forEach(ch=>ch.classList.add('active'));
+    } else {
+      if(activeFilters.has(c)){ activeFilters.delete(c); chip.classList.remove('active'); }
+      else { activeFilters.add(c); chip.classList.add('active'); }
+      const allChip = document.querySelector('.chip[data-c="all"]');
+      if(activeFilters.size === 3) allChip.classList.add('active'); else allChip.classList.remove('active');
+    }
+    applyFilters();
+  });
+});
+
+// search
+const searchBox = document.getElementById('searchBox');
+searchBox.addEventListener('input', applyFilters);
+
+function applyFilters(){
+  const q = searchBox.value.trim().toLowerCase();
+  let anyVisible = false;
+  document.querySelectorAll('table tbody tr').forEach(row=>{
+    const matchesClarity = activeFilters.has(row.dataset.c);
+    const matchesSearch = !q || row.dataset.text.includes(q);
+    const show = matchesClarity && matchesSearch;
+    row.classList.toggle('dim', !show);
+    if(show) anyVisible = true;
+  });
+  // hide whole feature section if no visible rows
+  document.querySelectorAll('section.feature').forEach(section=>{
+    const visibleRows = section.querySelectorAll('table tbody tr:not(.dim)').length;
+    section.style.display = visibleRows === 0 ? 'none' : '';
+  });
+  document.getElementById('emptyState').style.display = anyVisible ? 'none' : 'block';
+}
+
+// ---------- CSV export (for Google Sheets) ----------
+function csvEscape(val){
+  const s = (val === undefined || val === null) ? '' : String(val);
+  if(/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+
+function buildCsvRows(){
+  const header = ["Epic","Feature ID","Feature","Task ID","Task","Description","Dependency","Source","Clarity","Clarity Note"];
+  const rows = [header];
+  DATA.features.forEach(f=>{
+    const pushTask = (t, parentId) => {
+      rows.push([
+        "Credit Transfer",
+        f.id,
+        f.name,
+        t.id,
+        t.task,
+        t.desc || "",
+        t.dep || "",
+        t.src || "",
+        clarityLabel[t.c] || t.c,
+        t.note || ""
+      ]);
+    };
+    f.tasks.forEach(t=>{
+      pushTask(t);
+      if(t.subs) t.subs.forEach(s=>pushTask(s));
+    });
+  });
+  return rows;
+}
+
+function exportCsv(){
+  // ใช้ตัวกรอง/คำค้นหาปัจจุบัน — export เฉพาะแถวที่มองเห็นอยู่บนจอ
+  const visibleIds = new Set();
+  document.querySelectorAll('table tbody tr:not(.dim)').forEach(row=>{
+    visibleIds.add(row.querySelector('.id').textContent.trim());
+  });
+  const allRows = buildCsvRows();
+  const header = allRows[0];
+  const dataRows = allRows.slice(1).filter(r => visibleIds.has(r[3]));
+  const finalRows = [header, ...dataRows];
+
+  const csvContent = finalRows.map(r => r.map(csvEscape).join(",")).join("\r\n");
+  const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" }); // BOM เพื่อให้ Excel/Sheets อ่านภาษาไทยถูก
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const stamp = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `ncbs-credit-transfer-breakdown-${stamp}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById('exportCsv').addEventListener('click', exportCsv);
+
+// expand/collapse all
+let allCollapsed = false;
+document.getElementById('toggleAll').addEventListener('click', ()=>{
+  allCollapsed = !allCollapsed;
+  document.querySelectorAll('.feature-head').forEach(head=>{
+    const isCollapsed = head.classList.contains('collapsed');
+    if(isCollapsed !== allCollapsed) head.click();
+  });
+});
+</script>
+</body>
+</html>
