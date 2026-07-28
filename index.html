@@ -887,9 +887,7 @@ function addBusinessDays(start, days){
 }
 function fmtDate(d){
   if(!d) return '–';
-  const mm = String(d.getMonth()+1).padStart(2,'0');
-  const dd = String(d.getDate()).padStart(2,'0');
-  return `${mm}/${dd}/${d.getFullYear()}`; // Gregorian MM/DD/YYYY — ให้ตรงกับ format ของ <input type="date"> ด้านบน
+  return d.toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' }); // เช่น "4 January 2027" — อ่านง่ายกว่าตัวเลขล้วน
 }
 
 function keyEpic(epicId){ return `E::${epicId}`; }
@@ -1099,7 +1097,7 @@ function renderTimeline(){
   renderOutlineGantt();
 }
 
-function fmtDateShort(d){ if(!d) return ''; return d.toLocaleDateString('th-TH',{ month:'short', day:'numeric' }); }
+function fmtDateShort(d){ if(!d) return ''; return d.toLocaleDateString('en-GB',{ month:'short', day:'numeric' }); }
 
 function matchesSearch(node){
   if(!planSearchQuery) return true;
