@@ -272,7 +272,7 @@
   .timeline-toolbar{ display:flex; gap:8px; align-items:center; padding:14px 20px 0; flex-wrap:wrap; }
   .timeline-hint{ font-size:12px; color:var(--ink-faint); padding:0 20px 14px; }
   .og-header-row{ display:flex; height:32px; border-bottom:1.5px solid var(--border); background:var(--surface-sunk); position:sticky; top:0; z-index:5; }
-  .og-label-col-head{ width:340px; flex-shrink:0; position:sticky; left:0; z-index:6; background:var(--surface-sunk); border-right:1px solid var(--border); display:flex; align-items:center; padding:0 12px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-faint); }
+  .og-label-col-head{ width:430px; flex-shrink:0; position:sticky; left:0; z-index:6; background:var(--surface-sunk); border-right:1px solid var(--border); display:flex; align-items:center; padding:0 12px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-faint); }
   .og-timeline-head{ position:relative; flex-shrink:0; }
   .og-date-tick{ position:absolute; top:0; height:100%; display:flex; align-items:center; font-family:'IBM Plex Mono'; font-size:10px; color:var(--ink-faint); padding-left:5px; border-left:1px solid var(--border); white-space:nowrap; }
 
@@ -285,7 +285,7 @@
   .og-row.drag-over-bottom{ box-shadow: inset 0 -2px 0 var(--primary); }
 
   .og-label-cell{
-    width:340px; flex-shrink:0; position:sticky; left:0; z-index:3; background:var(--surface);
+    width:430px; flex-shrink:0; position:sticky; left:0; z-index:3; background:var(--surface);
     display:flex; align-items:center; gap:6px; padding:0 10px; border-right:1px solid var(--border); overflow:hidden;
   }
   .og-row.level-epic .og-label-cell{ background:var(--surface-sunk); font-weight:700; }
@@ -464,7 +464,7 @@ function renderEpicList(){
     const t = epicTally(e);
     const item = document.createElement('div');
     item.className = 'epic-list-item' + (id===currentEpicId && currentView==='epic' ? ' current':'');
-    item.innerHTML = `<span class="sys-tag">${e.system||''}</span><span class="name">${e.name}</span>
+    item.innerHTML = `<span class="sys-tag">${e.system||''}</span><span class="name" title="${e.name}">${e.name}</span>
       <span class="dots">
         ${t.green?'<i style="background:var(--green)"></i>':''}
         ${t.yellow?'<i style="background:var(--amber)"></i>':''}
@@ -1146,7 +1146,7 @@ function renderOutlineGantt(){
           <span class="og-caret ${eCollapsed?'collapsed':''}" data-caret-key="${epicNode.key}">▾</span>
           <span class="og-eye" data-hide-key="${epicNode.key}">${epicNode.hidden?'🚫':'👁'}</span>
           <span class="og-sys">${epic.system||''}</span>
-          <span class="og-name">${epic.name}</span>
+          <span class="og-name" title="${epic.name}">${epic.name}</span>
         </div>
         <div class="og-timeline-cell" style="width:${timelineWidth}px;">${barHtml(epicRange[epicNode.key], 'var(--primary)')}</div>
       </div>`;
@@ -1162,7 +1162,7 @@ function renderOutlineGantt(){
             <span class="og-drag-handle">☰</span>
             <span class="og-caret ${fCollapsed?'collapsed':''}" data-caret-key="${featNode.key}">▾</span>
             <span class="og-eye" data-hide-key="${featNode.key}">${featNode.hidden?'🚫':'👁'}</span>
-            <span class="og-name">${f.name}</span>
+            <span class="og-name" title="${f.name}">${f.name}</span>
           </div>
           <div class="og-timeline-cell" style="width:${timelineWidth}px;">${barHtml(featureRange[featNode.key], 'var(--purple)')}</div>
         </div>`;
@@ -1180,7 +1180,7 @@ function renderOutlineGantt(){
               <span class="og-eye" data-hide-key="${taskNode.key}">${taskNode.hidden?'🚫':'👁'}</span>
               <span class="og-dot" style="background:${clarityColor(t.c)}"></span>
               <span class="og-name mono">${t.id}</span>
-              <span class="og-name">${t.task}</span>
+              <span class="og-name" title="${t.id} — ${t.task}">${t.task}</span>
               <span class="og-badge">${total>0?total+'d':''}</span>
             </div>
             <div class="og-timeline-cell" style="width:${timelineWidth}px;">${barHtml(taskRange[taskNode.planKey], clarityColor(t.c))}</div>
@@ -1206,7 +1206,7 @@ function renderOutlineGantt(){
                   return `<div class="og-sub-row ${s.hidden?'hidden-item':''}">
                     <span class="og-eye" data-hide-key="${s.key}">${s.hidden?'🚫':'👁'}</span>
                     <span class="og-dot" style="background:${clarityColor(s.data.c)}"></span>
-                    <span class="og-name">${s.data.id} ${s.data.task}</span>
+                    <span class="og-name" title="${s.data.id} — ${s.data.task}">${s.data.id} ${s.data.task}</span>
                     ${ROLES.map(r=>`<input type="number" min="0" step="0.5" title="${r.label}" value="${sp.manday[r.key]||0}" data-manday-key="${s.planKey}" data-role="${r.key}">`).join('')}
                   </div>`;
                 }).join('')}
