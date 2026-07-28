@@ -769,7 +769,17 @@ function detectEffortTier(text){
 }
 function roundQuarter(n){ return Math.round(n*4)/4; }
 
+const CEREMONY_MANDAY_OVERRIDES = {
+  // ระยะเวลาที่ PO ระบุตรงๆ (1 เดือน ≈ 20 วันทำการ) — ใช้แทน keyword-tier logic เพราะงานพวกนี้ไม่ใช่ dev task ทั่วไป
+  'CER-1': { po_ba:5, tech_lead:0, dev:8,  qa_lead:8,  qa:20, pm:0,  dm:0 },  // SIT
+  'CER-2': { po_ba:20,tech_lead:0, dev:0,  qa_lead:0,  qa:10, pm:5,  dm:0 },  // UAT
+  'CER-3': { po_ba:0, tech_lead:5, dev:10, qa_lead:20, qa:0,  pm:0,  dm:0 },  // Pen Test & Performance
+  'TRN-1': { po_ba:40,tech_lead:0, dev:0,  qa_lead:0,  qa:0,  pm:15, dm:0 },  // Training
+};
+
 function generateMockManday(task, isSub){
+  if(CEREMONY_MANDAY_OVERRIDES[task.id]) return Object.assign({}, CEREMONY_MANDAY_OVERRIDES[task.id]);
+
   const text = (task.task+' '+(task.desc||'')).toLowerCase();
   const tier = detectEffortTier(text);
   let dev = TIER_BASE_DEV[tier];
@@ -808,6 +818,35 @@ function clearAllManday(){
 
 
 const PLAN_STORAGE_KEY = 'ncbs-planning-v1';
+
+// ============================================================================
+// Recommended epic order — heuristic based on keyword matching against epic
+// name/Thai name, reflecting typical NCBS dependency chain (foundation first,
+// blocked/later-phase items last). Works off text, not hard-coded epic IDs,
+// so it stays valid even as new epic files are added.
+// ============================================================================
+const EPIC_PRIORITY_TIERS = [
+  { tier:1, kws:['foundation','identity','authentication',' auth','role & access','access management','institution structure','master data'] },
+  { tier:2, kws:['user management','grade','credit management','credit transfer','data ingestion','learner identity','learner profile'] },
+  { tier:3, kws:['notification','pdpa','compliance','api management','integration standards'] },
+  { tier:4, kws:['dashboard','analytics','landing','cms','recommendation','result-upload','payment','white-label','whitelabel','skill matrix'] },
+  { tier:5, kws:['blockchain','lms integration','blocked integrations','strategic gap'] },
+  { tier:6, kws:['testing, training','go-live','ceremonies','readiness'] },  // SIT/UAT/Pen Test/Training — ต้องมาหลังสุดเสมอ
+];
+function epicPriorityTier(epic){
+  const text = (epic.name+' '+(epic.thaiName||'')).toLowerCase();
+  for(const g of EPIC_PRIORITY_TIERS){ if(g.kws.some(k=>text.includes(k))) return g.tier; }
+  return 3;
+}
+function applyRecommendedEpicOrder(){
+  const epics = allEpics();
+  const scored = Object.keys(epics).map(id=>({ id, tier: epicPriorityTier(epics[id]) }));
+  scored.sort((a,b)=> a.tier-b.tier); // stable sort — ties keep their relative order
+  planState.epicOrder = scored.map(s=>s.id);
+  savePlanState();
+  if(document.getElementById('ogContainer')) renderOutlineGantt();
+}
+
 let planState = { projectStart:'', targetEnd:'', tasks:{} }; // tasks[key] = { seq, manday:{role:val}, }
 
 function loadPlanState(){
@@ -980,6 +1019,7 @@ function renderTimeline(){
         <button class="btn primary" id="applyMockFill">🪄 เติม mock estimate (เฉพาะช่องว่าง)</button>
         <button class="btn" id="applyMockOverwrite">🪄 เขียนทับทั้งหมดด้วย mock estimate</button>
         <button class="btn ghost-dashed" id="clearAllManday">↺ ล้าง manday ทั้งหมด</button>
+        <button class="btn" id="applyRecommendedOrder">📐 ใช้ลำดับ Epic ที่แนะนำ (ตาม dependency)</button>
       </div>
       <div class="timeline-hint" style="padding-top:6px;">Mock estimate เดาจาก keyword ใน task/description + clarity (🟢🟡🔴) — เป็นตัวเลขตั้งต้น ไม่ใช่ estimate จริง ควรให้ Tech Lead/Dev ยืนยันก่อน commit sprint จริง</div>
       <div class="workload-strip" id="workloadStrip"></div>
@@ -1025,6 +1065,9 @@ function renderTimeline(){
   });
   document.getElementById('clearAllManday').addEventListener('click', ()=>{
     if(confirm('ล้างค่า manday ทุก task ทุก role กลับเป็น 0 ทั้งหมด — ยืนยันหรือไม่?')) clearAllManday();
+  });
+  document.getElementById('applyRecommendedOrder').addEventListener('click', ()=>{
+    if(confirm('จะเรียง Epic ใหม่ตาม dependency ที่แนะนำ (Foundation → Core → Supporting → Secondary → Blocked/ทีหลัง) — ลำดับ Feature/Task ภายในแต่ละ Epic จะไม่เปลี่ยน ยืนยันหรือไม่?')) applyRecommendedEpicOrder();
   });
   document.getElementById('planSearch').addEventListener('input', e=>{ planSearchQuery = e.target.value.trim().toLowerCase(); renderOutlineGantt(); });
   document.getElementById('collapseAllPlan').addEventListener('click', ()=>{
