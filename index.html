@@ -268,24 +268,59 @@
   .workload-seg .role{ font-size:10px; color:var(--ink-faint); font-weight:600; }
   .workload-seg .val{ font-family:'IBM Plex Mono'; font-size:15px; font-weight:700; margin-top:2px; }
 
-  .gantt-wrap{ padding:16px 20px 20px; overflow-x:auto; }
-  .gantt-row{ display:flex; align-items:center; gap:10px; height:26px; margin-bottom:3px; }
-  .gantt-label{ width:230px; flex-shrink:0; font-size:11.5px; color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .gantt-track{ position:relative; flex:1; height:16px; background:var(--surface-sunk); border-radius:4px; min-width:400px; }
-  .gantt-bar{ position:absolute; top:0; height:100%; border-radius:4px; min-width:3px; }
-
+  .og-scroll{ overflow-x:auto; overflow-y:visible; }
   .timeline-toolbar{ display:flex; gap:8px; align-items:center; padding:14px 20px 0; flex-wrap:wrap; }
   .timeline-hint{ font-size:12px; color:var(--ink-faint); padding:0 20px 14px; }
+  .og-header-row{ display:flex; height:32px; border-bottom:1.5px solid var(--border); background:var(--surface-sunk); position:sticky; top:0; z-index:5; }
+  .og-label-col-head{ width:340px; flex-shrink:0; position:sticky; left:0; z-index:6; background:var(--surface-sunk); border-right:1px solid var(--border); display:flex; align-items:center; padding:0 12px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-faint); }
+  .og-timeline-head{ position:relative; flex-shrink:0; }
+  .og-date-tick{ position:absolute; top:0; height:100%; display:flex; align-items:center; font-family:'IBM Plex Mono'; font-size:10px; color:var(--ink-faint); padding-left:5px; border-left:1px solid var(--border); white-space:nowrap; }
 
-  .plan-table th, .plan-table td{ text-align:center; }
-  .plan-table td.task-cell, .plan-table th.task-cell{ text-align:left; }
-  .plan-table input[type=number]{
-    width:52px; padding:4px 5px; border:1px solid var(--border); border-radius:4px; text-align:center; font-size:12px; font-family:'IBM Plex Mono';
+  .og-row{ display:flex; align-items:stretch; border-bottom:1px solid var(--border-soft); min-height:32px; }
+  .og-row:hover{ background:rgba(9,30,66,.025); }
+  .og-row.hidden-item{ opacity:.4; }
+  .og-row.level-epic{ background:var(--surface-sunk); }
+  .og-row.dragging{ opacity:.35; }
+  .og-row.drag-over-top{ box-shadow: inset 0 2px 0 var(--primary); }
+  .og-row.drag-over-bottom{ box-shadow: inset 0 -2px 0 var(--primary); }
+
+  .og-label-cell{
+    width:340px; flex-shrink:0; position:sticky; left:0; z-index:3; background:var(--surface);
+    display:flex; align-items:center; gap:6px; padding:0 10px; border-right:1px solid var(--border); overflow:hidden;
   }
-  .plan-table input[type=number]:focus{ outline:none; border-color:var(--primary); }
-  .plan-table .seq-input{ width:38px; }
-  .plan-table td.total{ font-family:'IBM Plex Mono'; font-weight:700; }
-  .plan-table td.dates{ font-family:'IBM Plex Mono'; font-size:11px; white-space:nowrap; }
+  .og-row.level-epic .og-label-cell{ background:var(--surface-sunk); font-weight:700; }
+  .og-row.level-feature .og-label-cell{ padding-left:28px; font-weight:600; }
+  .og-row.level-task .og-label-cell{ padding-left:46px; cursor:pointer; }
+  .og-row.level-task .og-label-cell:hover .og-name{ color:var(--primary); }
+
+  .og-drag-handle{ cursor:grab; color:var(--ink-faint); font-size:12px; flex-shrink:0; }
+  .og-drag-handle:active{ cursor:grabbing; }
+  .og-eye{ cursor:pointer; font-size:12px; flex-shrink:0; color:var(--ink-faint); }
+  .og-eye:hover{ color:var(--primary); }
+  .og-caret{ font-size:9px; color:var(--ink-faint); flex-shrink:0; width:10px; cursor:pointer; transition:.15s; display:inline-block; }
+  .og-caret.collapsed{ transform:rotate(-90deg); }
+  .og-sys{ font-family:'IBM Plex Mono'; font-size:8.5px; font-weight:700; background:var(--surface); border:1px solid var(--border); padding:0 5px; border-radius:3px; color:var(--ink-faint); flex-shrink:0; }
+  .og-dot{ width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+  .og-name{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12.4px; flex:1; min-width:0; }
+  .og-badge{ font-family:'IBM Plex Mono'; font-size:9.5px; color:var(--ink-faint); flex-shrink:0; }
+
+  .og-timeline-cell{ position:relative; flex-shrink:0; }
+  .og-bar{ position:absolute; top:8px; height:16px; border-radius:4px; min-width:4px; cursor:pointer; }
+  .og-row.level-epic .og-bar{ top:11px; height:8px; opacity:.85; }
+  .og-row.level-feature .og-bar{ top:9px; height:11px; opacity:.9; }
+
+  .og-detail{ padding:14px 20px 16px 66px; background:var(--surface-sunk); border-bottom:1px solid var(--border); font-size:12.6px; }
+  .og-detail-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px 24px; margin-bottom:12px; }
+  .og-detail-grid div b{ display:block; font-size:10px; text-transform:uppercase; color:var(--ink-faint); font-weight:600; margin-bottom:2px; letter-spacing:.03em; }
+  .og-manday-inputs{ display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
+  .og-manday-inputs .mini-field{ display:flex; flex-direction:column; gap:3px; }
+  .og-manday-inputs label{ font-size:9.5px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; }
+  .og-manday-inputs input, .og-sub-row input{ width:56px; padding:5px 6px; border:1px solid var(--border); border-radius:5px; text-align:center; font-family:'IBM Plex Mono'; font-size:12px; }
+  .og-manday-inputs input:focus, .og-sub-row input:focus{ outline:none; border-color:var(--primary); }
+  .og-sub-list{ margin-top:10px; border-top:1px dashed var(--border); padding-top:8px; }
+  .og-sub-list-label{ font-size:9.5px; text-transform:uppercase; color:var(--ink-faint); font-weight:700; margin-bottom:6px; letter-spacing:.04em; }
+  .og-sub-row{ display:flex; align-items:center; gap:8px; padding:5px 0; font-size:11.8px; flex-wrap:wrap; }
+  .og-sub-row .og-name{ flex:1; min-width:160px; }
 
   footer.app-footer{ text-align:center; padding:26px; color:var(--ink-faint); font-size:11px; font-family:'IBM Plex Mono'; }
 
@@ -762,13 +797,13 @@ function applyMockEstimates(overwrite){
     });
   });
   savePlanState();
-  renderTimelineBody();
+  if(document.getElementById('ogContainer')) renderOutlineGantt();
 }
 
 function clearAllManday(){
   Object.values(planState.tasks).forEach(p=>{ ROLES.forEach(r=> p.manday[r.key]=0); });
   savePlanState();
-  renderTimelineBody();
+  if(document.getElementById('ogContainer')) renderOutlineGantt();
 }
 
 
@@ -802,26 +837,129 @@ function addBusinessDays(start, days){
 }
 function fmtDate(d){ if(!d) return '–'; return d.toLocaleDateString('th-TH',{ year:'numeric', month:'short', day:'numeric' }); }
 
-function computeSchedule(){
-  const flat = flattenAllTasks().map(x=>{
-    const p = getTaskPlan(x.key);
-    return Object.assign({}, x, { plan:p });
-  });
-  flat.sort((a,b)=> (a.plan.seq||0) - (b.plan.seq||0));
+function keyEpic(epicId){ return `E::${epicId}`; }
+function keyFeature(epicId, featureId){ return `F::${epicId}::${featureId}`; }
+function keyTask(epicId, taskId){ return `T::${epicId}::${taskId}`; }
+function keySub(epicId, subId){ return `S::${epicId}::${subId}`; }
+function isHiddenKey(k){ return !!(planState.hidden||{})[k]; }
+function toggleHiddenKey(k){ planState.hidden = planState.hidden||{}; planState.hidden[k] = !planState.hidden[k]; savePlanState(); }
 
+function syncOrder(existing, actualIds){
+  const arr = (existing||[]).filter(id=>actualIds.includes(id));
+  actualIds.forEach(id=>{ if(!arr.includes(id)) arr.push(id); });
+  return arr;
+}
+
+// ============================================================================
+// Build the ordered Epic > Feature > Task(+Sub) tree, respecting custom order
+// (drag-and-drop) and hidden flags. This is the single source of truth for
+// both the schedule computation and the outline+Gantt render.
+// ============================================================================
+function buildOrderedTree(){
+  const epics = allEpics();
+  planState.epicOrder = syncOrder(planState.epicOrder, Object.keys(epics));
+  planState.featureOrder = planState.featureOrder || {};
+  planState.taskOrder = planState.taskOrder || {};
+
+  const tree = [];
+  planState.epicOrder.forEach(epicId=>{
+    const epic = epics[epicId]; if(!epic) return;
+    const eKey = keyEpic(epicId);
+    const featureIds = epic.features.map(f=>f.id);
+    planState.featureOrder[epicId] = syncOrder(planState.featureOrder[epicId], featureIds);
+
+    const featureNodes = [];
+    planState.featureOrder[epicId].forEach(featureId=>{
+      const f = epic.features.find(x=>x.id===featureId); if(!f) return;
+      const fKey = keyFeature(epicId, featureId);
+      const taskIds = f.tasks.map(t=>t.id);
+      const tOrderKey = `${epicId}::${featureId}`;
+      planState.taskOrder[tOrderKey] = syncOrder(planState.taskOrder[tOrderKey], taskIds);
+
+      const taskNodes = [];
+      planState.taskOrder[tOrderKey].forEach(taskId=>{
+        const t = f.tasks.find(x=>x.id===taskId); if(!t) return;
+        const tKey = keyTask(epicId, taskId);
+        const planKey = `${epicId}::${taskId}`;
+        const subs = (t.subs||[]).map(s=>({
+          type:'sub', key:keySub(epicId, s.id), planKey:`${epicId}::${s.id}`,
+          data:s, hidden:isHiddenKey(keySub(epicId, s.id)),
+        }));
+        taskNodes.push({ type:'task', key:tKey, planKey, data:t, hidden:isHiddenKey(tKey), epicId, epicName:epic.name, featureId, featureName:f.name, subs });
+      });
+      featureNodes.push({ type:'feature', key:fKey, epicId, epicName:epic.name, featureId, data:f, hidden:isHiddenKey(fKey), tasks:taskNodes });
+    });
+    tree.push({ type:'epic', key:eKey, epicId, data:epic, hidden:isHiddenKey(eKey), features:featureNodes });
+  });
+  return tree;
+}
+
+function flattenScheduleOrder(tree){
+  const seq = [];
+  tree.forEach(epicNode=>{
+    if(epicNode.hidden) return;
+    epicNode.features.forEach(featNode=>{
+      if(featNode.hidden) return;
+      featNode.tasks.forEach(taskNode=>{
+        if(taskNode.hidden) return;
+        seq.push({ key:taskNode.planKey, task:taskNode.data, isSub:false });
+        taskNode.subs.forEach(subNode=>{
+          if(subNode.hidden) return;
+          seq.push({ key:subNode.planKey, task:subNode.data, isSub:true });
+        });
+      });
+    });
+  });
+  return seq;
+}
+
+function computeSchedule(){
+  const tree = buildOrderedTree();
+  const order = flattenScheduleOrder(tree);
   const start = planState.projectStart ? nextBusinessDay(new Date(planState.projectStart)) : null;
   let cursor = start;
-  flat.forEach(x=>{
-    const manday = Object.values(x.plan.manday||{});
-    const duration = Math.ceil(Math.max(0, ...manday, 0));
-    if(!cursor){ x.scheduledStart=null; x.scheduledEnd=null; x.duration=duration; return; }
-    x.scheduledStart = new Date(cursor);
-    x.scheduledEnd = duration>0 ? addBusinessDays(cursor, duration) : new Date(cursor);
-    x.duration = duration;
-    if(duration>0) cursor = x.scheduledEnd;
+  const scheduleMap = {};
+  order.forEach(item=>{
+    const p = getTaskPlan(item.key);
+    const duration = Math.ceil(Math.max(0, ...Object.values(p.manday||{}), 0));
+    let s=null, e=null;
+    if(cursor){ s = new Date(cursor); e = duration>0 ? addBusinessDays(cursor, duration) : new Date(cursor); if(duration>0) cursor = e; }
+    scheduleMap[item.key] = { start:s, end:e, duration, plan:p };
   });
-  return { flat, projectEnd: cursor };
+  return { tree, order, scheduleMap, projectEnd: cursor };
 }
+
+function computeRollups(tree, scheduleMap){
+  const taskRange = {}, featureRange = {}, epicRange = {};
+  tree.forEach(epicNode=>{
+    if(epicNode.hidden) return;
+    let eStart=null, eEnd=null;
+    epicNode.features.forEach(featNode=>{
+      if(featNode.hidden) return;
+      let fStart=null, fEnd=null;
+      featNode.tasks.forEach(taskNode=>{
+        if(taskNode.hidden) return;
+        const keys = [taskNode.planKey, ...taskNode.subs.filter(s=>!s.hidden).map(s=>s.planKey)];
+        let tStart=null, tEnd=null;
+        keys.forEach(k=>{ const s=scheduleMap[k]; if(s && s.start){ if(!tStart||s.start<tStart) tStart=s.start; if(!tEnd||s.end>tEnd) tEnd=s.end; } });
+        taskRange[taskNode.planKey] = { start:tStart, end:tEnd };
+        if(tStart){ if(!fStart||tStart<fStart) fStart=tStart; if(!fEnd||tEnd>fEnd) fEnd=tEnd; }
+      });
+      featureRange[featNode.key] = { start:fStart, end:fEnd };
+      if(fStart){ if(!eStart||fStart<eStart) eStart=fStart; if(!eEnd||fEnd>eEnd) eEnd=fEnd; }
+    });
+    epicRange[epicNode.key] = { start:eStart, end:eEnd };
+  });
+  return { taskRange, featureRange, epicRange };
+}
+
+// ============================================================================
+// Timeline view — project config + unified Outline & Gantt tree
+// ============================================================================
+let collapsedNodes = new Set();   // session-only: which epic/feature keys are collapsed
+let expandedTasks = new Set();    // session-only: which task keys have detail panel open
+let planSearchQuery = '';
+const PX_PER_DAY = 26;
 
 function renderTimeline(){
   const root = document.getElementById('viewTimeline');
@@ -843,31 +981,26 @@ function renderTimeline(){
         <button class="btn" id="applyMockOverwrite">🪄 เขียนทับทั้งหมดด้วย mock estimate</button>
         <button class="btn ghost-dashed" id="clearAllManday">↺ ล้าง manday ทั้งหมด</button>
       </div>
-      <div class="timeline-hint" style="padding-top:6px;">Mock estimate เดาจาก keyword ใน task/description + clarity (🟢🟡🔴) ของแต่ละ task — เป็นแค่ตัวเลขตั้งต้นให้เริ่มคุยกับทีมง่ายขึ้น ไม่ใช่ estimate จริง ควรให้ Tech Lead/Dev ยืนยันก่อน commit sprint จริง</div>
+      <div class="timeline-hint" style="padding-top:6px;">Mock estimate เดาจาก keyword ใน task/description + clarity (🟢🟡🔴) — เป็นตัวเลขตั้งต้น ไม่ใช่ estimate จริง ควรให้ Tech Lead/Dev ยืนยันก่อน commit sprint จริง</div>
       <div class="workload-strip" id="workloadStrip"></div>
-    </div>
-
-    <div class="card" style="margin-bottom:18px;">
-      <h3 style="padding:16px 20px 0; margin:0; font-size:14px;">Gantt overview (ระดับ Feature)</h3>
-      <div class="timeline-hint">Duration ต่อ task = manday สูงสุดในบรรดา 7 role (สมมติทำงานคู่ขนานภายใน task เดียว) เรียงตาม seq ต่อเนื่องกันแบบวันทำการ (เว้นเสาร์-อาทิตย์) — เป็น model แบบง่ายสำหรับวางแผนคร่าวๆ ไม่ใช่ critical-path engine เต็มรูปแบบ</div>
-      <div class="gantt-wrap" id="ganttWrap"></div>
     </div>
 
     <div class="card">
       <div class="timeline-toolbar">
         <div class="search-wrap"><input id="planSearch" type="text" placeholder="ค้นหา task…"></div>
-        <button class="btn ghost-dashed" id="collapseAllPlan">ยุบ/ขยายทั้งหมด</button>
+        <button class="btn ghost-dashed" id="collapseAllPlan">ยุบทั้งหมด</button>
+        <button class="btn ghost-dashed" id="expandAllPlan">ขยายทั้งหมด</button>
       </div>
-      <div class="timeline-hint">ใส่ manday เฉพาะ role ที่เกี่ยวข้อง (ที่เหลือปล่อย 0) · ลำดับ (Seq) แก้ได้เพื่อจัดคิวใหม่ · ข้อมูลบันทึกอัตโนมัติในเบราว์เซอร์นี้</div>
-      <div class="feature-body" id="planTableWrap"></div>
+      <div class="timeline-hint">ลาก ☰ เพื่อจัดลำดับใหม่ (ในกลุ่มเดียวกันเท่านั้น) · กด 👁 เพื่อซ่อน/แสดง · คลิกชื่อ task เพื่อดูรายละเอียด + กรอก manday · ข้อมูลบันทึกอัตโนมัติในเบราว์เซอร์นี้</div>
+      <div class="og-scroll"><div id="ogContainer"></div></div>
     </div>
   `;
 
   document.getElementById('projectStart').value = planState.projectStart || '';
   document.getElementById('targetEnd').value = planState.targetEnd || '';
 
-  document.getElementById('projectStart').addEventListener('change', e=>{ planState.projectStart=e.target.value; savePlanState(); renderTimelineBody(); });
-  document.getElementById('targetEnd').addEventListener('change', e=>{ planState.targetEnd=e.target.value; savePlanState(); renderTimelineBody(); });
+  document.getElementById('projectStart').addEventListener('change', e=>{ planState.projectStart=e.target.value; savePlanState(); renderOutlineGantt(); });
+  document.getElementById('targetEnd').addEventListener('change', e=>{ planState.targetEnd=e.target.value; savePlanState(); renderOutlineGantt(); });
   document.getElementById('exportPlanJson').addEventListener('click', ()=>{
     const blob = new Blob([JSON.stringify(planState,null,2)], {type:'application/json'});
     const url = URL.createObjectURL(blob); const a=document.createElement('a');
@@ -893,135 +1026,273 @@ function renderTimeline(){
   document.getElementById('clearAllManday').addEventListener('click', ()=>{
     if(confirm('ล้างค่า manday ทุก task ทุก role กลับเป็น 0 ทั้งหมด — ยืนยันหรือไม่?')) clearAllManday();
   });
-  document.getElementById('planSearch').addEventListener('input', filterPlanTable);
+  document.getElementById('planSearch').addEventListener('input', e=>{ planSearchQuery = e.target.value.trim().toLowerCase(); renderOutlineGantt(); });
   document.getElementById('collapseAllPlan').addEventListener('click', ()=>{
-    const heads = document.querySelectorAll('#planTableWrap .feature-head');
-    const shouldCollapse = ![...heads].every(h=>h.classList.contains('collapsed'));
-    heads.forEach(h=>{ if(h.classList.contains('collapsed')!==shouldCollapse) h.click(); });
+    const tree = buildOrderedTree();
+    tree.forEach(e=>{ collapsedNodes.add(e.key); e.features.forEach(f=>collapsedNodes.add(f.key)); });
+    renderOutlineGantt();
   });
+  document.getElementById('expandAllPlan').addEventListener('click', ()=>{ collapsedNodes.clear(); renderOutlineGantt(); });
 
-  renderTimelineBody();
+  wireOutlineGanttEvents(); // delegated listeners, attached once
+  renderOutlineGantt();
 }
 
-function renderTimelineBody(){
-  const { flat, projectEnd } = computeSchedule();
-  document.getElementById('computedEnd').innerHTML = projectEnd ? `<b>${fmtDate(projectEnd)}</b>` : 'กำหนด Start Date ก่อน';
+function fmtDateShort(d){ if(!d) return ''; return d.toLocaleDateString('th-TH',{ month:'short', day:'numeric' }); }
 
+function matchesSearch(node){
+  if(!planSearchQuery) return true;
+  const text = (node.data.task+' '+(node.data.desc||'')).toLowerCase();
+  return text.includes(planSearchQuery);
+}
+
+function renderOutlineGantt(){
+  const { tree, scheduleMap, projectEnd } = computeSchedule();
+  const { taskRange, featureRange, epicRange } = computeRollups(tree, scheduleMap);
+
+  document.getElementById('computedEnd').innerHTML = projectEnd ? `<b>${fmtDate(projectEnd)}</b>` : 'กำหนด Start Date ก่อน';
   const varEl = document.getElementById('varianceReadout');
   if(planState.targetEnd && projectEnd){
     const target = new Date(planState.targetEnd);
     const diffDays = Math.round((target-projectEnd)/86400000);
-    varEl.innerHTML = diffDays>=0
-      ? `<span class="variance-ok">เหลือ buffer ~${diffDays} วัน</span>`
-      : `<span class="variance-bad">เกินเป้า ~${Math.abs(diffDays)} วัน</span>`;
+    varEl.innerHTML = diffDays>=0 ? `<span class="variance-ok">เหลือ buffer ~${diffDays} วัน</span>` : `<span class="variance-bad">เกินเป้า ~${Math.abs(diffDays)} วัน</span>`;
   } else varEl.textContent = '';
 
-  // workload strip
   const totals = Object.fromEntries(ROLES.map(r=>[r.key,0]));
-  flat.forEach(x=> ROLES.forEach(r=> totals[r.key] += Number(x.plan.manday[r.key]||0)));
+  Object.values(scheduleMap).forEach(s=> ROLES.forEach(r=> totals[r.key] += Number(s.plan.manday[r.key]||0)));
   document.getElementById('workloadStrip').innerHTML = ROLES.map((r,i)=>`
     <div class="workload-seg"><div class="role">${r.label}</div><div class="val" style="color:${ROLE_COLORS[i]}">${totals[r.key]||0}</div></div>
   `).join('');
 
-  // gantt (feature-level aggregation)
-  const featureMap = {};
-  flat.forEach(x=>{
-    const fkey = `${x.epicId}::${x.featureId}`;
-    if(!featureMap[fkey]) featureMap[fkey] = { epicName:x.epicName, featureName:x.featureName, start:null, end:null, clarity:{green:0,yellow:0,red:0} };
-    const fm = featureMap[fkey];
-    fm.clarity[x.task.c]++;
-    if(x.scheduledStart && (!fm.start || x.scheduledStart < fm.start)) fm.start = x.scheduledStart;
-    if(x.scheduledEnd && (!fm.end || x.scheduledEnd > fm.end)) fm.end = x.scheduledEnd;
-  });
-  const ganttEl = document.getElementById('ganttWrap');
-  const allDates = Object.values(featureMap).filter(f=>f.start&&f.end);
-  if(allDates.length===0 || !planState.projectStart){
-    ganttEl.innerHTML = '<div class="timeline-hint">กำหนด Project Start Date และใส่ manday อย่างน้อย 1 task เพื่อดู Gantt chart</div>';
+  const projStart = planState.projectStart ? nextBusinessDay(new Date(planState.projectStart)) : null;
+  const overallEnd = projectEnd;
+  const totalDays = (projStart && overallEnd) ? Math.max(14, Math.ceil((overallEnd-projStart)/86400000)+5) : 21;
+  const timelineWidth = totalDays*PX_PER_DAY;
+  const dateToX = d => (!projStart||!d) ? 0 : Math.max(0,(d-projStart)/86400000)*PX_PER_DAY;
+
+  let headerTicks = '';
+  if(projStart){
+    for(let i=0; i<=totalDays; i+=7){
+      const d = new Date(projStart); d.setDate(d.getDate()+i);
+      headerTicks += `<div class="og-date-tick" style="left:${i*PX_PER_DAY}px;">${fmtDateShort(d)}</div>`;
+    }
   } else {
-    const minD = new Date(Math.min(...allDates.map(f=>f.start)));
-    const maxD = new Date(Math.max(...allDates.map(f=>f.end)));
-    const totalSpan = Math.max(1, (maxD-minD)/86400000);
-    ganttEl.innerHTML = Object.values(featureMap).map(f=>{
-      if(!f.start||!f.end) return '';
-      const left = ((f.start-minD)/86400000)/totalSpan*100;
-      const width = Math.max(0.6, ((f.end-f.start)/86400000)/totalSpan*100);
-      const dominant = f.clarity.red ? 'var(--red)' : (f.clarity.yellow ? 'var(--amber)' : 'var(--green)');
-      return `<div class="gantt-row">
-        <div class="gantt-label" title="${f.epicName} — ${f.featureName}">${f.featureName}</div>
-        <div class="gantt-track"><div class="gantt-bar" style="left:${left}%; width:${width}%; background:${dominant};" title="${fmtDate(f.start)} → ${fmtDate(f.end)}"></div></div>
-      </div>`;
-    }).join('');
+    headerTicks = `<div class="og-date-tick" style="left:8px; border-left:none;">กำหนด Project Start Date เพื่อดู timeline</div>`;
   }
 
-  // task table, grouped by epic (accordion, matches epic-view visual language)
-  const wrap = document.getElementById('planTableWrap');
-  wrap.innerHTML = '';
-  const byEpic = {};
-  flat.forEach(x=>{ (byEpic[x.epicId] = byEpic[x.epicId]||[]).push(x); });
+  function barHtml(range, colorVar){
+    if(!range || !range.start || !projStart) return '';
+    const left = dateToX(range.start);
+    const width = Math.max(4, dateToX(range.end) - left);
+    return `<div class="og-bar" style="left:${left}px; width:${width}px; background:${colorVar};" title="${fmtDate(range.start)} → ${fmtDate(range.end)}"></div>`;
+  }
+  function clarityColor(c){ return c==='green' ? 'var(--green)' : (c==='yellow' ? 'var(--amber)' : 'var(--red)'); }
+  function mandayTotal(planKey){ return Object.values(getTaskPlan(planKey).manday).reduce((a,b)=>a+Number(b||0),0); }
 
-  Object.keys(byEpic).forEach(epicId=>{
-    const epic = allEpics()[epicId];
-    const items = byEpic[epicId];
-    const section = document.createElement('section');
-    section.className = 'feature card'; section.style.marginBottom='10px';
-    const rowsHtml = items.map(x=>{
-      const roleInputs = ROLES.map(r=>`<td><input type="number" min="0" step="0.5" value="${x.plan.manday[r.key]||0}" data-key="${x.key}" data-role="${r.key}"></td>`).join('');
-      const total = Object.values(x.plan.manday).reduce((a,b)=>a+Number(b||0),0);
-      return `<tr data-searchtext="${(x.task.task+' '+x.featureName).toLowerCase()}">
-        <td><input type="number" class="seq-input" value="${x.plan.seq||0}" data-key="${x.key}" data-field="seq"></td>
-        <td class="task-cell mono" style="font-weight:600;">${x.task.id}</td>
-        <td class="task-cell">${x.task.task}</td>
-        ${roleInputs}
-        <td class="total">${total}</td>
-        <td class="dates">${x.scheduledStart?fmtDate(x.scheduledStart):'–'}<br>→ ${x.scheduledEnd?fmtDate(x.scheduledEnd):'–'}</td>
-      </tr>`;
-    }).join('');
-    section.innerHTML = `
-      <div class="feature-head" data-target="plan-${epicId}"><span class="fnum">${epic.system||''}</span><h3>${epic.name}</h3><span class="caret">▾</span></div>
-      <div class="feature-body" id="plan-${epicId}-body">
-        <table class="plan-table">
-          <thead><tr><th>Seq</th><th class="task-cell">ID</th><th class="task-cell">Task</th>${ROLES.map(r=>`<th>${r.label}</th>`).join('')}<th>รวม</th><th>วันที่</th></tr></thead>
-          <tbody>${rowsHtml}</tbody>
-        </table>
+  let rowsHtml = '';
+  tree.forEach(epicNode=>{
+    const epic = epicNode.data;
+    const visibleFeatures = epicNode.features.filter(f=> f.tasks.some(t=>matchesSearch(t) || t.subs.some(s=>matchesSearch(s))));
+    if(planSearchQuery && visibleFeatures.length===0) return;
+
+    const eCollapsed = collapsedNodes.has(epicNode.key);
+    rowsHtml += `
+      <div class="og-row level-epic ${epicNode.hidden?'hidden-item':''}" draggable="true" data-order-scope="epic" data-order-id="${epicNode.epicId}">
+        <div class="og-label-cell">
+          <span class="og-drag-handle">☰</span>
+          <span class="og-caret ${eCollapsed?'collapsed':''}" data-caret-key="${epicNode.key}">▾</span>
+          <span class="og-eye" data-hide-key="${epicNode.key}">${epicNode.hidden?'🚫':'👁'}</span>
+          <span class="og-sys">${epic.system||''}</span>
+          <span class="og-name">${epic.name}</span>
+        </div>
+        <div class="og-timeline-cell" style="width:${timelineWidth}px;">${barHtml(epicRange[epicNode.key], 'var(--primary)')}</div>
       </div>`;
-    wrap.appendChild(section);
+
+    if(eCollapsed) return;
+    epicNode.features.forEach(featNode=>{
+      const f = featNode.data;
+      if(planSearchQuery && !featNode.tasks.some(t=>matchesSearch(t) || t.subs.some(s=>matchesSearch(s)))) return;
+      const fCollapsed = collapsedNodes.has(featNode.key);
+      rowsHtml += `
+        <div class="og-row level-feature ${featNode.hidden?'hidden-item':''}" draggable="true" data-order-scope="feat:${featNode.epicId}" data-order-id="${featNode.featureId}">
+          <div class="og-label-cell">
+            <span class="og-drag-handle">☰</span>
+            <span class="og-caret ${fCollapsed?'collapsed':''}" data-caret-key="${featNode.key}">▾</span>
+            <span class="og-eye" data-hide-key="${featNode.key}">${featNode.hidden?'🚫':'👁'}</span>
+            <span class="og-name">${f.name}</span>
+          </div>
+          <div class="og-timeline-cell" style="width:${timelineWidth}px;">${barHtml(featureRange[featNode.key], 'var(--purple)')}</div>
+        </div>`;
+
+      if(fCollapsed) return;
+      featNode.tasks.forEach(taskNode=>{
+        if(planSearchQuery && !matchesSearch(taskNode) && !taskNode.subs.some(s=>matchesSearch(s))) return;
+        const t = taskNode.data;
+        const isOpen = expandedTasks.has(taskNode.key);
+        const total = mandayTotal(taskNode.planKey);
+        rowsHtml += `
+          <div class="og-row level-task ${taskNode.hidden?'hidden-item':''}" draggable="true" data-order-scope="task:${taskNode.epicId}::${taskNode.featureId}" data-order-id="${t.id}">
+            <div class="og-label-cell" data-task-toggle="${taskNode.key}">
+              <span class="og-drag-handle">☰</span>
+              <span class="og-eye" data-hide-key="${taskNode.key}">${taskNode.hidden?'🚫':'👁'}</span>
+              <span class="og-dot" style="background:${clarityColor(t.c)}"></span>
+              <span class="og-name mono">${t.id}</span>
+              <span class="og-name">${t.task}</span>
+              <span class="og-badge">${total>0?total+'d':''}</span>
+            </div>
+            <div class="og-timeline-cell" style="width:${timelineWidth}px;">${barHtml(taskRange[taskNode.planKey], clarityColor(t.c))}</div>
+          </div>`;
+
+        if(isOpen){
+          const p = getTaskPlan(taskNode.planKey);
+          rowsHtml += `
+            <div class="og-detail">
+              <div class="og-detail-grid">
+                <div><b>คำอธิบาย</b>${t.desc||'–'}</div>
+                <div><b>Dependency</b>${t.dep||'–'}</div>
+                <div><b>Source</b>${t.src||'–'}</div>
+                <div><b>Clarity</b>${stamp(t.c, t.note)}</div>
+              </div>
+              <div class="og-manday-inputs">
+                ${ROLES.map(r=>`<div class="mini-field"><label>${r.label}</label><input type="number" min="0" step="0.5" value="${p.manday[r.key]||0}" data-manday-key="${taskNode.planKey}" data-role="${r.key}"></div>`).join('')}
+              </div>
+              ${taskNode.subs.length ? `<div class="og-sub-list">
+                <div class="og-sub-list-label">Sub-tasks</div>
+                ${taskNode.subs.map(s=>{
+                  const sp = getTaskPlan(s.planKey);
+                  return `<div class="og-sub-row ${s.hidden?'hidden-item':''}">
+                    <span class="og-eye" data-hide-key="${s.key}">${s.hidden?'🚫':'👁'}</span>
+                    <span class="og-dot" style="background:${clarityColor(s.data.c)}"></span>
+                    <span class="og-name">${s.data.id} ${s.data.task}</span>
+                    ${ROLES.map(r=>`<input type="number" min="0" step="0.5" title="${r.label}" value="${sp.manday[r.key]||0}" data-manday-key="${s.planKey}" data-role="${r.key}">`).join('')}
+                  </div>`;
+                }).join('')}
+              </div>` : ''}
+            </div>`;
+        }
+      });
+    });
   });
 
-  wrap.querySelectorAll('input[type=number]').forEach(inp=>{
-    inp.addEventListener('change', e=>{
-      const key = e.target.dataset.key;
-      const p = getTaskPlan(key);
-      if(e.target.dataset.field==='seq') p.seq = Number(e.target.value)||0;
-      else p.manday[e.target.dataset.role] = Number(e.target.value)||0;
-      savePlanState();
-      renderTimelineBody();
-    });
+  const container = document.getElementById('ogContainer');
+  container.innerHTML = `
+    <div class="og-header-row">
+      <div class="og-label-col-head">Epic / Feature / Task</div>
+      <div class="og-timeline-head" style="width:${timelineWidth}px;">${headerTicks}</div>
+    </div>
+    ${rowsHtml || '<div class="timeline-hint" style="padding:16px 20px;">ไม่พบ task ที่ตรงกับคำค้นหา</div>'}
+  `;
+}
+
+// ============================================================================
+// Delegated events for the outline+Gantt tree — attached once, works across re-renders
+// ============================================================================
+let dragCtx = null;
+
+function wireOutlineGanttEvents(){
+  const container = document.getElementById('ogContainer');
+
+  container.addEventListener('click', e=>{
+    const eye = e.target.closest('.og-eye');
+    if(eye){ toggleHiddenKey(eye.dataset.hideKey); renderOutlineGantt(); return; }
+
+    const caret = e.target.closest('.og-caret');
+    if(caret){ const k=caret.dataset.caretKey; collapsedNodes.has(k)?collapsedNodes.delete(k):collapsedNodes.add(k); renderOutlineGantt(); return; }
+
+    const bar = e.target.closest('.og-bar');
+    if(bar){
+      const row = bar.closest('.og-row');
+      if(row.classList.contains('level-epic')){ const c=row.querySelector('.og-caret'); if(c) c.click(); return; }
+      if(row.classList.contains('level-feature')){ const c=row.querySelector('.og-caret'); if(c) c.click(); return; }
+    }
+
+    const toggle = e.target.closest('[data-task-toggle]');
+    if(toggle){
+      const k = toggle.dataset.taskToggle;
+      expandedTasks.has(k) ? expandedTasks.delete(k) : expandedTasks.add(k);
+      renderOutlineGantt();
+      return;
+    }
   });
-  wrap.querySelectorAll('.feature-head').forEach(head=>{
-    head.addEventListener('click', ()=>{
-      const body = document.getElementById(head.dataset.target+'-body') || head.parentElement.querySelector('.feature-body');
-      const collapsed = head.classList.toggle('collapsed');
-      body.style.display = collapsed ? 'none' : '';
-    });
+
+  container.addEventListener('change', e=>{
+    const inp = e.target.closest('input[data-manday-key]');
+    if(!inp) return;
+    const p = getTaskPlan(inp.dataset.mandayKey);
+    p.manday[inp.dataset.role] = Number(inp.value)||0;
+    savePlanState();
+    renderOutlineGantt();
+  });
+
+  container.addEventListener('dragstart', e=>{
+    const row = e.target.closest('.og-row[draggable="true"]');
+    if(!row) return;
+    dragCtx = { scope: row.dataset.orderScope, fromId: row.dataset.orderId };
+    row.classList.add('dragging');
+  });
+  container.addEventListener('dragover', e=>{
+    const row = e.target.closest('.og-row[draggable="true"]');
+    if(!row || !dragCtx || row.dataset.orderScope!==dragCtx.scope) return;
+    e.preventDefault();
+    const rect = row.getBoundingClientRect();
+    const topHalf = (e.clientY-rect.top) < rect.height/2;
+    document.querySelectorAll('.og-row').forEach(r=>r.classList.remove('drag-over-top','drag-over-bottom'));
+    row.classList.add(topHalf?'drag-over-top':'drag-over-bottom');
+  });
+  container.addEventListener('drop', e=>{
+    const row = e.target.closest('.og-row[draggable="true"]');
+    if(!row || !dragCtx || row.dataset.orderScope!==dragCtx.scope){ dragCtx=null; return; }
+    e.preventDefault();
+    const rect = row.getBoundingClientRect();
+    const topHalf = (e.clientY-rect.top) < rect.height/2;
+    performReorder(dragCtx.scope, dragCtx.fromId, row.dataset.orderId, topHalf);
+    dragCtx = null;
+  });
+  container.addEventListener('dragend', ()=>{
+    document.querySelectorAll('.og-row').forEach(r=>r.classList.remove('drag-over-top','drag-over-bottom','dragging'));
+    dragCtx = null;
   });
 }
 
-function filterPlanTable(){
-  const q = document.getElementById('planSearch').value.trim().toLowerCase();
-  document.querySelectorAll('#planTableWrap tbody tr').forEach(row=>{
-    row.style.display = (!q || row.dataset.searchtext.includes(q)) ? '' : 'none';
-  });
+function performReorder(scope, fromId, toId, insertBefore){
+  if(fromId===toId) return;
+  let arrRef;
+  if(scope==='epic') arrRef = planState.epicOrder;
+  else if(scope.startsWith('feat:')) arrRef = planState.featureOrder[scope.slice(5)];
+  else if(scope.startsWith('task:')) arrRef = planState.taskOrder[scope.slice(5)];
+  if(!arrRef) return;
+  const fromIdx = arrRef.indexOf(fromId);
+  if(fromIdx===-1) return;
+  arrRef.splice(fromIdx,1);
+  let toIdx = arrRef.indexOf(toId);
+  if(toIdx===-1) toIdx = arrRef.length;
+  else if(!insertBefore) toIdx += 1;
+  arrRef.splice(toIdx,0,fromId);
+  savePlanState();
+  renderOutlineGantt();
 }
 
 function exportTimelineCsv(){
-  const { flat } = computeSchedule();
+  const { order, scheduleMap } = computeSchedule();
   const header = ["Epic","Feature","Task ID","Task", ...ROLES.map(r=>r.label), "Total Manday","Start","End"];
-  const rows = [header, ...flat.map(x=>[
-    x.epicName, x.featureName, x.task.id, x.task.task,
-    ...ROLES.map(r=>x.plan.manday[r.key]||0),
-    Object.values(x.plan.manday).reduce((a,b)=>a+Number(b||0),0),
-    x.scheduledStart?fmtDate(x.scheduledStart):'', x.scheduledEnd?fmtDate(x.scheduledEnd):''
-  ])];
+  // rebuild epic/feature name lookup since `order` only carries key+task+isSub
+  const tree = buildOrderedTree();
+  const nameByKey = {};
+  tree.forEach(en=> en.features.forEach(fn=> fn.tasks.forEach(tn=>{
+    nameByKey[tn.planKey] = { epicName: en.data.name, featureName: fn.data.name };
+    tn.subs.forEach(s=> nameByKey[s.planKey] = { epicName: en.data.name, featureName: fn.data.name });
+  })));
+  const rows = [header, ...order.map(x=>{
+    const names = nameByKey[x.key] || { epicName:'', featureName:'' };
+    const sched = scheduleMap[x.key];
+    const manday = sched.plan.manday;
+    return [
+      names.epicName, names.featureName, x.task.id, x.task.task,
+      ...ROLES.map(r=>manday[r.key]||0),
+      Object.values(manday).reduce((a,b)=>a+Number(b||0),0),
+      sched.start?fmtDate(sched.start):'', sched.end?fmtDate(sched.end):''
+    ];
+  })];
   downloadCsv(rows, `ncbs-timeline-${new Date().toISOString().slice(0,10)}.csv`);
 }
 
