@@ -255,10 +255,53 @@
   .heatmap-row .counts{ font-family:'IBM Plex Mono'; font-size:11px; color:var(--ink-faint); text-align:right; }
 
   /* ================= TIMELINE ================= */
+  .scenario-tabs{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:2px; padding:0 2px; }
+  .scenario-tab{
+    display:flex; align-items:center; gap:7px; padding:8px 13px; border-radius:8px 8px 0 0;
+    border:1px solid var(--border); border-bottom:none; background:var(--surface-sunk);
+    font-size:12.5px; font-weight:600; color:var(--ink-soft); cursor:pointer; max-width:220px;
+  }
+  .scenario-tab .st-name{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .scenario-tab.current{ background:var(--surface); color:var(--primary); position:relative; top:1px; border-bottom:1px solid var(--surface); }
+  .scenario-tab .st-del{ color:var(--ink-faint); font-size:11px; flex-shrink:0; }
+  .scenario-tab .st-del:hover{ color:var(--red); }
+  .scenario-tab-add{
+    padding:7px 11px; border-radius:8px; border:1px dashed var(--border); background:transparent;
+    color:var(--ink-faint); font-size:12px; cursor:pointer; font-family:inherit;
+  }
+  .scenario-tab-add:hover{ color:var(--primary); border-color:var(--primary); }
+
+  .dp-root{ position:relative; }
+  .dp-field{
+    display:flex; align-items:center; justify-content:space-between; gap:8px; cursor:pointer;
+    padding:7px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px;
+    color:var(--ink); background:var(--surface); min-width:190px;
+  }
+  .dp-field:hover{ border-color:var(--primary); }
+  .dp-display.dp-placeholder{ color:var(--ink-faint); }
+  .dp-icon{ font-size:12px; flex-shrink:0; }
+  .dp-popover{
+    position:absolute; top:calc(100% + 4px); left:0; z-index:50; background:var(--surface);
+    border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow-md); padding:10px; width:250px;
+  }
+  .dp-nav{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .dp-nav button{ border:none; background:var(--surface-sunk); border-radius:5px; width:24px; height:24px; cursor:pointer; color:var(--ink-soft); font-size:14px; }
+  .dp-nav button:hover{ background:var(--primary-bg); color:var(--primary); }
+  .dp-month-label{ font-size:12.5px; font-weight:700; }
+  .dp-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+  .dp-dow{ text-align:center; font-size:10px; color:var(--ink-faint); font-weight:700; padding-bottom:3px; }
+  .dp-day{ text-align:center; font-size:12px; padding:6px 0; border-radius:5px; cursor:pointer; color:var(--ink); }
+  .dp-day:hover{ background:var(--primary-bg); }
+  .dp-day-today{ font-weight:700; color:var(--primary); }
+  .dp-day-selected{ background:var(--primary); color:#fff; font-weight:700; }
+  .dp-day-empty{ cursor:default; }
+  .dp-footer{ display:flex; justify-content:space-between; margin-top:8px; padding-top:8px; border-top:1px solid var(--border-soft); }
+  .dp-footer button{ border:none; background:none; color:var(--primary); font-size:12px; cursor:pointer; font-family:inherit; }
+  .dp-footer button:hover{ text-decoration:underline; }
+
   .project-config{ display:flex; align-items:flex-end; gap:20px; flex-wrap:wrap; padding:18px 20px; }
   .field{ display:flex; flex-direction:column; gap:5px; }
   .field label{ font-size:11px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.03em; }
-  .field input[type=date]{ padding:7px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; color:var(--ink); }
   .field-readout{ font-family:'IBM Plex Mono'; font-size:13px; padding:7px 0; }
   .field-readout b{ color:var(--primary); }
   .variance-ok{ color:var(--green); } .variance-bad{ color:var(--red); }
@@ -321,6 +364,10 @@
   .og-row.level-feature .og-bar{ top:9px; height:11px; opacity:.9; }
 
   .og-detail{ padding:14px 20px 16px 66px; background:var(--surface-sunk); border-bottom:1px solid var(--border); font-size:12.6px; }
+  .og-detail-header{ margin-bottom:12px; padding-bottom:12px; border-bottom:1px dashed var(--border); }
+  .og-detail-breadcrumb{ font-size:10.5px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.03em; font-weight:600; margin-bottom:4px; }
+  .og-detail-title{ font-size:15px; font-weight:700; color:var(--ink); line-height:1.4; }
+  .og-detail-meta{ display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin-top:6px; font-size:11.8px; color:var(--ink-soft); }
   .og-detail-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px 24px; margin-bottom:12px; }
   .og-detail-grid div b{ display:block; font-size:10px; text-transform:uppercase; color:var(--ink-faint); font-weight:600; margin-bottom:2px; letter-spacing:.03em; }
   .og-manday-inputs{ display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
@@ -822,7 +869,7 @@ function applyMockEstimates(overwrite){
 }
 
 function clearAllManday(){
-  Object.values(planState.tasks).forEach(p=>{ ROLES.forEach(r=> p.manday[r.key]=0); });
+  Object.values(currentScenario().tasks).forEach(p=>{ ROLES.forEach(r=> p.manday[r.key]=0); });
   savePlanState();
   if(document.getElementById('ogContainer')) renderOutlineGantt();
 }
@@ -853,12 +900,41 @@ function applyRecommendedEpicOrder(){
   const epics = allEpics();
   const scored = Object.keys(epics).map(id=>({ id, tier: epicPriorityTier(epics[id]) }));
   scored.sort((a,b)=> a.tier-b.tier); // stable sort — ties keep their relative order
-  planState.epicOrder = scored.map(s=>s.id);
+  currentScenario().epicOrder = scored.map(s=>s.id);
   savePlanState();
   if(document.getElementById('ogContainer')) renderOutlineGantt();
 }
 
-let planState = { projectStart:'', targetEnd:'', tasks:{} }; // tasks[key] = { seq, manday:{role:val}, }
+function defaultScenario(name){
+  return { name: name||'แผนเริ่มต้น', projectStart:'', targetEnd:'', tasks:{}, hidden:{}, epicOrder:[], featureOrder:{}, taskOrder:{} };
+}
+function defaultPlanState(){
+  return { activeScenarioId:'default', scenarios: { default: defaultScenario('แผนเริ่มต้น') } };
+}
+function migratePlanState(data){
+  if(!data) return defaultPlanState();
+  if(data.scenarios) return data; // already new (multi-scenario) format
+  // ของเก่า (flat, ก่อนมี scenario) — ห่อเข้า scenario เดียวเพื่อไม่ให้ข้อมูลเดิมหาย
+  return {
+    activeScenarioId: 'default',
+    scenarios: {
+      default: {
+        name: 'แผนเริ่มต้น',
+        projectStart: data.projectStart||'', targetEnd: data.targetEnd||'',
+        tasks: data.tasks||{}, hidden: data.hidden||{},
+        epicOrder: data.epicOrder||[], featureOrder: data.featureOrder||{}, taskOrder: data.taskOrder||{},
+      }
+    }
+  };
+}
+let planState = defaultPlanState();
+
+function currentScenario(){
+  if(!planState.scenarios[planState.activeScenarioId]){
+    planState.activeScenarioId = Object.keys(planState.scenarios)[0];
+  }
+  return planState.scenarios[planState.activeScenarioId];
+}
 
 function loadPlanState(){
   return fetch('data/planning-state.json').then(r=>{
@@ -867,16 +943,18 @@ function loadPlanState(){
   }).catch(()=>{
     try{ const raw = localStorage.getItem(PLAN_STORAGE_KEY); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
   }).then(data=>{
-    if(data) planState = Object.assign({projectStart:'',targetEnd:'',tasks:{}}, data);
+    planState = migratePlanState(data);
   });
 }
 function savePlanState(){
   try{ localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(planState)); }catch(e){}
 }
 function getTaskPlan(key){
-  if(!planState.tasks[key]) planState.tasks[key] = { seq:0, manday:Object.fromEntries(ROLES.map(r=>[r.key,0])) };
-  return planState.tasks[key];
+  const s = currentScenario();
+  if(!s.tasks[key]) s.tasks[key] = { seq:0, manday:Object.fromEntries(ROLES.map(r=>[r.key,0])) };
+  return s.tasks[key];
 }
+
 
 function isWeekend(d){ const day=d.getDay(); return day===0||day===6; }
 function nextBusinessDay(d){ const r=new Date(d); while(isWeekend(r)) r.setDate(r.getDate()+1); return r; }
@@ -894,8 +972,8 @@ function keyEpic(epicId){ return `E::${epicId}`; }
 function keyFeature(epicId, featureId){ return `F::${epicId}::${featureId}`; }
 function keyTask(epicId, taskId){ return `T::${epicId}::${taskId}`; }
 function keySub(epicId, subId){ return `S::${epicId}::${subId}`; }
-function isHiddenKey(k){ return !!(planState.hidden||{})[k]; }
-function toggleHiddenKey(k){ planState.hidden = planState.hidden||{}; planState.hidden[k] = !planState.hidden[k]; savePlanState(); }
+function isHiddenKey(k){ return !!(currentScenario().hidden||{})[k]; }
+function toggleHiddenKey(k){ const s=currentScenario(); s.hidden = s.hidden||{}; s.hidden[k] = !s.hidden[k]; savePlanState(); }
 
 function syncOrder(existing, actualIds){
   const arr = (existing||[]).filter(id=>actualIds.includes(id));
@@ -910,27 +988,28 @@ function syncOrder(existing, actualIds){
 // ============================================================================
 function buildOrderedTree(){
   const epics = allEpics();
-  planState.epicOrder = syncOrder(planState.epicOrder, Object.keys(epics));
-  planState.featureOrder = planState.featureOrder || {};
-  planState.taskOrder = planState.taskOrder || {};
+  const S = currentScenario();
+  S.epicOrder = syncOrder(S.epicOrder, Object.keys(epics));
+  S.featureOrder = S.featureOrder || {};
+  S.taskOrder = S.taskOrder || {};
 
   const tree = [];
-  planState.epicOrder.forEach(epicId=>{
+  S.epicOrder.forEach(epicId=>{
     const epic = epics[epicId]; if(!epic) return;
     const eKey = keyEpic(epicId);
     const featureIds = epic.features.map(f=>f.id);
-    planState.featureOrder[epicId] = syncOrder(planState.featureOrder[epicId], featureIds);
+    S.featureOrder[epicId] = syncOrder(S.featureOrder[epicId], featureIds);
 
     const featureNodes = [];
-    planState.featureOrder[epicId].forEach(featureId=>{
+    S.featureOrder[epicId].forEach(featureId=>{
       const f = epic.features.find(x=>x.id===featureId); if(!f) return;
       const fKey = keyFeature(epicId, featureId);
       const taskIds = f.tasks.map(t=>t.id);
       const tOrderKey = `${epicId}::${featureId}`;
-      planState.taskOrder[tOrderKey] = syncOrder(planState.taskOrder[tOrderKey], taskIds);
+      S.taskOrder[tOrderKey] = syncOrder(S.taskOrder[tOrderKey], taskIds);
 
       const taskNodes = [];
-      planState.taskOrder[tOrderKey].forEach(taskId=>{
+      S.taskOrder[tOrderKey].forEach(taskId=>{
         const t = f.tasks.find(x=>x.id===taskId); if(!t) return;
         const tKey = keyTask(epicId, taskId);
         const planKey = `${epicId}::${taskId}`;
@@ -969,7 +1048,7 @@ function flattenScheduleOrder(tree){
 function computeSchedule(){
   const tree = buildOrderedTree();
   const order = flattenScheduleOrder(tree);
-  const start = planState.projectStart ? nextBusinessDay(new Date(planState.projectStart)) : null;
+  const start = currentScenario().projectStart ? nextBusinessDay(new Date(currentScenario().projectStart)) : null;
   let cursor = start;
   const scheduleMap = {};
   order.forEach(item=>{
@@ -1017,10 +1096,12 @@ const PX_PER_DAY = 26;
 function renderTimeline(){
   const root = document.getElementById('viewTimeline');
   root.innerHTML = `
+    <div class="scenario-tabs" id="scenarioTabs"></div>
+
     <div class="card" style="margin-bottom:18px;">
       <div class="project-config">
-        <div class="field"><label>Project Start Date</label><input type="date" id="projectStart"></div>
-        <div class="field"><label>Target End Date (ไม่บังคับ)</label><input type="date" id="targetEnd"></div>
+        <div class="field"><label>Project Start Date</label><div id="projectStartPicker" class="dp-root"></div></div>
+        <div class="field"><label>Target End Date (ไม่บังคับ)</label><div id="targetEndPicker" class="dp-root"></div></div>
         <div class="field"><label>คำนวณ End Date ได้</label><div class="field-readout" id="computedEnd">–</div></div>
         <div class="field"><label>&nbsp;</label><div id="varianceReadout" class="field-readout"></div></div>
         <div style="flex:1"></div>
@@ -1035,7 +1116,7 @@ function renderTimeline(){
         <button class="btn ghost-dashed" id="clearAllManday">↺ ล้าง manday ทั้งหมด</button>
         <button class="btn" id="applyRecommendedOrder">📐 ใช้ลำดับ Epic ที่แนะนำ (ตาม dependency)</button>
       </div>
-      <div class="timeline-hint" style="padding-top:6px;">Mock estimate เดาจาก keyword ใน task/description + clarity (🟢🟡🔴) — เป็นตัวเลขตั้งต้น ไม่ใช่ estimate จริง ควรให้ Tech Lead/Dev ยืนยันก่อน commit sprint จริง</div>
+      <div class="timeline-hint" style="padding-top:6px;">Mock estimate เดาจาก keyword ใน task/description + clarity (🟢🟡🔴) — เป็นตัวเลขตั้งต้น ไม่ใช่ estimate จริง ควรให้ Tech Lead/Dev ยืนยันก่อน commit sprint จริง · ทุกอย่างในหน้านี้ผูกกับ approach ที่เลือกอยู่ด้านบนเท่านั้น</div>
       <div class="workload-strip" id="workloadStrip"></div>
       <div class="timeline-hint" style="padding-bottom:6px;">รวม manday ต่อ Epic (ทุก role รวมกัน) — เรียงจากมากไปน้อย</div>
       <div class="epic-workload-strip" id="epicWorkloadStrip"></div>
@@ -1052,11 +1133,19 @@ function renderTimeline(){
     </div>
   `;
 
-  document.getElementById('projectStart').value = planState.projectStart || '';
-  document.getElementById('targetEnd').value = planState.targetEnd || '';
+  renderScenarioTabs();
 
-  document.getElementById('projectStart').addEventListener('change', e=>{ planState.projectStart=e.target.value; savePlanState(); renderOutlineGantt(); });
-  document.getElementById('targetEnd').addEventListener('change', e=>{ planState.targetEnd=e.target.value; savePlanState(); renderOutlineGantt(); });
+  createDatePicker(document.getElementById('projectStartPicker'), {
+    value: currentScenario().projectStart,
+    placeholder: 'เลือกวันที่เริ่มโครงการ',
+    onChange: iso=>{ currentScenario().projectStart=iso; savePlanState(); renderOutlineGantt(); },
+  });
+  createDatePicker(document.getElementById('targetEndPicker'), {
+    value: currentScenario().targetEnd,
+    placeholder: 'ไม่บังคับ',
+    onChange: iso=>{ currentScenario().targetEnd=iso; savePlanState(); renderOutlineGantt(); },
+  });
+
   document.getElementById('exportPlanJson').addEventListener('click', ()=>{
     const blob = new Blob([JSON.stringify(planState,null,2)], {type:'application/json'});
     const url = URL.createObjectURL(blob); const a=document.createElement('a');
@@ -1067,23 +1156,23 @@ function renderTimeline(){
     const file = e.target.files[0]; if(!file) return;
     const reader = new FileReader();
     reader.onload = ev=>{
-      try{ planState = JSON.parse(ev.target.result); savePlanState(); renderTimeline(); }
+      try{ planState = migratePlanState(JSON.parse(ev.target.result)); savePlanState(); renderTimeline(); }
       catch(err){ alert('ไฟล์ JSON ไม่ถูกต้อง'); }
     };
     reader.readAsText(file);
   });
   document.getElementById('exportTimelineCsv').addEventListener('click', exportTimelineCsv);
   document.getElementById('applyMockFill').addEventListener('click', ()=>{
-    if(confirm('เติม manday เบื้องต้น (mock estimate) ให้เฉพาะช่องที่ยังเป็น 0 — ช่องที่กรอกไว้แล้วจะไม่ถูกแตะต้อง ดำเนินการต่อไหม?')) applyMockEstimates(false);
+    if(confirm('เติม manday เบื้องต้น (mock estimate) ให้เฉพาะช่องที่ยังเป็น 0 ในแผน "'+currentScenario().name+'" — ช่องที่กรอกไว้แล้วจะไม่ถูกแตะต้อง ดำเนินการต่อไหม?')) applyMockEstimates(false);
   });
   document.getElementById('applyMockOverwrite').addEventListener('click', ()=>{
-    if(confirm('⚠️ จะเขียนทับ manday ทุกช่องด้วย mock estimate ใหม่ทั้งหมด (รวมช่องที่เคยกรอกไว้แล้ว) — ยืนยันหรือไม่?')) applyMockEstimates(true);
+    if(confirm('⚠️ จะเขียนทับ manday ทุกช่องด้วย mock estimate ใหม่ทั้งหมดในแผน "'+currentScenario().name+'" (รวมช่องที่เคยกรอกไว้แล้ว) — ยืนยันหรือไม่?')) applyMockEstimates(true);
   });
   document.getElementById('clearAllManday').addEventListener('click', ()=>{
-    if(confirm('ล้างค่า manday ทุก task ทุก role กลับเป็น 0 ทั้งหมด — ยืนยันหรือไม่?')) clearAllManday();
+    if(confirm('ล้างค่า manday ทุก task ทุก role ในแผน "'+currentScenario().name+'" กลับเป็น 0 ทั้งหมด — ยืนยันหรือไม่?')) clearAllManday();
   });
   document.getElementById('applyRecommendedOrder').addEventListener('click', ()=>{
-    if(confirm('จะเรียง Epic ใหม่ตาม dependency ที่แนะนำ (Foundation → Core → Supporting → Secondary → Blocked/ทีหลัง) — ลำดับ Feature/Task ภายในแต่ละ Epic จะไม่เปลี่ยน ยืนยันหรือไม่?')) applyRecommendedEpicOrder();
+    if(confirm('จะเรียง Epic ใหม่ตาม dependency ที่แนะนำ (Foundation → Core → Supporting → Secondary → Blocked/ทีหลัง) ในแผน "'+currentScenario().name+'" — ลำดับ Feature/Task ภายในแต่ละ Epic จะไม่เปลี่ยน ยืนยันหรือไม่?')) applyRecommendedEpicOrder();
   });
   document.getElementById('planSearch').addEventListener('input', e=>{ planSearchQuery = e.target.value.trim().toLowerCase(); renderOutlineGantt(); });
   document.getElementById('collapseAllPlan').addEventListener('click', ()=>{
@@ -1096,6 +1185,143 @@ function renderTimeline(){
   wireOutlineGanttEvents(); // delegated listeners, attached once
   renderOutlineGantt();
 }
+
+// ============================================================================
+// Scenario tabs — save multiple planning "approaches" side by side
+// ============================================================================
+function renderScenarioTabs(){
+  const el = document.getElementById('scenarioTabs');
+  if(!el) return;
+  const ids = Object.keys(planState.scenarios);
+  el.innerHTML = ids.map(id=>{
+    const s = planState.scenarios[id];
+    const isCurrent = id===planState.activeScenarioId;
+    return `<div class="scenario-tab ${isCurrent?'current':''}" data-scenario-id="${id}" title="${s.name}">
+      <span class="st-name">${s.name}</span>
+      ${ids.length>1 ? `<span class="st-del" data-del-scenario="${id}" title="ลบแผนนี้">✕</span>` : ''}
+    </div>`;
+  }).join('') + `
+    <button type="button" class="scenario-tab-add" id="addScenarioBtn">+ Approach ใหม่</button>
+    <button type="button" class="scenario-tab-add" id="dupScenarioBtn">⧉ ทำสำเนา</button>
+    <button type="button" class="scenario-tab-add" id="renameScenarioBtn">✎ เปลี่ยนชื่อ</button>
+  `;
+
+  el.querySelectorAll('.scenario-tab').forEach(tab=>{
+    tab.addEventListener('click', e=>{
+      if(e.target.closest('.st-del')) return;
+      planState.activeScenarioId = tab.dataset.scenarioId;
+      savePlanState();
+      renderTimeline();
+    });
+  });
+  el.querySelectorAll('.st-del').forEach(delBtn=>{
+    delBtn.addEventListener('click', e=>{
+      e.stopPropagation();
+      const id = delBtn.dataset.delScenario;
+      if(!confirm(`ลบแผน "${planState.scenarios[id].name}" ทิ้ง — กู้คืนไม่ได้ ยืนยันหรือไม่?`)) return;
+      delete planState.scenarios[id];
+      if(planState.activeScenarioId===id) planState.activeScenarioId = Object.keys(planState.scenarios)[0];
+      savePlanState();
+      renderTimeline();
+    });
+  });
+  document.getElementById('addScenarioBtn').addEventListener('click', ()=>{
+    const name = prompt('ตั้งชื่อ approach ใหม่ (เริ่มจากศูนย์ ไม่มีข้อมูลเดิม):', 'Approach ใหม่');
+    if(!name) return;
+    const id = 'scenario-' + Date.now();
+    planState.scenarios[id] = defaultScenario(name);
+    planState.activeScenarioId = id;
+    savePlanState();
+    renderTimeline();
+  });
+  document.getElementById('dupScenarioBtn').addEventListener('click', ()=>{
+    const cur = currentScenario();
+    const name = prompt('ตั้งชื่อสำเนาของ "'+cur.name+'":', cur.name+' (สำเนา)');
+    if(!name) return;
+    const id = 'scenario-' + Date.now();
+    planState.scenarios[id] = JSON.parse(JSON.stringify(cur));
+    planState.scenarios[id].name = name;
+    planState.activeScenarioId = id;
+    savePlanState();
+    renderTimeline();
+  });
+  document.getElementById('renameScenarioBtn').addEventListener('click', ()=>{
+    const cur = currentScenario();
+    const name = prompt('เปลี่ยนชื่อแผนปัจจุบัน:', cur.name);
+    if(!name) return;
+    cur.name = name;
+    savePlanState();
+    renderScenarioTabs();
+  });
+}
+
+// ============================================================================
+// Lightweight custom date picker (native <input type=date> shows the format
+// controlled by the OS/browser locale, which we can't override — this gives
+// full control over the display text, e.g. "4 January 2027")
+// ============================================================================
+function isoToDate(iso){ if(!iso) return null; const [y,m,d]=iso.split('-').map(Number); return new Date(y,m-1,d); }
+function dateToIso(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+
+function createDatePicker(root, opts){
+  let value = opts.value || '';
+  let viewDate = isoToDate(value) || new Date();
+  let open = false;
+
+  function dayCells(){
+    const y=viewDate.getFullYear(), m=viewDate.getMonth();
+    const startDow = new Date(y,m,1).getDay();
+    const daysInMonth = new Date(y,m+1,0).getDate();
+    const todayIso = dateToIso(new Date());
+    let html = '';
+    for(let i=0;i<startDow;i++) html += '<div class="dp-day dp-day-empty"></div>';
+    for(let d=1; d<=daysInMonth; d++){
+      const iso = dateToIso(new Date(y,m,d));
+      const cls = ['dp-day'];
+      if(iso===value) cls.push('dp-day-selected');
+      if(iso===todayIso) cls.push('dp-day-today');
+      html += `<div class="${cls.join(' ')}" data-iso="${iso}">${d}</div>`;
+    }
+    return html;
+  }
+
+  function render(){
+    root.innerHTML = `
+      <div class="dp-field" tabindex="0">
+        <span class="dp-display ${value?'':'dp-placeholder'}">${value ? fmtDate(isoToDate(value)) : (opts.placeholder||'เลือกวันที่')}</span>
+        <span class="dp-icon">📅</span>
+      </div>
+      ${open ? `<div class="dp-popover">
+        <div class="dp-nav">
+          <button type="button" class="dp-prev">‹</button>
+          <span class="dp-month-label">${viewDate.toLocaleDateString('en-GB',{month:'long',year:'numeric'})}</span>
+          <button type="button" class="dp-next">›</button>
+        </div>
+        <div class="dp-grid">
+          ${['S','M','T','W','T','F','S'].map(d=>`<div class="dp-dow">${d}</div>`).join('')}
+          ${dayCells()}
+        </div>
+        <div class="dp-footer">
+          <button type="button" class="dp-clear">Clear</button>
+          <button type="button" class="dp-today">Today</button>
+        </div>
+      </div>` : ''}
+    `;
+    root.querySelector('.dp-field').addEventListener('click', e=>{ e.stopPropagation(); open=!open; render(); });
+    if(open){
+      root.querySelector('.dp-prev').addEventListener('click', e=>{ e.stopPropagation(); viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()-1,1); render(); });
+      root.querySelector('.dp-next').addEventListener('click', e=>{ e.stopPropagation(); viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()+1,1); render(); });
+      root.querySelector('.dp-clear').addEventListener('click', e=>{ e.stopPropagation(); value=''; open=false; opts.onChange(''); render(); });
+      root.querySelector('.dp-today').addEventListener('click', e=>{ e.stopPropagation(); const iso=dateToIso(new Date()); value=iso; viewDate=new Date(); open=false; opts.onChange(iso); render(); });
+      root.querySelectorAll('.dp-day:not(.dp-day-empty)').forEach(cell=>{
+        cell.addEventListener('click', e=>{ e.stopPropagation(); value=cell.dataset.iso; open=false; opts.onChange(value); render(); });
+      });
+    }
+  }
+  render();
+  document.addEventListener('click', ()=>{ if(open){ open=false; render(); } });
+}
+
 
 function fmtDateShort(d){ if(!d) return ''; return d.toLocaleDateString('en-GB',{ month:'short', day:'numeric' }); }
 
@@ -1111,8 +1337,8 @@ function renderOutlineGantt(){
 
   document.getElementById('computedEnd').innerHTML = projectEnd ? `<b>${fmtDate(projectEnd)}</b>` : 'กำหนด Start Date ก่อน';
   const varEl = document.getElementById('varianceReadout');
-  if(planState.targetEnd && projectEnd){
-    const target = new Date(planState.targetEnd);
+  if(currentScenario().targetEnd && projectEnd){
+    const target = new Date(currentScenario().targetEnd);
     const diffDays = Math.round((target-projectEnd)/86400000);
     varEl.innerHTML = diffDays>=0 ? `<span class="variance-ok">เหลือ buffer ~${diffDays} วัน</span>` : `<span class="variance-bad">เกินเป้า ~${Math.abs(diffDays)} วัน</span>`;
   } else varEl.textContent = '';
@@ -1147,7 +1373,7 @@ function renderOutlineGantt(){
     `).join('');
   }
 
-  const projStart = planState.projectStart ? nextBusinessDay(new Date(planState.projectStart)) : null;
+  const projStart = currentScenario().projectStart ? nextBusinessDay(new Date(currentScenario().projectStart)) : null;
   const overallEnd = projectEnd;
   const totalDays = (projStart && overallEnd) ? Math.max(14, Math.ceil((overallEnd-projStart)/86400000)+5) : 21;
   const timelineWidth = totalDays*PX_PER_DAY;
@@ -1228,13 +1454,23 @@ function renderOutlineGantt(){
 
         if(isOpen){
           const p = getTaskPlan(taskNode.planKey);
+          const tr = taskRange[taskNode.planKey] || {};
           rowsHtml += `
             <div class="og-detail">
+              <div class="og-detail-header">
+                <div class="og-detail-breadcrumb">${taskNode.epicName} › ${taskNode.featureName}</div>
+                <div class="og-detail-title"><span class="mono">${t.id}</span> — ${t.task}</div>
+                <div class="og-detail-meta">
+                  <span>${stamp(t.c, t.note)}</span>
+                  <span class="mono">รวม ${total}d</span>
+                  ${tr.start ? `<span class="mono">${fmtDate(tr.start)} → ${fmtDate(tr.end)}</span>` : ''}
+                </div>
+              </div>
               <div class="og-detail-grid">
                 <div><b>คำอธิบาย</b>${t.desc||'–'}</div>
                 <div><b>Dependency</b>${t.dep||'–'}</div>
                 <div><b>Source</b>${t.src||'–'}</div>
-                <div><b>Clarity</b>${stamp(t.c, t.note)}</div>
+                <div><b>Clarity note</b>${t.note||'–'}</div>
               </div>
               <div class="og-manday-inputs">
                 ${ROLES.map(r=>`<div class="mini-field"><label>${r.label}</label><input type="number" min="0" step="0.5" value="${p.manday[r.key]||0}" data-manday-key="${taskNode.planKey}" data-role="${r.key}"></div>`).join('')}
@@ -1339,10 +1575,11 @@ function wireOutlineGanttEvents(){
 
 function performReorder(scope, fromId, toId, insertBefore){
   if(fromId===toId) return;
+  const S = currentScenario();
   let arrRef;
-  if(scope==='epic') arrRef = planState.epicOrder;
-  else if(scope.startsWith('feat:')) arrRef = planState.featureOrder[scope.slice(5)];
-  else if(scope.startsWith('task:')) arrRef = planState.taskOrder[scope.slice(5)];
+  if(scope==='epic') arrRef = S.epicOrder;
+  else if(scope.startsWith('feat:')) arrRef = S.featureOrder[scope.slice(5)];
+  else if(scope.startsWith('task:')) arrRef = S.taskOrder[scope.slice(5)];
   if(!arrRef) return;
   const fromIdx = arrRef.indexOf(fromId);
   if(fromIdx===-1) return;
