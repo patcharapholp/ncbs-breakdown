@@ -1,126 +1,121 @@
-# ncbs-breakdown
+# ncbs-breakdown (v2 — Planning Console)
 
-Dashboard สำหรับติดตาม task breakdown ของโครงการ NCBS/UCBS/CTP (เริ่มจาก Epic: Credit Transfer)
+Dashboard สำหรับติดตาม task breakdown ของโครงการ NCBS/UCBS/CTP ครบทั้ง 21 epic
+พร้อมโมดูล **Timeline & Planning** (กำหนด start date, ใส่ manday ต่อ role, ดู schedule ที่คำนวณให้)
+และ **Overview dashboard** (สรุป readiness ข้ามทุก epic + cross-epic flags)
+
 แยกออกจาก `ncbs-wiki` โดยเจตนา — ที่นี่คือ **PM/planning artifact** ที่แก้ไขบ่อย ไม่ใช่ source of truth ของ spec
-(spec/decision ที่ authoritative ยังอยู่ที่ `ncbs-wiki` เหมือนเดิม ที่นี่แค่ reference กลับไป)
 
-## โครงสร้าง
+---
+
+## ⚠️ Migration จาก v1 (ที่มี epic tab แถวยาวด้านบน)
+
+ไฟล์ `index.html` ตัวนี้เป็น**คนละสถาปัตยกรรม**กับตัวเดิม — ใช้ **sidebar ด้านซ้าย** แทน tab แถวยาวด้านบน
+และ**ไม่ต้องแก้ไฟล์ `index.html` เพื่อเพิ่ม epic ใหม่อีกต่อไป** (อ่านหัวข้อ "ระบบ manifest" ด้านล่าง)
+
+**ทำตามนี้เพื่ออัปเดต repo ของคุณ:**
+
+```bash
+cd ~/ncbs-breakdown
+
+# 1) เอา index.html เก่าออก แทนที่ด้วยตัวใหม่ (ดาวน์โหลดจากแชท)
+#    data/*.js เดิมทั้ง 21 epic ไม่ต้องแก้ไฟล์ไหนเลย ใช้ต่อได้ทันที (field/format เหมือนเดิมทุกอย่าง)
+
+# 2) เพิ่มไฟล์ใหม่ 3 ไฟล์ (ดาวน์โหลดจากแชท):
+#    - data/_cross-epic-flags.js
+#    - update-manifest.sh   (ไว้ที่ root ของ repo, ไม่ใช่ใน data/)
+#    - data/manifest.json    (จะถูกเขียนทับใหม่ในขั้นตอนถัดไปอยู่ดี ข้ามได้)
+
+# 3) สร้าง manifest.json ให้ตรงกับไฟล์ epic ทั้ง 21 ที่มีจริงในเครื่องคุณ (คำสั่งเดียวจบ)
+chmod +x update-manifest.sh
+./update-manifest.sh
+
+# 4) ทดสอบก่อน commit
+open index.html
+# ควรเห็น sidebar ซ้ายมือมี "Overview / Timeline & Planning / Epics" + epic ทั้ง 21 อันใน list ค้นหาได้
+
+# 5) commit + push
+git add -A
+git commit -m "redesign: sidebar nav + Jira-style theme + Timeline/Planning module + Overview dashboard"
+git push
+```
+
+---
+
+## โครงสร้างไฟล์
 
 ```
 ncbs-breakdown/
-├── index.html                    # dashboard — รองรับหลาย epic พร้อม tab สลับด้านบน
+├── index.html                    # Planning Console — sidebar nav, 3 view (Overview/Timeline/Epic)
+├── update-manifest.sh            # รันทุกครั้งหลังเพิ่ม/ลบไฟล์ epic ใน data/
 ├── data/
-│   ├── credit-transfer.js        # ข้อมูล breakdown ของ Epic Credit Transfer
-│   └── _template.js              # ต้นแบบสำหรับสร้าง epic ใหม่ (ไม่ถูกโหลดใน index.html)
+│   ├── manifest.json             # รายชื่อไฟล์ epic ทั้งหมด — generate อัตโนมัติ ห้ามแก้มือ
+│   ├── _template.js              # ต้นแบบสำหรับสร้าง epic ใหม่
+│   ├── _cross-epic-flags.js      # ประเด็นที่กระทบมากกว่า 1 epic (แสดงใน Overview)
+│   ├── credit-transfer.js
+│   └── <อีก 20 ไฟล์ epic>.js
 └── README.md
 ```
 
-`index.html` อ่านข้อมูลจาก **registry กลาง** ชื่อ `window.NCBS_EPICS` — แต่ละไฟล์ใน `data/` จะ
-"ลงทะเบียน" epic ของตัวเองเข้า registry นี้ตอนโหลด (ดูท้ายไฟล์ `credit-transfer.js`) ตัว dashboard
-จะ auto-generate epic tab ด้านบนจาก key ทั้งหมดที่ลงทะเบียนไว้ — ไม่ต้องแก้โค้ด `index.html` เวลาเพิ่ม epic ใหม่
+## ระบบ manifest — เพิ่ม epic ใหม่โดยไม่ต้องแตะ index.html
 
-### เพิ่ม Epic ใหม่ (เช่น User Management, Role Management, API Management)
+เดิมต้องเพิ่ม `<script src="data/xxx.js">` เองใน `index.html` ทุกครั้งที่มี epic ใหม่ — ตอนนี้ไม่ต้องแล้ว
+`index.html` จะ `fetch('data/manifest.json')` ตอนเปิดหน้า แล้วโหลดทุกไฟล์ที่ระบุไว้ให้อัตโนมัติ
 
-1. คัดลอก `data/_template.js` เป็น `data/<epic-slug>.js` เช่น `data/user-management.js`
-2. แก้เนื้อหาข้างในให้ตรงกับ epic นั้น (โครงสร้างเหมือนกับ `credit-transfer.js` ทุกกระเบียดนิ้ว)
-3. เปิด `index.html` แล้วเพิ่มบรรทัดเดียวตรงส่วน `<!-- โหลด data file -->`:
-   ```html
-   <script src="data/user-management.js"></script>
-   ```
-4. รีเฟรชหน้า — จะเห็น tab epic ใหม่ขึ้นที่แถบด้านบน คลิกสลับได้ทันที ไม่กระทบข้อมูล epic เดิม
+**เวิร์กโฟลว์เพิ่ม epic ใหม่:**
+1. สร้าง `data/<epic-slug>.js` (copy จาก `data/_template.js`)
+2. รัน `./update-manifest.sh` — จะ scan ไฟล์ `.js` ทั้งหมดใน `data/` แล้วเขียน `manifest.json` ใหม่ให้ตรง
+3. เปิด `index.html` — เห็น epic ใหม่ใน sidebar ทันที ไม่ต้องแก้โค้ดที่ไหนเลย
 
-## การ re-check ให้ครอบคลุมโมดูลอื่นของ NCBS (User Management, Role Management, API Management ฯลฯ)
+---
 
-Prompt เดิมที่ใช้กับ Claude Code (session ใน `~/ncbs-wiki`) เลือกโฟกัสที่ Epic ที่ "สเปกสมบูรณ์ที่สุด" คือ
-Credit Transfer ก่อน ตามที่ Claude สรุปไว้ตอนต้น session — โมดูลอื่นเลยยังไม่ถูกสำรวจเลย ให้ทำ 2 phase ต่อ:
+## หน้าจอทั้ง 3 ส่วน
 
-**Phase 1 — สำรวจภาพรวมทั้ง wiki ก่อน (inventory)**
+### 1. Overview
+สรุปภาพรวมทั้งโครงการ (auto-generate จากทุก epic ที่โหลดอยู่):
+- Stat cards: จำนวน epic/feature/task รวม, % พร้อม dev, % ยังเป็นแค่ proposed
+- **Epic Readiness heatmap** — เรียง epic จาก "เสี่ยงสุด" (สัดส่วน 🟡🔴 เยอะสุด) ไปหา "พร้อมสุด" คลิกแถวเพื่อเปิด epic นั้น
+- **Cross-epic Flags** — ประเด็นที่กระทบมากกว่า 1 epic (จาก `data/_cross-epic-flags.js`) เช่น "Enforcement = mock ทั้งชุด RBAC/ABAC", "Blockchain ค้าง 3 epic พร้อมกัน" ฯลฯ — แก้ไข/เพิ่มรายการได้ตรงไฟล์นั้น
 
-เปิด Claude Code ใน `~/ncbs-wiki` แล้วสั่งประมาณนี้:
+### 2. Timeline & Planning
+โมดูลวางแผนที่ให้:
+- ตั้ง **Project Start Date** (บังคับ) และ **Target End Date** (ไม่บังคับ — ใช้เทียบ buffer/overrun)
+- ใส่ **manday ต่อ role** (PO/BA, Tech Lead, Dev, QA Lead, QA, PM, DM) ในแต่ละ task โดยตรงในตาราง (จัดกลุ่มตาม epic แบบ accordion เหมือนหน้า Epic)
+- แก้ **Seq** (ลำดับ) ต่อ task เพื่อจัดคิวใหม่ตามที่ทีมตัดสินใจจริง
+- ระบบคำนวณ **start/end date ของแต่ละ task อัตโนมัติ** ตามลำดับ Seq (ข้ามเสาร์-อาทิตย์)
+- **Gantt overview ระดับ Feature** ด้านบน (สรุปจาก task ย่อยในแต่ละ feature)
+- **Workload strip** สรุป manday รวมต่อ role ทั้งโครงการ
 
-> สำรวจโครงสร้าง repo `~/ncbs-wiki` ทั้งหมดอีกครั้ง แต่รอบนี้ขอ **รายการ epic/โมดูลทั้งหมด** ที่มีอยู่จริงในระบบ NCBS/UCBS/CTP ไม่ใช่แค่ Credit Transfer — เช่น User Management, Role & Access Management, API Management, Notification Service, Institution Structure & Master Data, Identity & Auth ฯลฯ
->
-> สำหรับแต่ละ epic ขอสรุปแค่:
-> 1. ชื่อ epic และ system ที่เกี่ยวข้อง (NCBS/UCBS/CTP)
-> 2. มี spec/decision file ครบแค่ไหน (สมบูรณ์ / มีบางส่วน / แทบไม่มี)
-> 3. สถานะ dev จริง (จาก Jira/PM sources ถ้ามี) เทียบกับ prototype
-> 4. ประเมินคร่าวๆ ว่าน่าจะมีกี่ feature/task ระดับใหญ่
->
-> ยังไม่ต้อง breakdown ละเอียดตอนนี้ ขอแค่ inventory เพื่อเลือกว่าจะ breakdown อันไหนต่อก่อน
+**⚠️ ข้อจำกัดที่ต้องรู้ก่อนใช้จริง:** โมเดลนี้เป็น "sequential scheduling" แบบง่าย —
+สมมติว่า 7 role ทำงาน**คู่ขนานกันภายใน task เดียว** (duration = manday สูงสุดในบรรดา 7 role)
+และ task ต่างๆ เรียง**ต่อเนื่องกันตาม Seq** ไม่ใช่ critical-path/resource-leveling engine เต็มรูปแบบ
+(เพราะ field `Dependency` ในข้อมูลปัจจุบันเป็น free text ไม่ใช่ graph ที่ machine เชื่อมโยงได้แม่นยำ)
+เหมาะสำหรับ **วางแผนคร่าวๆ ระดับ ballpark** — ก่อน commit sprint จริงควรเอาไปคุยกับ Tech Lead/PM เพื่อจัด parallel track เอง
 
-ผลลัพธ์ที่ได้จะเป็น "แผนที่" ของทั้งโปรเจกต์ — เอาไปตัดสินใจว่าจะ breakdown epic ไหนก่อนตาม priority จริง
-(เช่น Identity & Auth น่าจะต้องมาก่อน เพราะ Credit Transfer เองก็ list เป็น dependency ไว้แล้ว)
+**การเก็บข้อมูล:** manday/seq/dates ที่กรอกจะ auto-save ใน `localStorage` ของเบราว์เซอร์ **เฉพาะเครื่องที่กรอก**
+ถ้าต้องการแชร์ให้ทีมเห็นค่าเดียวกัน:
+1. กด **⇩ Export planning (JSON)** ได้ไฟล์ `planning-state.json`
+2. วางไฟล์นั้นที่ `data/planning-state.json` แล้ว commit + push
+3. คนอื่นเปิด `index.html` ครั้งแรก จะโหลดค่านี้เป็น baseline อัตโนมัติ (ระบบ fetch ไฟล์นี้ก่อน localStorage เสมอ)
+4. ถ้าใครแก้ต่อในเครื่องตัวเอง ค่าจะ diverge เป็น local จนกว่าจะ export/commit ทับอีกครั้ง — เหมาะกับจังหวะ "PO sync ทีมเป็นช่วงๆ" มากกว่า real-time sync
 
-**Phase 2 — breakdown ทีละ epic ด้วย prompt แบบเดิม**
+**Export CSV:** ปุ่ม **⇩ Export timeline (CSV)** ได้ตาราง flat ของทุก task ทุก epic พร้อม manday ต่อ role + วันที่ — เอาไป Google Sheets ได้ทันทีตามขั้นตอนเดิม (File → Import → Upload)
 
-ใช้ prompt เดิมที่เคยได้ผลดี (แบบที่ใช้ตอน breakdown Credit Transfer) แต่ระบุ epic ให้ชัดเจน:
+### 3. Epic detail (เหมือนเดิมแต่ layout ใหม่)
+เปิดจาก sidebar (ค้นหา/กรองด้วย system tag NCBS/UCBS/CTP ได้) — เนื้อหาเดิมทั้งหมด (feature table, clarity filter, search, Export CSV ต่อ epic) ยังอยู่ครบ แค่ feature-index ย้ายจาก vertical rail มาเป็น chip แถวนอนด้านบนแทน เพื่อคืนพื้นที่ให้ตาราง
 
-> ให้ breakdown งานพัฒนา (development tasks) ของ **Epic: User Management** ในระดับละเอียดที่สุดเท่าที่จะได้
-> (fine-grained / smallest unit of work) ด้วยรูปแบบเดียวกับที่เคยทำกับ Credit Transfer
-> (Epic → Feature → Task → Sub-task, พร้อม Dependency/Source/Clarity 3 ระดับ 🟢🟡🔴)
->
-> ผลลัพธ์สุดท้ายขอเป็นไฟล์ JavaScript ตาม format ของ `data/_template.js` ที่แนบมา
-> (แนบไฟล์ template หรือวาง path `~/ncbs-breakdown/data/_template.js` ให้ Claude Code อ่านเป็นตัวอย่าง)
-> ตั้งชื่อไฟล์ `user-management.js` และลงทะเบียนเข้า `window.NCBS_EPICS['user-management']`
+---
 
-ทำซ้ำแบบนี้ทีละ epic — จะได้ข้อมูลรูปแบบเดียวกันทุก epic พร้อมใส่เข้า dashboard ได้ทันทีตามขั้นตอน
-"เพิ่ม Epic ใหม่" ด้านบน
+## Theme
 
-## แก้ไขข้อมูล
+Font: **IBM Plex Sans Thai** (heading/body) + **IBM Plex Mono** (ID/ตัวเลข/โค้ด) — เลือกเพราะรองรับภาษาไทยได้สวยและให้ความรู้สึกทันสมัยแบบ SaaS product มากกว่าฟอนต์เอกสารราชการ
+สี: โทน Jira-inspired — พื้นขาว/เทาอ่อน (`#F7F8FA`) + น้ำเงินหลัก (`#0052CC`) + สถานะ clarity ใช้โทนเขียว/ส้ม/แดงแบบ Atlassian design token
 
-เปิด `data/credit-transfer.js` แล้วแก้ตรง object ได้เลย โครงสร้างคือ:
+---
 
-```js
-const DATA = {
-  epicDeps: [ { name, why, blocker } ],
-  features: [
-    {
-      id: "F1", name: "...", sources: [...],
-      tasks: [
-        { id:"1.1", task:"...", desc:"...", dep:"...", src:"...", c:"green|yellow|red", note:"...",
-          subs: [ { id:"1.1.1", ... } ] }
-      ]
-    }
-  ],
-  priority: [ "...html string..." ],
-  flags: [ "...html string..." ]
-}
-```
+## Export เป็นตารางสำหรับ Google Sheets (เหมือนเดิม)
 
-`c` (clarity) ใช้ค่า `"green"` (พร้อม dev) / `"yellow"` (ต้องเช็คก่อน) / `"red"` (ยังเป็นแค่ proposed)
+- **ต่อ epic**: เปิด epic → กด Export CSV มุมขวาบน
+- **รวมทุก epic (timeline)**: หน้า Timeline & Planning → กด Export timeline (CSV)
 
-## Workflow แนะนำ (ใช้ Claude Code)
-
-1. Clone repo นี้ลงเครื่อง (ครั้งเดียว)
-2. ทุกครั้งที่มีการ confirm spec ใหม่ หรือ breakdown เพิ่ม → เปิด Claude Code ในโฟลเดอร์นี้ แล้วสั่งเช่น:
-   > "อ่าน data/credit-transfer.js แล้วอัปเดต task 4.6 ให้ clarity เป็น green เพราะทีมเคาะ threshold เป็น 2.00 ทุกระดับแล้ว อ้างอิงจาก [ลิงก์/ข้อความ confirm]"
-3. เปิด `index.html` ตรวจดูผลลัพธ์ (double-click เปิดในเบราว์เซอร์ได้เลย ไม่ต้อง build)
-4. `git add -A && git commit -m "update: 4.6 grade gate confirmed 2.00 ทุกระดับ"`
-5. `git push`
-
-ข้อดีของการแยก `data/credit-transfer.js` ออกจาก `index.html`: `git diff` จะอ่านง่ายมาก เห็นชัดว่าบรรทัดไหนเปลี่ยน clarity จาก `yellow` → `green` และย้อนดู history ได้ว่า task ไหน confirm ตอนไหน
-
-## Deploy เป็นลิงก์แชร์ได้ (GitHub Pages)
-
-1. ใน repo settings → Pages → Source: เลือก branch `main`, folder `/ (root)`
-2. รอ 1-2 นาที จะได้ลิงก์ประมาณ `https://<username>.github.io/ncbs-breakdown/`
-3. แชร์ลิงก์นี้แทนการ export ไป Slides ทุกครั้ง (จะ export ไป Slides ตอน present กับ steering committee ก็ยังทำได้ตามปกติ)
-
-## Export เป็นตารางสำหรับ Google Sheets
-
-กดปุ่ม **⇩ Export CSV** มุมขวาบนของ dashboard:
-- export เฉพาะ **epic ที่กำลังเปิดดูอยู่** (ตาม tab ด้านบน) — สลับ tab ก่อน export ถ้าต้องการ epic อื่น
-- จะ export เฉพาะแถวที่ "มองเห็นอยู่บนจอตอนนั้น" ตามตัวกรอง/คำค้นหาที่ตั้งไว้ — ถ้าต้องการทั้งหมด ให้ล้างตัวกรอง (กดชิป "ทั้งหมด" + เคลียร์ช่องค้นหา) ก่อนกด export
-- ได้ไฟล์ `.csv` พร้อม UTF-8 BOM (ภาษาไทยไม่เพี้ยนเวลาเปิดด้วย Excel/Sheets)
-- คอลัมน์ที่ได้: Epic, Feature ID, Feature, Task ID, Task, Description, Dependency, Source, Clarity, Clarity Note
-
-**นำเข้า Google Sheets:**
-1. เปิด Google Sheets → File → Import → Upload → เลือกไฟล์ `.csv` ที่ export มา
-2. เลือก "Replace current sheet" หรือ "Insert new sheet" ตามต้องการ
-3. Separator type: เลือก "Comma" (ปกติ auto-detect ได้อยู่แล้ว)
-
-**ถ้าอยาก sync อัตโนมัติ (ไม่ต้อง export มือทุกครั้ง):** หลัง deploy GitHub Pages แล้ว สามารถใช้สูตรใน Google Sheets:
-```
-=IMPORTHTML("https://<username>.github.io/ncbs-breakdown/", "table", 1)
-```
-แต่วิธีนี้ดึงได้ทีละ 1 ตาราง (1 feature) ต่อสูตร และไม่รองรับ filter/sub-task ที่ซ้อนกัน — สำหรับการใช้งานจริงแนะนำให้ export CSV ตอนต้องการ snapshot ไปคุยกับทีม จะควบคุมง่ายกว่า
+นำเข้า Google Sheets: File → Import → Upload → เลือกไฟล์ → เลือก "Insert new sheet"

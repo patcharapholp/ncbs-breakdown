@@ -3,620 +3,975 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NCBS Breakdown Ledger</title>
+<title>NCBS Planning Console</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --paper:#E9EFDF;
-    --paper-card:#F5F8EF;
-    --paper-deep:#DDE6CD;
-    --ink:#1E2B22;
-    --ink-soft:#516153;
-    --ink-faint:#7D8C7E;
-    --rule:#BFCBAE;
-    --rule-strong:#9FAF8C;
-    --teal:#1F5C57;
-    --teal-soft:#DCEAE7;
-    --green:#2F6B4F;
-    --green-bg:#DCEBDF;
-    --amber:#95681E;
-    --amber-bg:#F3E6C8;
-    --red:#8C2E2C;
-    --red-bg:#F3DCD7;
-    --shadow: 0 1px 2px rgba(30,43,34,0.06), 0 4px 14px rgba(30,43,34,0.08);
-    --radius: 3px;
+    --bg:#F7F8FA;
+    --surface:#FFFFFF;
+    --surface-sunk:#F4F5F7;
+    --border:#DFE1E6;
+    --border-soft:#EBECF0;
+    --ink:#172B4D;
+    --ink-soft:#5E6C84;
+    --ink-faint:#8993A4;
+    --primary:#0052CC;
+    --primary-hover:#0747A6;
+    --primary-bg:#E9F2FF;
+    --green:#22874E; --green-bg:#E3FCEF;
+    --amber:#A54800; --amber-bg:#FFF7D6;
+    --red:#AE2E24; --red-bg:#FFECEB;
+    --purple:#5243AA; --purple-bg:#EAE6FF;
+    --radius:8px; --radius-sm:6px;
+    --shadow-sm:0 1px 2px rgba(9,30,66,.08);
+    --shadow-md:0 3px 5px rgba(9,30,66,.10), 0 0 1px rgba(9,30,66,.20);
   }
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
+  html,body{margin:0;padding:0;height:100%;}
   body{
-    background:var(--paper);
-    background-image:
-      repeating-linear-gradient(180deg, rgba(159,175,140,0.10) 0px, rgba(159,175,140,0.10) 1px, transparent 1px, transparent 34px);
-    color:var(--ink);
-    font-family:'Sarabun', sans-serif;
-    font-size:14.5px;
-    line-height:1.55;
-    -webkit-font-smoothing:antialiased;
+    background:var(--bg); color:var(--ink); font-family:'IBM Plex Sans Thai',sans-serif;
+    font-size:14px; line-height:1.55; -webkit-font-smoothing:antialiased;
   }
-  ::selection{ background:var(--amber-bg); }
-  a{ color:var(--teal); text-decoration:none; border-bottom:1px solid rgba(31,92,87,0.3); }
-  a:hover{ border-bottom-color:var(--teal); }
+  a{ color:var(--primary); text-decoration:none; }
+  a:hover{ text-decoration:underline; }
+  .mono{ font-family:'IBM Plex Mono',monospace; }
+  button, input{ font-family:inherit; }
+  ::selection{ background:var(--primary-bg); }
 
-  .mono{ font-family:'JetBrains Mono', monospace; }
+  .app{ display:flex; min-height:100vh; }
 
-  /* ---------- Header ---------- */
-  header{
-    position:sticky; top:0; z-index:40;
-    background:linear-gradient(180deg, var(--paper) 60%, rgba(233,239,223,0.85));
-    backdrop-filter:blur(6px);
-    border-bottom:1.5px solid var(--rule-strong);
-    padding:18px 28px 14px;
+  /* ================= SIDEBAR ================= */
+  .sidebar{
+    width:268px; flex-shrink:0; background:var(--surface); border-right:1px solid var(--border);
+    display:flex; flex-direction:column; height:100vh; position:sticky; top:0;
   }
-  .header-top{ display:flex; align-items:baseline; justify-content:space-between; gap:20px; flex-wrap:wrap; }
-  .brand{ display:flex; align-items:baseline; gap:12px; }
-  .brand .stamp-mark{
-    font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:600;
-    border:1.5px solid var(--ink); color:var(--ink); padding:2px 7px; border-radius:2px;
-    letter-spacing:0.06em; transform:rotate(-2deg); white-space:nowrap;
+  .sidebar-brand{ padding:18px 18px 14px; border-bottom:1px solid var(--border-soft); }
+  .sidebar-brand .mark{ display:flex; align-items:center; gap:9px; }
+  .sidebar-brand .logo{
+    width:28px; height:28px; border-radius:6px; background:var(--primary); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; font-family:'IBM Plex Mono';
   }
-  h1{
-    font-size:22px; font-weight:700; margin:0; letter-spacing:-0.01em;
+  .sidebar-brand h1{ font-size:15px; margin:0; font-weight:700; }
+  .sidebar-brand .sub{ font-size:11.5px; color:var(--ink-faint); margin-top:2px; }
+
+  .nav-section{ padding:12px 10px; }
+  .nav-section-label{ font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint); padding:4px 10px 6px; font-weight:600; }
+  .nav-item{
+    display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:var(--radius-sm);
+    font-size:13.3px; font-weight:500; color:var(--ink-soft); cursor:pointer; transition:.1s ease;
   }
-  h1 .thai{ font-weight:600; color:var(--ink-soft); font-size:15px; display:block; margin-top:2px;}
-  .subtitle{ color:var(--ink-soft); font-size:13px; margin-top:4px; max-width:640px; }
+  .nav-item:hover{ background:var(--surface-sunk); color:var(--ink); }
+  .nav-item.current{ background:var(--primary-bg); color:var(--primary); font-weight:600; }
+  .nav-item .icon{ width:16px; text-align:center; flex-shrink:0; font-size:14px; }
 
-  .ledger-folio{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-faint); text-align:right; line-height:1.5;}
-  .ledger-folio b{ color:var(--ink); font-size:13px; }
-
-  .epic-tabs{ display:flex; align-items:center; gap:6px; margin-top:14px; flex-wrap:wrap; }
-  .epic-tab{
-    font-size:12.8px; font-weight:600; padding:7px 14px; border-radius:2px 2px 0 0;
-    border:1.5px solid var(--rule-strong); border-bottom:none; background:var(--paper-deep);
-    color:var(--ink-soft); cursor:pointer; position:relative; top:1px; user-select:none;
-    display:flex; align-items:center; gap:7px; transition:.12s ease;
+  .epic-nav{ flex:1; min-height:0; display:flex; flex-direction:column; padding:0 10px 10px; }
+  .epic-search{ position:relative; margin:4px 0 8px; }
+  .epic-search input{
+    width:100%; padding:7px 10px 7px 28px; border:1px solid var(--border); border-radius:var(--radius-sm);
+    font-size:12.8px; background:var(--surface-sunk); color:var(--ink);
   }
-  .epic-tab:hover{ background:var(--paper-card); color:var(--ink); }
-  .epic-tab.current{ background:var(--paper-card); color:var(--ink); border-bottom:1.5px solid var(--paper-card); }
-  .epic-tab .sys{ font-family:'JetBrains Mono'; font-size:9.5px; color:var(--ink-faint); border:1px solid var(--rule-strong); padding:1px 5px; border-radius:8px; }
-  .epic-tab .status-dots{ display:flex; gap:2px; }
-  .epic-tab .status-dots i{ width:5px; height:5px; border-radius:50%; display:block; }
-  .epic-tab-empty{ font-size:12px; color:var(--ink-faint); padding:8px 4px; }
+  .epic-search input:focus{ outline:none; border-color:var(--primary); background:var(--surface); }
+  .epic-search::before{ content:"⌕"; position:absolute; left:8px; top:50%; transform:translateY(-50%); color:var(--ink-faint); font-size:13px; }
+  .system-filters{ display:flex; gap:4px; margin-bottom:8px; }
+  .sys-chip{
+    font-family:'IBM Plex Mono'; font-size:10px; font-weight:600; padding:3px 8px; border-radius:12px;
+    border:1px solid var(--border); color:var(--ink-faint); cursor:pointer; background:var(--surface);
+  }
+  .sys-chip.active{ background:var(--ink); color:#fff; border-color:var(--ink); }
+  .epic-list{ overflow-y:auto; flex:1; }
+  .epic-list-item{
+    display:flex; align-items:center; gap:8px; padding:7px 10px; border-radius:var(--radius-sm);
+    cursor:pointer; font-size:12.6px; color:var(--ink-soft); margin-bottom:1px;
+  }
+  .epic-list-item:hover{ background:var(--surface-sunk); }
+  .epic-list-item.current{ background:var(--primary-bg); color:var(--primary); font-weight:600; }
+  .epic-list-item .sys-tag{
+    font-family:'IBM Plex Mono'; font-size:8.5px; font-weight:700; padding:1px 5px; border-radius:3px;
+    background:var(--surface-sunk); color:var(--ink-faint); flex-shrink:0;
+  }
+  .epic-list-item .name{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .epic-list-item .dots{ display:flex; gap:2px; flex-shrink:0; }
+  .epic-list-item .dots i{ width:5px; height:5px; border-radius:50%; display:block; }
+  .epic-list-empty{ padding:16px 10px; font-size:12px; color:var(--ink-faint); text-align:center; }
 
-  .controls{ display:flex; align-items:center; gap:10px; margin-top:14px; flex-wrap:wrap; border-top:1px solid var(--rule); padding-top:12px; }
-  .search-wrap{ position:relative; flex:1; min-width:220px; max-width:360px; }
+  .sidebar-footer{ padding:12px 18px; border-top:1px solid var(--border-soft); font-size:10.8px; color:var(--ink-faint); }
+
+  /* ================= SHELL / TOPBAR ================= */
+  .shell{ flex:1; min-width:0; display:flex; flex-direction:column; }
+  .topbar{
+    background:var(--surface); border-bottom:1px solid var(--border); padding:16px 28px;
+    position:sticky; top:0; z-index:20;
+  }
+  .topbar-title-row{ display:flex; align-items:baseline; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+  .topbar h2{ font-size:19px; margin:0; font-weight:700; display:flex; align-items:center; gap:10px; }
+  .topbar .sys-badge{ font-family:'IBM Plex Mono'; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:4px; background:var(--surface-sunk); color:var(--ink-faint); }
+  .topbar .desc{ font-size:12.5px; color:var(--ink-soft); margin-top:3px; }
+  .topbar .stats{ font-family:'IBM Plex Mono'; font-size:11.5px; color:var(--ink-faint); text-align:right; }
+  .topbar .stats b{ color:var(--ink); }
+
+  .toolbar{ display:flex; align-items:center; gap:8px; margin-top:14px; flex-wrap:wrap; }
+  .search-wrap{ position:relative; flex:1; min-width:200px; max-width:320px; }
   .search-wrap input{
-    width:100%; padding:8px 12px 8px 30px; border:1.5px solid var(--rule-strong); border-radius:2px;
-    background:var(--paper-card); font-family:'Sarabun'; font-size:13.5px; color:var(--ink);
+    width:100%; padding:7px 11px 7px 30px; border:1px solid var(--border); border-radius:var(--radius-sm);
+    background:var(--surface); font-size:13px; color:var(--ink);
   }
-  .search-wrap input:focus{ outline:none; border-color:var(--teal); }
-  .search-wrap::before{
-    content:"⌕"; position:absolute; left:9px; top:50%; transform:translateY(-50%); color:var(--ink-faint); font-size:15px;
-  }
+  .search-wrap input:focus{ outline:none; border-color:var(--primary); }
+  .search-wrap::before{ content:"⌕"; position:absolute; left:9px; top:50%; transform:translateY(-50%); color:var(--ink-faint); font-size:15px; }
   .chip{
-    font-family:'JetBrains Mono',monospace; font-size:11.5px; font-weight:500; padding:6px 11px;
-    border:1.5px solid var(--rule-strong); border-radius:20px; background:var(--paper-card); cursor:pointer;
-    display:flex; align-items:center; gap:6px; color:var(--ink-soft); user-select:none; transition:all .12s ease;
+    font-family:'IBM Plex Mono'; font-size:11px; font-weight:600; padding:6px 11px;
+    border:1px solid var(--border); border-radius:20px; background:var(--surface); cursor:pointer;
+    display:flex; align-items:center; gap:6px; color:var(--ink-soft); user-select:none; transition:.1s ease;
   }
-  .chip:hover{ border-color:var(--ink-soft); }
-  .chip.active{ background:var(--ink); color:var(--paper-card); border-color:var(--ink); }
-  .chip .dot{ width:8px; height:8px; border-radius:50%; display:inline-block; }
+  .chip:hover{ border-color:var(--ink-faint); }
+  .chip.active{ background:var(--ink); color:#fff; border-color:var(--ink); }
+  .chip .dot{ width:7px; height:7px; border-radius:50%; display:inline-block; }
   .chip[data-c="green"] .dot{ background:var(--green); }
   .chip[data-c="yellow"] .dot{ background:var(--amber); }
   .chip[data-c="red"] .dot{ background:var(--red); }
-  .chip-count{ font-size:10px; opacity:.75; }
-  .btn-ghost{
-    font-family:'JetBrains Mono',monospace; font-size:11.5px; padding:6px 11px; border-radius:20px;
-    border:1.5px dashed var(--rule-strong); background:transparent; color:var(--ink-soft); cursor:pointer;
+  .btn{
+    font-size:12.5px; font-weight:600; padding:7px 14px; border-radius:var(--radius-sm); cursor:pointer; border:1px solid var(--border);
+    background:var(--surface); color:var(--ink-soft); display:inline-flex; align-items:center; gap:6px;
   }
-  .btn-ghost:hover{ border-color:var(--ink-soft); color:var(--ink); }
+  .btn:hover{ border-color:var(--ink-faint); color:var(--ink); }
+  .btn.primary{ background:var(--primary); border-color:var(--primary); color:#fff; }
+  .btn.primary:hover{ background:var(--primary-hover); border-color:var(--primary-hover); }
+  .btn.ghost-dashed{ border-style:dashed; }
 
-  /* ---------- Layout ---------- */
-  .layout{ display:grid; grid-template-columns:230px 1fr; gap:0; max-width:1400px; margin:0 auto; }
-  @media (max-width:880px){ .layout{ grid-template-columns:1fr; } .rail{ display:none; } }
+  /* ================= MAIN ================= */
+  main{ flex:1; padding:24px 28px 70px; min-width:0; }
+  .view{ max-width:1360px; margin:0 auto; }
+  .view[hidden]{ display:none; }
 
-  /* ---------- Left rail: ledger tab index ---------- */
-  .rail{
-    position:sticky; top:150px; align-self:start; height:calc(100vh - 170px); overflow-y:auto;
-    padding:22px 0 40px 24px;
+  .card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow-sm); }
+  .card-pad{ padding:18px 20px; }
+
+  /* --- Feature chip nav (horizontal, replaces old vertical rail) --- */
+  .feature-chip-nav{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:18px; }
+  .feature-chip{
+    font-size:12px; font-weight:600; padding:6px 12px; border-radius:16px; border:1px solid var(--border);
+    background:var(--surface); color:var(--ink-soft); cursor:pointer; display:flex; align-items:center; gap:6px;
   }
-  .rail-label{ font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:10px; font-family:'JetBrains Mono'; }
-  .tab-item{
-    display:flex; align-items:center; gap:9px; padding:8px 10px 8px 12px; margin-bottom:3px;
-    border-radius:2px 0 0 2px; cursor:pointer; border-left:3px solid transparent; transition:.12s ease;
-    font-size:13px;
-  }
-  .tab-item:hover{ background:var(--paper-card); }
-  .tab-item.current{ background:var(--paper-card); border-left-color:var(--teal); font-weight:600; }
-  .tab-num{ font-family:'JetBrains Mono'; font-size:11px; color:var(--ink-faint); width:20px; flex-shrink:0; }
-  .tab-status{ margin-left:auto; display:flex; gap:3px; }
-  .tab-status i{ width:6px; height:6px; border-radius:50%; display:block; }
-  .rail-divider{ height:1px; background:var(--rule); margin:16px 0; }
-  .rail-note{ font-size:11.5px; color:var(--ink-faint); padding:0 10px; line-height:1.6; }
+  .feature-chip:hover{ border-color:var(--primary); color:var(--primary); }
+  .feature-chip .fnum{ font-family:'IBM Plex Mono'; font-size:10.5px; color:var(--ink-faint); }
+  .feature-chip .dots{ display:flex; gap:2px; }
+  .feature-chip .dots i{ width:5px; height:5px; border-radius:50%; display:block; }
 
-  /* ---------- Main ---------- */
-  main{ padding:26px 32px 80px; min-width:0; }
-
-  .epic-deps{
-    background:var(--paper-card); border:1px solid var(--rule); border-radius:var(--radius);
-    padding:16px 18px; margin-bottom:26px; box-shadow:var(--shadow);
-  }
-  .epic-deps summary{ cursor:pointer; font-weight:600; font-size:13.5px; list-style:none; display:flex; align-items:center; gap:8px;}
-  .epic-deps summary::-webkit-details-marker{ display:none; }
-  .epic-deps summary::before{ content:"▸"; color:var(--ink-faint); transition:.15s; font-size:11px; }
-  .epic-deps[open] summary::before{ transform:rotate(90deg); }
-  .dep-grid{ margin-top:12px; display:grid; grid-template-columns:1fr; gap:1px; background:var(--rule); border:1px solid var(--rule); border-radius:2px; overflow:hidden;}
-  .dep-row{ display:grid; grid-template-columns:260px 1fr; background:var(--paper-card); font-size:12.8px; }
-  .dep-row > div{ padding:9px 12px; }
-  .dep-row .name{ font-weight:600; border-right:1px solid var(--rule); }
+  details.epic-deps{ margin-bottom:18px; }
+  details.epic-deps summary{ cursor:pointer; font-weight:600; font-size:13px; list-style:none; display:flex; align-items:center; gap:8px; padding:14px 18px; }
+  details.epic-deps summary::-webkit-details-marker{ display:none; }
+  details.epic-deps summary::before{ content:"▸"; color:var(--ink-faint); transition:.15s; font-size:11px; }
+  details.epic-deps[open] summary::before{ transform:rotate(90deg); }
+  .dep-grid{ padding:0 18px 16px; display:grid; gap:1px; background:var(--border-soft); border-top:1px solid var(--border-soft); }
+  .dep-row{ display:grid; grid-template-columns:280px 1fr; background:var(--surface); font-size:12.5px; }
+  .dep-row > div{ padding:8px 0; }
+  .dep-row .name{ font-weight:600; padding-right:14px; }
   .dep-row.blocker .name{ color:var(--red); }
 
-  section.feature{ margin-bottom:8px; border:1px solid var(--rule); border-radius:var(--radius); background:var(--paper-card); box-shadow:var(--shadow); overflow:hidden; margin-bottom:22px;}
+  section.feature{ margin-bottom:18px; overflow:hidden; }
   .feature-head{
-    display:flex; align-items:center; gap:14px; padding:15px 18px; cursor:pointer; user-select:none;
-    background:linear-gradient(90deg, var(--paper-deep), var(--paper-card) 55%);
-    border-bottom:1px solid var(--rule);
+    display:flex; align-items:center; gap:14px; padding:15px 18px; cursor:pointer; user-select:none; border-bottom:1px solid var(--border);
   }
-  .feature-head .fnum{ font-family:'JetBrains Mono'; font-weight:700; font-size:13px; color:var(--teal); flex-shrink:0; }
-  .feature-head h2{ font-size:15.5px; margin:0; font-weight:700; flex:1; min-width:0; }
+  .feature-head .fnum{ font-family:'IBM Plex Mono'; font-weight:700; font-size:12.5px; color:var(--primary); flex-shrink:0; }
+  .feature-head h3{ font-size:14.5px; margin:0; font-weight:700; flex:1; min-width:0; }
   .feature-head .caret{ color:var(--ink-faint); font-size:12px; transition:.15s ease; flex-shrink:0; }
   .feature-head.collapsed .caret{ transform:rotate(-90deg); }
   .feature-tally{ display:flex; gap:6px; flex-shrink:0; }
-  .feature-tally span{ font-family:'JetBrains Mono'; font-size:11px; padding:2px 6px; border-radius:10px; }
+  .feature-tally span{ font-family:'IBM Plex Mono'; font-size:10.5px; padding:2px 7px; border-radius:10px; }
   .tally-green{ background:var(--green-bg); color:var(--green); }
   .tally-yellow{ background:var(--amber-bg); color:var(--amber); }
   .tally-red{ background:var(--red-bg); color:var(--red); }
 
-  .feature-source{ padding:9px 18px; font-size:12px; color:var(--ink-soft); border-bottom:1px solid var(--rule); background:rgba(255,255,255,0.35); }
-  .feature-source b{ color:var(--ink-soft); font-weight:600; }
-  .feature-note{ padding:10px 18px; font-size:12.3px; color:var(--ink-soft); background:var(--amber-bg); border-bottom:1px solid var(--rule); }
+  .feature-source{ padding:9px 18px; font-size:12px; color:var(--ink-soft); border-bottom:1px solid var(--border-soft); background:var(--surface-sunk); }
+  .feature-note{ padding:10px 18px; font-size:12.3px; color:var(--amber); background:var(--amber-bg); border-bottom:1px solid var(--border-soft); }
 
   .feature-body{ overflow-x:auto; }
-  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  table{ width:100%; border-collapse:collapse; font-size:12.8px; }
   thead th{
-    text-align:left; padding:9px 12px; font-family:'JetBrains Mono'; font-size:10.5px; letter-spacing:.06em;
-    text-transform:uppercase; color:var(--ink-faint); border-bottom:1.5px solid var(--rule-strong); white-space:nowrap;
-    position:sticky; top:0; background:var(--paper-card);
+    text-align:left; padding:9px 12px; font-family:'IBM Plex Mono'; font-size:10px; letter-spacing:.05em;
+    text-transform:uppercase; color:var(--ink-faint); border-bottom:1px solid var(--border); white-space:nowrap;
+    background:var(--surface-sunk);
   }
-  tbody tr{ border-bottom:1px solid var(--rule); transition:background .1s ease; }
-  tbody tr:hover{ background:rgba(31,92,87,0.045); }
+  tbody tr{ border-bottom:1px solid var(--border-soft); }
+  tbody tr:hover{ background:rgba(9,30,66,.02); }
   tbody tr.dim{ display:none; }
-  tbody tr.sub td:first-child{ color:var(--ink-faint); }
-  td{ padding:10px 12px; vertical-align:top; }
-  td.id{ font-family:'JetBrains Mono'; font-weight:600; color:var(--ink-soft); white-space:nowrap; }
-  tr.sub td.id{ padding-left:22px; font-weight:400; }
-  tr.sub td.id::before{ content:"└ "; color:var(--rule-strong); }
-  td.task{ font-weight:600; min-width:190px; }
-  tr.sub td.task{ font-weight:500; font-size:12.6px; color:var(--ink-soft); }
-  td.desc{ color:var(--ink-soft); font-size:12.6px; min-width:200px; }
-  td.dep{ font-size:12px; color:var(--ink-soft); min-width:140px; }
-  td.src{ font-size:12px; min-width:140px; }
-  td.src .mono{ font-size:11.3px; }
-  td.clarity{ min-width:200px; }
+  td{ padding:9px 12px; vertical-align:top; }
+  td.id{ font-family:'IBM Plex Mono'; font-weight:600; color:var(--ink-soft); white-space:nowrap; }
+  tr.sub td.id{ padding-left:24px; font-weight:400; }
+  tr.sub td.id::before{ content:"└ "; color:var(--border); }
+  td.task{ font-weight:600; min-width:180px; }
+  tr.sub td.task{ font-weight:500; font-size:12.3px; color:var(--ink-soft); }
+  td.desc{ color:var(--ink-soft); font-size:12.3px; min-width:190px; }
+  td.dep{ font-size:11.8px; color:var(--ink-soft); min-width:130px; }
+  td.src{ font-size:11.5px; min-width:130px; }
+  td.clarity{ min-width:190px; }
 
-  mark.hit{ background:var(--amber-bg); padding:0 1px; border-radius:2px; }
-
-  .stamp{
-    display:inline-flex; align-items:center; gap:7px; font-size:12px;
-  }
-  .stamp .badge{
-    width:15px; height:15px; border-radius:50%; flex-shrink:0; position:relative; display:inline-block;
-    border:2px solid; box-shadow:inset 0 0 0 2px var(--paper-card);
-  }
-  .stamp.green .badge{ border-color:var(--green); background:var(--green-bg); }
-  .stamp.yellow .badge{ border-color:var(--amber); background:var(--amber-bg); }
-  .stamp.red .badge{ border-color:var(--red); background:var(--red-bg); transform:rotate(-6deg); box-shadow: inset 0 0 0 2px var(--paper-card), 0 0 0 2px var(--red-bg); }
-  .stamp-text{ color:var(--ink-soft); font-size:12px; }
+  .stamp{ display:inline-flex; align-items:center; gap:7px; font-size:11.8px; }
+  .stamp .badge{ width:8px; height:8px; border-radius:50%; flex-shrink:0; display:inline-block; }
+  .stamp.green .badge{ background:var(--green); }
+  .stamp.yellow .badge{ background:var(--amber); }
+  .stamp.red .badge{ background:var(--red); }
+  .stamp-text{ color:var(--ink-soft); }
   .stamp.red .stamp-text{ color:var(--red); font-weight:600; }
   .stamp.yellow .stamp-text{ color:var(--amber); }
 
-  /* ---------- Priority + Flags ---------- */
-  .panel{
-    background:var(--paper-card); border:1px solid var(--rule); border-radius:var(--radius);
-    padding:20px 22px; margin-bottom:22px; box-shadow:var(--shadow);
-  }
-  .panel h3{ font-size:14.5px; margin:0 0 4px; display:flex; align-items:center; gap:9px; }
-  .panel .stamp-mark-mini{
-    font-family:'JetBrains Mono'; font-size:10px; border:1.5px solid var(--ink-faint); color:var(--ink-faint);
-    padding:1px 6px; border-radius:2px; letter-spacing:.05em;
-  }
-  .panel .hint{ font-size:12px; color:var(--ink-faint); margin-bottom:14px; }
-  ol.priority{ margin:0; padding-left:22px; }
-  ol.priority li{ margin-bottom:8px; font-size:13px; }
-  ol.priority b{ font-family:'JetBrains Mono'; font-size:12.3px; color:var(--teal); }
+  .panel{ margin-bottom:18px; }
+  .panel h3{ font-size:14px; margin:0 0 4px; padding:16px 20px 0; display:flex; align-items:center; gap:9px; }
+  .panel .hint{ font-size:11.8px; color:var(--ink-faint); padding:0 20px; margin-bottom:12px; }
+  ol.priority{ margin:0; padding:0 20px 18px 40px; }
+  ol.priority li{ margin-bottom:8px; font-size:12.8px; }
+  ol.priority b{ font-family:'IBM Plex Mono'; font-size:12px; color:var(--primary); }
 
   .flags-panel{ border-left:4px solid var(--red); }
-  ol.flags{ margin:0; padding-left:0; list-style:none; counter-reset:flag; }
+  ol.flags{ margin:0; padding:0 20px 18px; list-style:none; counter-reset:flag; }
   ol.flags li{
-    counter-increment:flag; margin-bottom:12px; padding:12px 14px 12px 42px; position:relative;
-    background:rgba(140,46,44,0.045); border-radius:2px; font-size:12.8px; line-height:1.6;
+    counter-increment:flag; margin-bottom:10px; padding:12px 14px 12px 42px; position:relative;
+    background:var(--red-bg); border-radius:var(--radius-sm); font-size:12.6px; line-height:1.6;
   }
   ol.flags li::before{
     content:counter(flag); position:absolute; left:12px; top:11px;
-    font-family:'JetBrains Mono'; font-weight:700; font-size:12px; color:var(--red);
-    background:var(--red-bg); width:20px; height:20px; border-radius:50%;
-    display:flex; align-items:center; justify-content:center; border:1.5px solid var(--red);
+    font-family:'IBM Plex Mono'; font-weight:700; font-size:11.5px; color:#fff;
+    background:var(--red); width:19px; height:19px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
   }
-  ol.flags b{ color:var(--ink); }
+  ol.flags .epic-tags{ margin-top:6px; display:flex; gap:5px; flex-wrap:wrap; }
+  ol.flags .epic-tags span{ font-family:'IBM Plex Mono'; font-size:9.5px; background:var(--surface); border:1px solid var(--border); padding:1px 6px; border-radius:8px; color:var(--ink-faint); }
 
-  footer{ text-align:center; padding:30px; color:var(--ink-faint); font-size:11.5px; font-family:'JetBrains Mono'; }
+  .empty-state{ padding:50px; text-align:center; color:var(--ink-faint); font-size:13px; display:none; }
 
-  .empty-state{ padding:40px; text-align:center; color:var(--ink-faint); font-size:13px; display:none; }
+  /* ================= OVERVIEW ================= */
+  .stat-grid{ display:grid; grid-template-columns:repeat(5, 1fr); gap:12px; margin-bottom:20px; }
+  .stat-card{ padding:16px 18px; }
+  .stat-card .num{ font-size:26px; font-weight:700; font-family:'IBM Plex Mono'; line-height:1; }
+  .stat-card .label{ font-size:11.5px; color:var(--ink-soft); margin-top:6px; }
+  .stat-card.green .num{ color:var(--green); } .stat-card.yellow .num{ color:var(--amber); } .stat-card.red .num{ color:var(--red); }
+
+  .heatmap-row{ display:grid; grid-template-columns:220px 1fr 90px; align-items:center; gap:14px; padding:9px 20px; border-bottom:1px solid var(--border-soft); cursor:pointer; }
+  .heatmap-row:hover{ background:var(--surface-sunk); }
+  .heatmap-row .ename{ font-size:12.8px; font-weight:600; display:flex; align-items:center; gap:7px; overflow:hidden; }
+  .heatmap-row .ename .sys-tag{ font-family:'IBM Plex Mono'; font-size:8.5px; font-weight:700; padding:1px 5px; border-radius:3px; background:var(--surface-sunk); color:var(--ink-faint); flex-shrink:0; }
+  .heatmap-bar{ height:10px; border-radius:5px; overflow:hidden; display:flex; background:var(--border-soft); }
+  .heatmap-bar div{ height:100%; }
+  .heatmap-row .counts{ font-family:'IBM Plex Mono'; font-size:11px; color:var(--ink-faint); text-align:right; }
+
+  /* ================= TIMELINE ================= */
+  .project-config{ display:flex; align-items:flex-end; gap:20px; flex-wrap:wrap; padding:18px 20px; }
+  .field{ display:flex; flex-direction:column; gap:5px; }
+  .field label{ font-size:11px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.03em; }
+  .field input[type=date]{ padding:7px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; color:var(--ink); }
+  .field-readout{ font-family:'IBM Plex Mono'; font-size:13px; padding:7px 0; }
+  .field-readout b{ color:var(--primary); }
+  .variance-ok{ color:var(--green); } .variance-bad{ color:var(--red); }
+
+  .workload-strip{ display:flex; gap:2px; margin-top:14px; padding:0 20px 18px; }
+  .workload-seg{ flex:1; text-align:center; padding:10px 4px; border-radius:var(--radius-sm); background:var(--surface-sunk); }
+  .workload-seg .role{ font-size:10px; color:var(--ink-faint); font-weight:600; }
+  .workload-seg .val{ font-family:'IBM Plex Mono'; font-size:15px; font-weight:700; margin-top:2px; }
+
+  .gantt-wrap{ padding:16px 20px 20px; overflow-x:auto; }
+  .gantt-row{ display:flex; align-items:center; gap:10px; height:26px; margin-bottom:3px; }
+  .gantt-label{ width:230px; flex-shrink:0; font-size:11.5px; color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .gantt-track{ position:relative; flex:1; height:16px; background:var(--surface-sunk); border-radius:4px; min-width:400px; }
+  .gantt-bar{ position:absolute; top:0; height:100%; border-radius:4px; min-width:3px; }
+
+  .timeline-toolbar{ display:flex; gap:8px; align-items:center; padding:14px 20px 0; flex-wrap:wrap; }
+  .timeline-hint{ font-size:12px; color:var(--ink-faint); padding:0 20px 14px; }
+
+  .plan-table th, .plan-table td{ text-align:center; }
+  .plan-table td.task-cell, .plan-table th.task-cell{ text-align:left; }
+  .plan-table input[type=number]{
+    width:52px; padding:4px 5px; border:1px solid var(--border); border-radius:4px; text-align:center; font-size:12px; font-family:'IBM Plex Mono';
+  }
+  .plan-table input[type=number]:focus{ outline:none; border-color:var(--primary); }
+  .plan-table .seq-input{ width:38px; }
+  .plan-table td.total{ font-family:'IBM Plex Mono'; font-weight:700; }
+  .plan-table td.dates{ font-family:'IBM Plex Mono'; font-size:11px; white-space:nowrap; }
+
+  footer.app-footer{ text-align:center; padding:26px; color:var(--ink-faint); font-size:11px; font-family:'IBM Plex Mono'; }
+
+  @media (max-width:1000px){
+    .sidebar{ display:none; }
+    .stat-grid{ grid-template-columns:repeat(2,1fr); }
+  }
 </style>
 </head>
 <body>
 
-<header>
-  <div class="header-top">
-    <div class="brand">
-      <div>
-        <h1>NCBS Breakdown Ledger<span class="thai" id="epicSubtitle">บันทึกแตกงาน</span></h1>
-        <div class="subtitle" id="epicStatus">กำลังโหลดข้อมูล…</div>
-      </div>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="mark"><div class="logo">N</div><h1>NCBS Planning<br>Console</h1></div>
+      <div class="sub">breakdown · timeline · gap analysis</div>
     </div>
-    <div class="ledger-folio">
-      Epic <b id="folioEpicName">–</b><br>
-      <span id="folioFeatureCount">–</span> Features · <span id="totalTaskCount">–</span> tasks
+
+    <div class="nav-section">
+      <div class="nav-item" data-view="overview"><span class="icon">▤</span> Overview</div>
+      <div class="nav-item" data-view="timeline"><span class="icon">▦</span> Timeline &amp; Planning</div>
     </div>
+
+    <div class="epic-nav">
+      <div class="nav-section-label">Epics</div>
+      <div class="epic-search"><input id="epicSearch" type="text" placeholder="ค้นหา epic…"></div>
+      <div class="system-filters" id="systemFilters"></div>
+      <div class="epic-list" id="epicList"></div>
+    </div>
+
+    <div class="sidebar-footer">ncbs-breakdown · synthesize จาก ncbs-wiki · ไม่ผูกกับ commit ของ wiki</div>
+  </aside>
+
+  <div class="shell">
+    <header class="topbar" id="topbar"></header>
+    <main>
+      <section class="view" id="viewOverview"></section>
+      <section class="view" id="viewTimeline" hidden></section>
+      <section class="view" id="viewEpic" hidden></section>
+    </main>
+    <footer class="app-footer">NCBS Planning Console · prototype · ข้อมูล timeline เก็บใน localStorage ของเบราว์เซอร์ (export/import เป็น JSON เพื่อแชร์ทีมได้)</footer>
   </div>
-  <div class="epic-tabs" id="epicTabs"></div>
-  <div class="controls">
-    <div class="search-wrap"><input id="searchBox" type="text" placeholder="ค้นหา task, source, dependency…"></div>
-    <div class="chip active" data-c="all">ทั้งหมด <span class="chip-count" id="cnt-all"></span></div>
-    <div class="chip active" data-c="green"><span class="dot"></span>พร้อม dev<span class="chip-count" id="cnt-green"></span></div>
-    <div class="chip active" data-c="yellow"><span class="dot"></span>ต้องเช็คก่อน<span class="chip-count" id="cnt-yellow"></span></div>
-    <div class="chip active" data-c="red"><span class="dot"></span>ยังเป็นแค่ proposed<span class="chip-count" id="cnt-red"></span></div>
-    <button class="btn-ghost" id="toggleAll">ยุบ/ขยายทั้งหมด</button>
-    <button class="btn-ghost" id="exportCsv" title="Export เฉพาะแถวที่กรองอยู่บนจอตอนนี้ — ล้างตัวกรองก่อนถ้าต้องการ export ทั้งหมด" style="border-style:solid; color:var(--teal); border-color:var(--teal);">⇩ Export CSV</button>
-  </div>
-</header>
-
-<div class="layout">
-  <nav class="rail">
-    <div class="rail-label">Feature Index</div>
-    <div id="railList"></div>
-    <div class="rail-divider"></div>
-    <div class="rail-note">แตะชิปด้านบนเพื่อกรองตามสถานะ spec clarity · แถบสีขวาของแต่ละ feature คือสัดส่วน 🟢/🟡/🔴</div>
-  </nav>
-
-  <main>
-    <details class="epic-deps" open>
-      <summary>Epic-level dependencies — Epic อื่นที่ต้องมาก่อน (ยังไม่ breakdown ในรอบนี้)</summary>
-      <div class="dep-grid" id="epicDeps"></div>
-    </details>
-
-    <div id="featureContainer"></div>
-    <div class="empty-state" id="emptyState">ไม่พบ task ที่ตรงกับตัวกรอง — ลองล้างคำค้นหรือเปิดสถานะเพิ่ม</div>
-
-    <div class="panel">
-      <h3>ลำดับความสำคัญภายใน Epic <span class="stamp-mark-mini">by technical dependency</span></h3>
-      <div class="hint">เรียงตามสิ่งที่ต้องเสร็จก่อนในเชิงเทคนิค ไม่ใช่ลำดับตาม business value</div>
-      <ol class="priority" id="priorityList"></ol>
-    </div>
-
-    <div class="panel flags-panel">
-      <h3>Flags รวม <span class="stamp-mark-mini">confirm ก่อนประเมิน manday จริง</span></h3>
-      <div class="hint">จุดที่ spec ยังขัดกันเอง เป็น regulatory blocker หรือยังไม่มีดีไซน์ — ควรถามทีม/PM ก่อนตัดสินใจ commit sprint</div>
-      <ol class="flags" id="flagsList"></ol>
-    </div>
-  </main>
 </div>
 
-<footer>ncbs-breakdown · prototype dashboard · ข้อมูล derive จาก ncbs-wiki ผ่าน Claude Code session (auto mode) · ไม่ commit กลับ wiki repo</footer>
-
-<!-- โหลด data file ของแต่ละ epic ตรงนี้ — เพิ่มบรรทัดใหม่เวลามี epic เพิ่ม ไม่ต้องแก้ JS ด้านล่างเลย -->
-<script src="data/credit-transfer.js"></script>
-<script src="data/api-management.js"></script>
-<script src="data/blockchain-credential.js"></script>
-<script src="data/blocked-integrations.js"></script>
-<script src="data/dashboards.js"></script>
-<script src="data/data-ingestion.js"></script>
-<script src="data/data-service-foundation.js"></script>
-<script src="data/grade-credit-management.js"></script>
-<script src="data/identity-auth.js"></script>
-<script src="data/institution-structure.js"></script>
-<script src="data/landing-cms-recommendation.js"></script>
-<script src="data/learner-identity-linking.js"></script>
-<script src="data/learner-profile-portfolio.js"></script>
-<script src="data/lms-integration.js"></script>
-<script src="data/notification-service.js"></script>
-<script src="data/pdpa-compliance.js"></script>
-<script src="data/result-upload-integration.js"></script>
-<script src="data/role-access-management.js"></script>
-<script src="data/skill-matrix.js"></script>
-<script src="data/strategic-gaps.js"></script>
-<script src="data/university-payment-whitelabel.js"></script>
-<script src="data/user-management.js"></script>
+<!-- ไม่ต้องแก้ไฟล์นี้เพื่อเพิ่ม epic ใหม่อีกต่อไป — ระบบจะโหลดตาม data/manifest.json อัตโนมัติ (ดู README) -->
 
 <script>
-
-// ---------- shared helpers ----------
+// ============================================================================
+// Config
+// ============================================================================
 const clarityLabel = { green:"พร้อม dev", yellow:"ต้องเช็คก่อน confirm", red:"ยังเป็นแค่ proposed / block" };
+const ROLES = [
+  { key:'po_ba',    label:'PO/BA' },
+  { key:'tech_lead',label:'Tech Lead' },
+  { key:'dev',      label:'Dev' },
+  { key:'qa_lead',  label:'QA Lead' },
+  { key:'qa',       label:'QA' },
+  { key:'pm',       label:'PM' },
+  { key:'dm',       label:'DM' },
+];
+const ROLE_COLORS = ['#0052CC','#5243AA','#00875A','#FF8B00','#DE350B','#006644','#403294'];
 
-function stamp(c, note){
-  return `<span class="stamp ${c}"><span class="badge"></span><span class="stamp-text">${clarityLabel[c]}${note ? " — " + note : ""}</span></span>`;
-}
+let currentView = 'overview';
+let currentEpicId = null;
+let activeFilters = new Set(['green','yellow','red']);
+let activeSystem = 'ALL';
 
-function taskRow(t, isSub){
-  return `<tr class="${isSub ? 'sub':''}" data-c="${t.c}" data-text="${(t.task+' '+(t.desc||'')+' '+(t.dep||'')+' '+(t.src||'')+' '+(t.note||'')).toLowerCase()}">
-    <td class="id">${t.id}</td>
-    <td class="task">${t.task}</td>
-    <td class="desc">${t.desc||''}</td>
-    <td class="dep">${t.dep||''}</td>
-    <td class="src mono">${t.src||''}</td>
-    <td class="clarity">${stamp(t.c, t.note)}</td>
-  </tr>`;
-}
+// ============================================================================
+// Data helpers
+// ============================================================================
+function allEpics(){ return window.NCBS_EPICS || {}; }
+function epicIds(){ return Object.keys(allEpics()); }
 
 function featureTally(f){
   const t = { green:0, yellow:0, red:0 };
   f.tasks.forEach(x=>{ t[x.c]++; if(x.subs) x.subs.forEach(s=>t[s.c]++); });
   return t;
 }
-
-const container   = document.getElementById('featureContainer');
-const railList    = document.getElementById('railList');
-const epicDepsEl  = document.getElementById('epicDeps');
-const priorityList= document.getElementById('priorityList');
-const flagsList   = document.getElementById('flagsList');
-const epicTabsEl  = document.getElementById('epicTabs');
-const searchBox   = document.getElementById('searchBox');
-
-let activeFilters = new Set(['green','yellow','red']);
-let currentEpicId = null;
-
-// ---------- epic tab bar (built once from whatever data files were loaded) ----------
-function buildEpicTabs(){
-  const ids = Object.keys(window.NCBS_EPICS || {});
-  epicTabsEl.innerHTML = '';
-  if(ids.length === 0){
-    epicTabsEl.innerHTML = '<div class="epic-tab-empty">ไม่พบข้อมูล epic — ตรวจว่ามี &lt;script src="data/…js"&gt; ใน index.html หรือยัง</div>';
-    return;
-  }
-  ids.forEach(id=>{
-    const epic = window.NCBS_EPICS[id];
-    const t = { green:0, yellow:0, red:0 };
+function epicTally(epic){
+  const t = { green:0, yellow:0, red:0 };
+  epic.features.forEach(f=>{ const ft = featureTally(f); t.green+=ft.green; t.yellow+=ft.yellow; t.red+=ft.red; });
+  return t;
+}
+function flattenAllTasks(){
+  // returns [{key, epicId, epicName, featureId, featureName, task}]
+  const out = [];
+  epicIds().forEach(id=>{
+    const epic = allEpics()[id];
     epic.features.forEach(f=>{
-      const ft = featureTally(f);
-      t.green+=ft.green; t.yellow+=ft.yellow; t.red+=ft.red;
+      f.tasks.forEach(t=>{
+        out.push({ key:`${id}::${t.id}`, epicId:id, epicName:epic.name, featureId:f.id, featureName:f.name, task:t });
+        if(t.subs) t.subs.forEach(s=> out.push({ key:`${id}::${s.id}`, epicId:id, epicName:epic.name, featureId:f.id, featureName:f.name, task:s }));
+      });
     });
-    const tab = document.createElement('div');
-    tab.className = 'epic-tab';
-    tab.dataset.epic = id;
-    tab.innerHTML = `<span class="sys">${epic.system||''}</span><span>${epic.name}</span>
-      <span class="status-dots">
-        ${t.green ? '<i style="background:var(--green)"></i>' : ''}
-        ${t.yellow ? '<i style="background:var(--amber)"></i>' : ''}
-        ${t.red ? '<i style="background:var(--red)"></i>' : ''}
+  });
+  return out;
+}
+
+// ============================================================================
+// Sidebar: nav + epic list
+// ============================================================================
+function buildSidebar(){
+  document.querySelectorAll('.nav-item').forEach(item=>{
+    item.addEventListener('click', ()=> switchView(item.dataset.view));
+  });
+
+  const systems = new Set(['ALL']);
+  epicIds().forEach(id=> systems.add(allEpics()[id].system || 'NCBS'));
+  const sysFilterEl = document.getElementById('systemFilters');
+  sysFilterEl.innerHTML = '';
+  [...systems].forEach(sys=>{
+    const chip = document.createElement('div');
+    chip.className = 'sys-chip' + (sys==='ALL' ? ' active':'');
+    chip.textContent = sys;
+    chip.dataset.sys = sys;
+    chip.addEventListener('click', ()=>{
+      activeSystem = sys;
+      document.querySelectorAll('.sys-chip').forEach(c=>c.classList.toggle('active', c.dataset.sys===sys));
+      renderEpicList();
+    });
+    sysFilterEl.appendChild(chip);
+  });
+
+  document.getElementById('epicSearch').addEventListener('input', renderEpicList);
+  renderEpicList();
+}
+
+function renderEpicList(){
+  const q = document.getElementById('epicSearch').value.trim().toLowerCase();
+  const listEl = document.getElementById('epicList');
+  listEl.innerHTML = '';
+  const ids = epicIds().filter(id=>{
+    const e = allEpics()[id];
+    const matchesSys = activeSystem==='ALL' || (e.system||'NCBS')===activeSystem;
+    const matchesQ = !q || e.name.toLowerCase().includes(q) || (e.thaiName||'').toLowerCase().includes(q);
+    return matchesSys && matchesQ;
+  });
+  if(ids.length===0){ listEl.innerHTML = '<div class="epic-list-empty">ไม่พบ epic ที่ตรงกับตัวกรอง</div>'; return; }
+  ids.forEach(id=>{
+    const e = allEpics()[id];
+    const t = epicTally(e);
+    const item = document.createElement('div');
+    item.className = 'epic-list-item' + (id===currentEpicId && currentView==='epic' ? ' current':'');
+    item.innerHTML = `<span class="sys-tag">${e.system||''}</span><span class="name">${e.name}</span>
+      <span class="dots">
+        ${t.green?'<i style="background:var(--green)"></i>':''}
+        ${t.yellow?'<i style="background:var(--amber)"></i>':''}
+        ${t.red?'<i style="background:var(--red)"></i>':''}
       </span>`;
-    tab.addEventListener('click', ()=> switchEpic(id));
-    epicTabsEl.appendChild(tab);
+    item.addEventListener('click', ()=> openEpic(id));
+    listEl.appendChild(item);
   });
 }
 
-function switchEpic(id){
-  currentEpicId = id;
-  document.querySelectorAll('.epic-tab').forEach(t=> t.classList.toggle('current', t.dataset.epic === id));
-  // reset search + clarity filters when switching epic — cleaner starting point each time
-  searchBox.value = '';
-  activeFilters = new Set(['green','yellow','red']);
-  document.querySelectorAll('.chip').forEach(ch=> ch.classList.add('active'));
-  renderEpic(id);
-  window.scrollTo({top:0, behavior:'instant'});
+function switchView(view){
+  currentView = view;
+  document.querySelectorAll('.nav-item').forEach(i=> i.classList.toggle('current', i.dataset.view===view));
+  document.getElementById('viewOverview').hidden = view!=='overview';
+  document.getElementById('viewTimeline').hidden = view!=='timeline';
+  document.getElementById('viewEpic').hidden = view!=='epic';
+  renderEpicList();
+  if(view==='overview') renderOverview();
+  if(view==='timeline') renderTimeline();
+  renderTopbar();
 }
 
-// ---------- render a single epic into the page ----------
-function renderEpic(id){
-  const epic = window.NCBS_EPICS[id];
-  if(!epic) return;
+function openEpic(id){
+  currentEpicId = id;
+  switchView('epic');
+  renderEpicView(id);
+}
 
-  container.innerHTML = '';
-  railList.innerHTML = '';
-  epicDepsEl.innerHTML = '';
-  priorityList.innerHTML = '';
-  flagsList.innerHTML = '';
+// ============================================================================
+// Topbar (contextual per view)
+// ============================================================================
+function renderTopbar(){
+  const bar = document.getElementById('topbar');
+  if(currentView==='overview'){
+    bar.innerHTML = `<div class="topbar-title-row"><div><h2>ภาพรวมโครงการ</h2><div class="desc">สรุปสถานะ readiness ของทุก epic + ประเด็นที่กระทบข้าม epic</div></div></div>`;
+  } else if(currentView==='timeline'){
+    bar.innerHTML = `<div class="topbar-title-row"><div><h2>Timeline &amp; Planning</h2><div class="desc">กำหนด start date ของโครงการ ใส่ manday ต่อ role ต่อ task แล้วดูตารางเวลาที่คำนวณให้อัตโนมัติ</div></div></div>`;
+  } else if(currentView==='epic'){
+    const epic = allEpics()[currentEpicId];
+    if(!epic) return;
+    bar.innerHTML = `
+      <div class="topbar-title-row">
+        <div><h2><span class="sys-badge">${epic.system||''}</span> ${epic.name}</h2><div class="desc">${epic.status||''}</div></div>
+        <div class="stats"><b>${epic.features.length}</b> Features · <b id="epicTotalTasks">–</b> tasks</div>
+      </div>
+      <div class="toolbar">
+        <div class="search-wrap"><input id="searchBox" type="text" placeholder="ค้นหา task, source, dependency…"></div>
+        <div class="chip active" data-c="all">ทั้งหมด <span class="mono" id="cnt-all"></span></div>
+        <div class="chip active" data-c="green"><span class="dot"></span>พร้อม dev<span class="mono" id="cnt-green"></span></div>
+        <div class="chip active" data-c="yellow"><span class="dot"></span>ต้องเช็คก่อน<span class="mono" id="cnt-yellow"></span></div>
+        <div class="chip active" data-c="red"><span class="dot"></span>proposed<span class="mono" id="cnt-red"></span></div>
+        <button class="btn ghost-dashed" id="toggleAll">ยุบ/ขยายทั้งหมด</button>
+        <button class="btn primary" id="exportCsv">⇩ Export CSV</button>
+      </div>`;
+    wireEpicToolbar();
+  }
+}
 
-  document.getElementById('epicSubtitle').textContent = `บันทึกแตกงาน — ${epic.thaiName || epic.name}`;
-  document.getElementById('epicStatus').textContent = (epic.status || '') + ' · เอกสารนี้ synthesize จาก ncbs-wiki (ไม่ผูกกับ commit ของ wiki)';
-  document.getElementById('folioEpicName').textContent = epic.name;
-  document.getElementById('folioFeatureCount').textContent = epic.features.length;
+// ============================================================================
+// Epic detail view (feature chip nav + tables) — same content model as before
+// ============================================================================
+function stamp(c, note){
+  return `<span class="stamp ${c}"><span class="badge"></span><span class="stamp-text">${clarityLabel[c]}${note ? " — " + note : ""}</span></span>`;
+}
+function taskRow(t, isSub){
+  return `<tr class="${isSub?'sub':''}" data-c="${t.c}" data-text="${(t.task+' '+(t.desc||'')+' '+(t.dep||'')+' '+(t.src||'')+' '+(t.note||'')).toLowerCase()}">
+    <td class="id">${t.id}</td><td class="task">${t.task}</td><td class="desc">${t.desc||''}</td>
+    <td class="dep">${t.dep||''}</td><td class="src mono">${t.src||''}</td><td class="clarity">${stamp(t.c, t.note)}</td>
+  </tr>`;
+}
 
-  let totalTasks = 0;
-  const counts = { green:0, yellow:0, red:0 };
+function renderEpicView(id){
+  const epic = allEpics()[id];
+  const root = document.getElementById('viewEpic');
+  root.innerHTML = `
+    <div class="feature-chip-nav" id="featureChipNav"></div>
+    <details class="epic-deps card" open>
+      <summary>Epic-level dependencies — Epic อื่นที่ต้องมาก่อน (ยังไม่ breakdown ในรอบนี้)</summary>
+      <div class="dep-grid" id="epicDeps"></div>
+    </details>
+    <div id="featureContainer"></div>
+    <div class="empty-state" id="emptyState">ไม่พบ task ที่ตรงกับตัวกรอง — ลองล้างคำค้นหรือเปิดสถานะเพิ่ม</div>
+    <div class="card panel"><h3>ลำดับความสำคัญภายใน Epic</h3><div class="hint">เรียงตาม technical dependency ไม่ใช่ business value</div><ol class="priority" id="priorityList"></ol></div>
+    <div class="card panel flags-panel"><h3>Flags — confirm ก่อนประเมิน manday จริง</h3><div class="hint">จุดที่ spec ยังขัดกันเอง เป็น blocker หรือยังไม่มีดีไซน์</div><ol class="flags" id="flagsList"></ol></div>
+  `;
 
-  epic.features.forEach((f, idx)=>{
+  const container = document.getElementById('featureContainer');
+  const chipNav = document.getElementById('featureChipNav');
+  const epicDepsEl = document.getElementById('epicDeps');
+  let totalTasks = 0; const counts = { green:0, yellow:0, red:0 };
+
+  epic.features.forEach(f=>{
     const tally = featureTally(f);
-    totalTasks += tally.green + tally.yellow + tally.red;
-    counts.green += tally.green; counts.yellow += tally.yellow; counts.red += tally.red;
+    totalTasks += tally.green+tally.yellow+tally.red;
+    counts.green+=tally.green; counts.yellow+=tally.yellow; counts.red+=tally.red;
 
     let rows = '';
-    f.tasks.forEach(t=>{
-      rows += taskRow(t,false);
-      if(t.subs) t.subs.forEach(s=> rows += taskRow(s,true));
-    });
+    f.tasks.forEach(t=>{ rows += taskRow(t,false); if(t.subs) t.subs.forEach(s=>rows+=taskRow(s,true)); });
 
     const section = document.createElement('section');
-    section.className = 'feature';
+    section.className = 'feature card';
     section.id = f.id;
     section.innerHTML = `
       <div class="feature-head" data-target="${f.id}">
-        <span class="fnum">${f.id}</span>
-        <h2>${f.name}</h2>
-        <div class="feature-tally">
-          <span class="tally-green">${tally.green}</span>
-          <span class="tally-yellow">${tally.yellow}</span>
-          <span class="tally-red">${tally.red}</span>
-        </div>
+        <span class="fnum">${f.id}</span><h3>${f.name}</h3>
+        <div class="feature-tally"><span class="tally-green">${tally.green}</span><span class="tally-yellow">${tally.yellow}</span><span class="tally-red">${tally.red}</span></div>
         <span class="caret">▾</span>
       </div>
-      ${f.sources && f.sources.length ? `<div class="feature-source"><b>Source หลัก:</b> ${f.sources.join(' · ')}</div>` : ''}
+      ${f.sources && f.sources.length ? `<div class="feature-source"><b>Source:</b> ${f.sources.join(' · ')}</div>` : ''}
       ${f.note ? `<div class="feature-note">${f.note}</div>` : ''}
-      <div class="feature-body">
-        <table>
-          <thead><tr><th>#</th><th>Task</th><th>คำอธิบาย</th><th>Dependency</th><th>Source</th><th>Clarity</th></tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
+      <div class="feature-body"><table><thead><tr><th>#</th><th>Task</th><th>คำอธิบาย</th><th>Dependency</th><th>Source</th><th>Clarity</th></tr></thead><tbody>${rows}</tbody></table></div>
     `;
     container.appendChild(section);
 
-    const tabItem = document.createElement('div');
-    tabItem.className = 'tab-item' + (idx===0 ? ' current' : '');
-    tabItem.dataset.target = f.id;
-    tabItem.innerHTML = `<span class="tab-num">${f.id}</span><span>${f.name.split('(')[0].trim()}</span>
-      <span class="tab-status">
-        ${tally.green ? '<i style="background:var(--green)"></i>' : ''}
-        ${tally.yellow ? '<i style="background:var(--amber)"></i>' : ''}
-        ${tally.red ? '<i style="background:var(--red)"></i>' : ''}
-      </span>`;
-    railList.appendChild(tabItem);
+    const chip = document.createElement('div');
+    chip.className = 'feature-chip';
+    chip.dataset.target = f.id;
+    chip.innerHTML = `<span class="fnum">${f.id}</span><span>${f.name.split('(')[0].trim()}</span>
+      <span class="dots">${tally.green?'<i style="background:var(--green)"></i>':''}${tally.yellow?'<i style="background:var(--amber)"></i>':''}${tally.red?'<i style="background:var(--red)"></i>':''}</span>`;
+    chip.addEventListener('click', ()=>{ section.scrollIntoView({behavior:'smooth', block:'start'}); });
+    chipNav.appendChild(chip);
   });
 
-  document.getElementById('totalTaskCount').textContent = totalTasks;
-  document.getElementById('cnt-all').textContent = totalTasks;
-  document.getElementById('cnt-green').textContent = counts.green;
-  document.getElementById('cnt-yellow').textContent = counts.yellow;
-  document.getElementById('cnt-red').textContent = counts.red;
+  document.getElementById('epicTotalTasks') && (document.getElementById('epicTotalTasks').textContent = totalTasks);
+  document.getElementById('cnt-all') && (document.getElementById('cnt-all').textContent = totalTasks);
+  document.getElementById('cnt-green') && (document.getElementById('cnt-green').textContent = counts.green);
+  document.getElementById('cnt-yellow') && (document.getElementById('cnt-yellow').textContent = counts.yellow);
+  document.getElementById('cnt-red') && (document.getElementById('cnt-red').textContent = counts.red);
 
   (epic.epicDeps||[]).forEach(d=>{
     const row = document.createElement('div');
-    row.className = 'dep-row' + (d.blocker ? ' blocker' : '');
+    row.className = 'dep-row'+(d.blocker?' blocker':'');
     row.innerHTML = `<div class="name">${d.name}</div><div>${d.why}</div>`;
     epicDepsEl.appendChild(row);
   });
+  (epic.priority||[]).forEach(p=>{ const li=document.createElement('li'); li.innerHTML=p; document.getElementById('priorityList').appendChild(li); });
+  (epic.flags||[]).forEach(fl=>{ const li=document.createElement('li'); li.innerHTML=fl; document.getElementById('flagsList').appendChild(li); });
 
-  (epic.priority||[]).forEach(p=>{
-    const li = document.createElement('li'); li.innerHTML = p; priorityList.appendChild(li);
+  activeFilters = new Set(['green','yellow','red']);
+  applyEpicFilters();
+
+  container.addEventListener('click', (e)=>{
+    const head = e.target.closest('.feature-head'); if(!head) return;
+    const section = document.getElementById(head.dataset.target);
+    const body = section.querySelector('.feature-body');
+    const src = section.querySelector('.feature-source');
+    const note = section.querySelector('.feature-note');
+    const collapsed = head.classList.toggle('collapsed');
+    body.style.display = collapsed ? 'none' : '';
+    if(src) src.style.display = collapsed ? 'none' : '';
+    if(note) note.style.display = collapsed ? 'none' : '';
   });
-
-  (epic.flags||[]).forEach(fl=>{
-    const li = document.createElement('li'); li.innerHTML = fl; flagsList.appendChild(li);
-  });
-
-  applyFilters();
 }
 
-// ---------- interactions (event-delegated, safe across re-renders) ----------
-container.addEventListener('click', (e)=>{
-  const head = e.target.closest('.feature-head');
-  if(!head) return;
-  const section = document.getElementById(head.dataset.target);
-  const body = section.querySelector('.feature-body');
-  const src = section.querySelector('.feature-source');
-  const note = section.querySelector('.feature-note');
-  const collapsed = head.classList.toggle('collapsed');
-  body.style.display = collapsed ? 'none' : '';
-  if(src) src.style.display = collapsed ? 'none' : '';
-  if(note) note.style.display = collapsed ? 'none' : '';
-});
-
-railList.addEventListener('click', (e)=>{
-  const item = e.target.closest('.tab-item');
-  if(!item) return;
-  document.querySelectorAll('.tab-item').forEach(i=>i.classList.remove('current'));
-  item.classList.add('current');
-  const target = document.getElementById(item.dataset.target);
-  const head = target.querySelector('.feature-head');
-  if(head.classList.contains('collapsed')){ head.click(); }
-  target.scrollIntoView({behavior:'smooth', block:'start'});
-});
-
-document.querySelectorAll('.chip').forEach(chip=>{
-  chip.addEventListener('click', ()=>{
-    const c = chip.dataset.c;
-    const allChip = document.querySelector('.chip[data-c="all"]');
-    if(c === 'all'){
-      activeFilters = new Set(['green','yellow','red']);
-      document.querySelectorAll('.chip').forEach(ch=>ch.classList.add('active'));
-    } else {
-      if(activeFilters.has(c)){ activeFilters.delete(c); chip.classList.remove('active'); }
-      else { activeFilters.add(c); chip.classList.add('active'); }
-      if(activeFilters.size === 3) allChip.classList.add('active'); else allChip.classList.remove('active');
-    }
-    applyFilters();
+function wireEpicToolbar(){
+  document.querySelectorAll('.chip').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      const c = chip.dataset.c;
+      const allChip = document.querySelector('.chip[data-c="all"]');
+      if(c==='all'){ activeFilters = new Set(['green','yellow','red']); document.querySelectorAll('.chip').forEach(ch=>ch.classList.add('active')); }
+      else {
+        if(activeFilters.has(c)){ activeFilters.delete(c); chip.classList.remove('active'); } else { activeFilters.add(c); chip.classList.add('active'); }
+        if(activeFilters.size===3) allChip.classList.add('active'); else allChip.classList.remove('active');
+      }
+      applyEpicFilters();
+    });
   });
-});
+  document.getElementById('searchBox').addEventListener('input', applyEpicFilters);
+  document.getElementById('toggleAll').addEventListener('click', ()=>{
+    const heads = document.querySelectorAll('.feature-head');
+    const shouldCollapse = ![...heads].every(h=>h.classList.contains('collapsed'));
+    heads.forEach(h=>{ if(h.classList.contains('collapsed') !== shouldCollapse) h.click(); });
+  });
+  document.getElementById('exportCsv').addEventListener('click', exportEpicCsv);
+}
 
-searchBox.addEventListener('input', applyFilters);
-
-function applyFilters(){
+function applyEpicFilters(){
+  const searchBox = document.getElementById('searchBox');
+  if(!searchBox) return;
   const q = searchBox.value.trim().toLowerCase();
   let anyVisible = false;
-  document.querySelectorAll('table tbody tr').forEach(row=>{
-    const matchesClarity = activeFilters.has(row.dataset.c);
-    const matchesSearch = !q || row.dataset.text.includes(q);
-    const show = matchesClarity && matchesSearch;
+  document.querySelectorAll('#viewEpic table tbody tr').forEach(row=>{
+    const show = activeFilters.has(row.dataset.c) && (!q || row.dataset.text.includes(q));
     row.classList.toggle('dim', !show);
     if(show) anyVisible = true;
   });
-  document.querySelectorAll('section.feature').forEach(section=>{
-    const visibleRows = section.querySelectorAll('table tbody tr:not(.dim)').length;
-    section.style.display = visibleRows === 0 ? 'none' : '';
+  document.querySelectorAll('#viewEpic section.feature').forEach(section=>{
+    const visible = section.querySelectorAll('table tbody tr:not(.dim)').length;
+    section.style.display = visible===0 ? 'none' : '';
   });
-  document.getElementById('emptyState').style.display = anyVisible ? 'none' : 'block';
+  const empty = document.getElementById('emptyState');
+  if(empty) empty.style.display = anyVisible ? 'none' : 'block';
 }
 
-// ---------- CSV export (for Google Sheets) — exports the currently active epic ----------
-function csvEscape(val){
-  const s = (val === undefined || val === null) ? '' : String(val);
-  if(/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
-  return s;
-}
-
-function buildCsvRows(){
-  const epic = window.NCBS_EPICS[currentEpicId];
+function csvEscape(v){ const s=(v===undefined||v===null)?'':String(v); return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; }
+function exportEpicCsv(){
+  const epic = allEpics()[currentEpicId];
+  const visibleIds = new Set();
+  document.querySelectorAll('#viewEpic table tbody tr:not(.dim)').forEach(row=> visibleIds.add(row.querySelector('.id').textContent.trim()));
   const header = ["Epic","Feature ID","Feature","Task ID","Task","Description","Dependency","Source","Clarity","Clarity Note"];
   const rows = [header];
   epic.features.forEach(f=>{
-    const pushTask = (t) => {
-      rows.push([epic.name, f.id, f.name, t.id, t.task, t.desc||"", t.dep||"", t.src||"", clarityLabel[t.c]||t.c, t.note||""]);
+    const push = t=> rows.push([epic.name,f.id,f.name,t.id,t.task,t.desc||'',t.dep||'',t.src||'',clarityLabel[t.c]||t.c,t.note||'']);
+    f.tasks.forEach(t=>{ push(t); if(t.subs) t.subs.forEach(s=>push(s)); });
+  });
+  const finalRows = [rows[0], ...rows.slice(1).filter(r=>visibleIds.has(r[3]))];
+  downloadCsv(finalRows, `ncbs-${currentEpicId}-breakdown-${new Date().toISOString().slice(0,10)}.csv`);
+}
+function downloadCsv(rows, filename){
+  const csv = rows.map(r=>r.map(csvEscape).join(",")).join("\r\n");
+  const blob = new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+// ============================================================================
+// Overview view
+// ============================================================================
+function renderOverview(){
+  const root = document.getElementById('viewOverview');
+  const ids = epicIds();
+  let totalFeatures=0, totalTasks=0; const totals = { green:0, yellow:0, red:0 };
+  const rows = ids.map(id=>{
+    const e = allEpics()[id];
+    const t = epicTally(e);
+    const n = t.green+t.yellow+t.red;
+    totalFeatures += e.features.length; totalTasks += n;
+    totals.green+=t.green; totals.yellow+=t.yellow; totals.red+=t.red;
+    return { id, e, t, n, riskPct: n? (t.yellow+t.red)/n : 0 };
+  }).sort((a,b)=> b.riskPct - a.riskPct);
+
+  const pct = (n,d)=> d? Math.round(n/d*100) : 0;
+
+  root.innerHTML = `
+    <div class="stat-grid">
+      <div class="card stat-card"><div class="num">${ids.length}</div><div class="label">Epics</div></div>
+      <div class="card stat-card"><div class="num">${totalFeatures}</div><div class="label">Features</div></div>
+      <div class="card stat-card"><div class="num">${totalTasks}</div><div class="label">Tasks ทั้งหมด</div></div>
+      <div class="card stat-card green"><div class="num">${pct(totals.green,totalTasks)}%</div><div class="label">พร้อม dev (${totals.green})</div></div>
+      <div class="card stat-card red"><div class="num">${pct(totals.red,totalTasks)}%</div><div class="label">ยังเป็นแค่ proposed (${totals.red})</div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px;">
+      <h3 style="padding:16px 20px 0; margin:0; font-size:14px;">Epic Readiness — เรียงจาก "เสี่ยงสุด" (yellow+red มากสุด) ไปหา "พร้อมสุด"</h3>
+      <div class="hint" style="padding:0 20px; margin:4px 0 10px; color:var(--ink-faint); font-size:11.8px;">คลิกแถวเพื่อเปิด epic นั้น — ใช้ดูว่า gap กระจุกอยู่ที่ไหนของโครงการ</div>
+      <div id="heatmapRows"></div>
+    </div>
+
+    <div class="card flags-panel panel">
+      <h3>Cross-epic Flags <span class="mono" style="font-size:10px; border:1px solid var(--border); padding:1px 6px; border-radius:4px; color:var(--ink-faint); font-weight:500;">กระทบมากกว่า 1 epic</span></h3>
+      <div class="hint">ประเด็นเหล่านี้ควร escalate ระดับโครงการ ไม่ใช่แก้ทีละ epic — แก้ไขได้ที่ data/_cross-epic-flags.js</div>
+      <ol class="flags" id="crossFlagsList"></ol>
+    </div>
+  `;
+
+  const heatmapEl = document.getElementById('heatmapRows');
+  rows.forEach(r=>{
+    const row = document.createElement('div');
+    row.className = 'heatmap-row';
+    const gp = pct(r.t.green, r.n), yp = pct(r.t.yellow, r.n), rp = 100-gp-yp;
+    row.innerHTML = `
+      <div class="ename"><span class="sys-tag">${r.e.system||''}</span><span>${r.e.name}</span></div>
+      <div class="heatmap-bar"><div style="width:${gp}%; background:var(--green);"></div><div style="width:${yp}%; background:var(--amber);"></div><div style="width:${100-gp-yp}%; background:var(--red);"></div></div>
+      <div class="counts">${r.t.green}/${r.t.yellow}/${r.t.red}</div>
+    `;
+    row.addEventListener('click', ()=> openEpic(r.id));
+    heatmapEl.appendChild(row);
+  });
+
+  const crossList = document.getElementById('crossFlagsList');
+  (window.NCBS_CROSS_EPIC_FLAGS||[]).forEach(flag=>{
+    const li = document.createElement('li');
+    li.innerHTML = `<b>${flag.title}</b> — ${flag.detail}` + (flag.epics && flag.epics.length ? `<div class="epic-tags">${flag.epics.map(e=>`<span>${e}</span>`).join('')}</div>` : '');
+    crossList.appendChild(li);
+  });
+  if(!window.NCBS_CROSS_EPIC_FLAGS || window.NCBS_CROSS_EPIC_FLAGS.length===0){
+    crossList.innerHTML = '<li>ยังไม่มีข้อมูล cross-epic flag — เพิ่มได้ที่ data/_cross-epic-flags.js</li>';
+  }
+}
+
+// ============================================================================
+// Timeline & Planning
+// ============================================================================
+const PLAN_STORAGE_KEY = 'ncbs-planning-v1';
+let planState = { projectStart:'', targetEnd:'', tasks:{} }; // tasks[key] = { seq, manday:{role:val}, }
+
+function loadPlanState(){
+  return fetch('data/planning-state.json').then(r=>{
+    if(!r.ok) throw new Error('no file');
+    return r.json();
+  }).catch(()=>{
+    try{ const raw = localStorage.getItem(PLAN_STORAGE_KEY); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
+  }).then(data=>{
+    if(data) planState = Object.assign({projectStart:'',targetEnd:'',tasks:{}}, data);
+  });
+}
+function savePlanState(){
+  try{ localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(planState)); }catch(e){}
+}
+function getTaskPlan(key){
+  if(!planState.tasks[key]) planState.tasks[key] = { seq:0, manday:Object.fromEntries(ROLES.map(r=>[r.key,0])) };
+  return planState.tasks[key];
+}
+
+function isWeekend(d){ const day=d.getDay(); return day===0||day===6; }
+function nextBusinessDay(d){ const r=new Date(d); while(isWeekend(r)) r.setDate(r.getDate()+1); return r; }
+function addBusinessDays(start, days){
+  let d = new Date(start); let added=0;
+  while(added<days){ d.setDate(d.getDate()+1); if(!isWeekend(d)) added++; }
+  return d;
+}
+function fmtDate(d){ if(!d) return '–'; return d.toLocaleDateString('th-TH',{ year:'numeric', month:'short', day:'numeric' }); }
+
+function computeSchedule(){
+  const flat = flattenAllTasks().map(x=>{
+    const p = getTaskPlan(x.key);
+    return Object.assign({}, x, { plan:p });
+  });
+  flat.sort((a,b)=> (a.plan.seq||0) - (b.plan.seq||0));
+
+  const start = planState.projectStart ? nextBusinessDay(new Date(planState.projectStart)) : null;
+  let cursor = start;
+  flat.forEach(x=>{
+    const manday = Object.values(x.plan.manday||{});
+    const duration = Math.ceil(Math.max(0, ...manday, 0));
+    if(!cursor){ x.scheduledStart=null; x.scheduledEnd=null; x.duration=duration; return; }
+    x.scheduledStart = new Date(cursor);
+    x.scheduledEnd = duration>0 ? addBusinessDays(cursor, duration) : new Date(cursor);
+    x.duration = duration;
+    if(duration>0) cursor = x.scheduledEnd;
+  });
+  return { flat, projectEnd: cursor };
+}
+
+function renderTimeline(){
+  const root = document.getElementById('viewTimeline');
+  root.innerHTML = `
+    <div class="card" style="margin-bottom:18px;">
+      <div class="project-config">
+        <div class="field"><label>Project Start Date</label><input type="date" id="projectStart"></div>
+        <div class="field"><label>Target End Date (ไม่บังคับ)</label><input type="date" id="targetEnd"></div>
+        <div class="field"><label>คำนวณ End Date ได้</label><div class="field-readout" id="computedEnd">–</div></div>
+        <div class="field"><label>&nbsp;</label><div id="varianceReadout" class="field-readout"></div></div>
+        <div style="flex:1"></div>
+        <button class="btn" id="exportPlanJson">⇩ Export planning (JSON)</button>
+        <button class="btn" id="importPlanJsonBtn">⇧ Import planning (JSON)</button>
+        <input type="file" id="importPlanJson" accept=".json" style="display:none;">
+        <button class="btn" id="exportTimelineCsv">⇩ Export timeline (CSV)</button>
+      </div>
+      <div class="workload-strip" id="workloadStrip"></div>
+    </div>
+
+    <div class="card" style="margin-bottom:18px;">
+      <h3 style="padding:16px 20px 0; margin:0; font-size:14px;">Gantt overview (ระดับ Feature)</h3>
+      <div class="timeline-hint">Duration ต่อ task = manday สูงสุดในบรรดา 7 role (สมมติทำงานคู่ขนานภายใน task เดียว) เรียงตาม seq ต่อเนื่องกันแบบวันทำการ (เว้นเสาร์-อาทิตย์) — เป็น model แบบง่ายสำหรับวางแผนคร่าวๆ ไม่ใช่ critical-path engine เต็มรูปแบบ</div>
+      <div class="gantt-wrap" id="ganttWrap"></div>
+    </div>
+
+    <div class="card">
+      <div class="timeline-toolbar">
+        <div class="search-wrap"><input id="planSearch" type="text" placeholder="ค้นหา task…"></div>
+        <button class="btn ghost-dashed" id="collapseAllPlan">ยุบ/ขยายทั้งหมด</button>
+      </div>
+      <div class="timeline-hint">ใส่ manday เฉพาะ role ที่เกี่ยวข้อง (ที่เหลือปล่อย 0) · ลำดับ (Seq) แก้ได้เพื่อจัดคิวใหม่ · ข้อมูลบันทึกอัตโนมัติในเบราว์เซอร์นี้</div>
+      <div class="feature-body" id="planTableWrap"></div>
+    </div>
+  `;
+
+  document.getElementById('projectStart').value = planState.projectStart || '';
+  document.getElementById('targetEnd').value = planState.targetEnd || '';
+
+  document.getElementById('projectStart').addEventListener('change', e=>{ planState.projectStart=e.target.value; savePlanState(); renderTimelineBody(); });
+  document.getElementById('targetEnd').addEventListener('change', e=>{ planState.targetEnd=e.target.value; savePlanState(); renderTimelineBody(); });
+  document.getElementById('exportPlanJson').addEventListener('click', ()=>{
+    const blob = new Blob([JSON.stringify(planState,null,2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob); const a=document.createElement('a');
+    a.href=url; a.download='planning-state.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  });
+  document.getElementById('importPlanJsonBtn').addEventListener('click', ()=> document.getElementById('importPlanJson').click());
+  document.getElementById('importPlanJson').addEventListener('change', e=>{
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ev=>{
+      try{ planState = JSON.parse(ev.target.result); savePlanState(); renderTimeline(); }
+      catch(err){ alert('ไฟล์ JSON ไม่ถูกต้อง'); }
     };
-    f.tasks.forEach(t=>{
-      pushTask(t);
-      if(t.subs) t.subs.forEach(s=>pushTask(s));
+    reader.readAsText(file);
+  });
+  document.getElementById('exportTimelineCsv').addEventListener('click', exportTimelineCsv);
+  document.getElementById('planSearch').addEventListener('input', filterPlanTable);
+  document.getElementById('collapseAllPlan').addEventListener('click', ()=>{
+    const heads = document.querySelectorAll('#planTableWrap .feature-head');
+    const shouldCollapse = ![...heads].every(h=>h.classList.contains('collapsed'));
+    heads.forEach(h=>{ if(h.classList.contains('collapsed')!==shouldCollapse) h.click(); });
+  });
+
+  renderTimelineBody();
+}
+
+function renderTimelineBody(){
+  const { flat, projectEnd } = computeSchedule();
+  document.getElementById('computedEnd').innerHTML = projectEnd ? `<b>${fmtDate(projectEnd)}</b>` : 'กำหนด Start Date ก่อน';
+
+  const varEl = document.getElementById('varianceReadout');
+  if(planState.targetEnd && projectEnd){
+    const target = new Date(planState.targetEnd);
+    const diffDays = Math.round((target-projectEnd)/86400000);
+    varEl.innerHTML = diffDays>=0
+      ? `<span class="variance-ok">เหลือ buffer ~${diffDays} วัน</span>`
+      : `<span class="variance-bad">เกินเป้า ~${Math.abs(diffDays)} วัน</span>`;
+  } else varEl.textContent = '';
+
+  // workload strip
+  const totals = Object.fromEntries(ROLES.map(r=>[r.key,0]));
+  flat.forEach(x=> ROLES.forEach(r=> totals[r.key] += Number(x.plan.manday[r.key]||0)));
+  document.getElementById('workloadStrip').innerHTML = ROLES.map((r,i)=>`
+    <div class="workload-seg"><div class="role">${r.label}</div><div class="val" style="color:${ROLE_COLORS[i]}">${totals[r.key]||0}</div></div>
+  `).join('');
+
+  // gantt (feature-level aggregation)
+  const featureMap = {};
+  flat.forEach(x=>{
+    const fkey = `${x.epicId}::${x.featureId}`;
+    if(!featureMap[fkey]) featureMap[fkey] = { epicName:x.epicName, featureName:x.featureName, start:null, end:null, clarity:{green:0,yellow:0,red:0} };
+    const fm = featureMap[fkey];
+    fm.clarity[x.task.c]++;
+    if(x.scheduledStart && (!fm.start || x.scheduledStart < fm.start)) fm.start = x.scheduledStart;
+    if(x.scheduledEnd && (!fm.end || x.scheduledEnd > fm.end)) fm.end = x.scheduledEnd;
+  });
+  const ganttEl = document.getElementById('ganttWrap');
+  const allDates = Object.values(featureMap).filter(f=>f.start&&f.end);
+  if(allDates.length===0 || !planState.projectStart){
+    ganttEl.innerHTML = '<div class="timeline-hint">กำหนด Project Start Date และใส่ manday อย่างน้อย 1 task เพื่อดู Gantt chart</div>';
+  } else {
+    const minD = new Date(Math.min(...allDates.map(f=>f.start)));
+    const maxD = new Date(Math.max(...allDates.map(f=>f.end)));
+    const totalSpan = Math.max(1, (maxD-minD)/86400000);
+    ganttEl.innerHTML = Object.values(featureMap).map(f=>{
+      if(!f.start||!f.end) return '';
+      const left = ((f.start-minD)/86400000)/totalSpan*100;
+      const width = Math.max(0.6, ((f.end-f.start)/86400000)/totalSpan*100);
+      const dominant = f.clarity.red ? 'var(--red)' : (f.clarity.yellow ? 'var(--amber)' : 'var(--green)');
+      return `<div class="gantt-row">
+        <div class="gantt-label" title="${f.epicName} — ${f.featureName}">${f.featureName}</div>
+        <div class="gantt-track"><div class="gantt-bar" style="left:${left}%; width:${width}%; background:${dominant};" title="${fmtDate(f.start)} → ${fmtDate(f.end)}"></div></div>
+      </div>`;
+    }).join('');
+  }
+
+  // task table, grouped by epic (accordion, matches epic-view visual language)
+  const wrap = document.getElementById('planTableWrap');
+  wrap.innerHTML = '';
+  const byEpic = {};
+  flat.forEach(x=>{ (byEpic[x.epicId] = byEpic[x.epicId]||[]).push(x); });
+
+  Object.keys(byEpic).forEach(epicId=>{
+    const epic = allEpics()[epicId];
+    const items = byEpic[epicId];
+    const section = document.createElement('section');
+    section.className = 'feature card'; section.style.marginBottom='10px';
+    const rowsHtml = items.map(x=>{
+      const roleInputs = ROLES.map(r=>`<td><input type="number" min="0" step="0.5" value="${x.plan.manday[r.key]||0}" data-key="${x.key}" data-role="${r.key}"></td>`).join('');
+      const total = Object.values(x.plan.manday).reduce((a,b)=>a+Number(b||0),0);
+      return `<tr data-searchtext="${(x.task.task+' '+x.featureName).toLowerCase()}">
+        <td><input type="number" class="seq-input" value="${x.plan.seq||0}" data-key="${x.key}" data-field="seq"></td>
+        <td class="task-cell mono" style="font-weight:600;">${x.task.id}</td>
+        <td class="task-cell">${x.task.task}</td>
+        ${roleInputs}
+        <td class="total">${total}</td>
+        <td class="dates">${x.scheduledStart?fmtDate(x.scheduledStart):'–'}<br>→ ${x.scheduledEnd?fmtDate(x.scheduledEnd):'–'}</td>
+      </tr>`;
+    }).join('');
+    section.innerHTML = `
+      <div class="feature-head" data-target="plan-${epicId}"><span class="fnum">${epic.system||''}</span><h3>${epic.name}</h3><span class="caret">▾</span></div>
+      <div class="feature-body" id="plan-${epicId}-body">
+        <table class="plan-table">
+          <thead><tr><th>Seq</th><th class="task-cell">ID</th><th class="task-cell">Task</th>${ROLES.map(r=>`<th>${r.label}</th>`).join('')}<th>รวม</th><th>วันที่</th></tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>`;
+    wrap.appendChild(section);
+  });
+
+  wrap.querySelectorAll('input[type=number]').forEach(inp=>{
+    inp.addEventListener('change', e=>{
+      const key = e.target.dataset.key;
+      const p = getTaskPlan(key);
+      if(e.target.dataset.field==='seq') p.seq = Number(e.target.value)||0;
+      else p.manday[e.target.dataset.role] = Number(e.target.value)||0;
+      savePlanState();
+      renderTimelineBody();
     });
   });
-  return rows;
+  wrap.querySelectorAll('.feature-head').forEach(head=>{
+    head.addEventListener('click', ()=>{
+      const body = document.getElementById(head.dataset.target+'-body') || head.parentElement.querySelector('.feature-body');
+      const collapsed = head.classList.toggle('collapsed');
+      body.style.display = collapsed ? 'none' : '';
+    });
+  });
 }
 
-function exportCsv(){
-  const visibleIds = new Set();
-  document.querySelectorAll('table tbody tr:not(.dim)').forEach(row=>{
-    visibleIds.add(row.querySelector('.id').textContent.trim());
+function filterPlanTable(){
+  const q = document.getElementById('planSearch').value.trim().toLowerCase();
+  document.querySelectorAll('#planTableWrap tbody tr').forEach(row=>{
+    row.style.display = (!q || row.dataset.searchtext.includes(q)) ? '' : 'none';
   });
-  const allRows = buildCsvRows();
-  const header = allRows[0];
-  const dataRows = allRows.slice(1).filter(r => visibleIds.has(r[3]));
-  const finalRows = [header, ...dataRows];
-
-  const csvContent = finalRows.map(r => r.map(csvEscape).join(",")).join("\r\n");
-  const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  const dstamp = new Date().toISOString().slice(0,10);
-  a.href = url;
-  a.download = `ncbs-${currentEpicId}-breakdown-${dstamp}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
 }
 
-document.getElementById('exportCsv').addEventListener('click', exportCsv);
+function exportTimelineCsv(){
+  const { flat } = computeSchedule();
+  const header = ["Epic","Feature","Task ID","Task", ...ROLES.map(r=>r.label), "Total Manday","Start","End"];
+  const rows = [header, ...flat.map(x=>[
+    x.epicName, x.featureName, x.task.id, x.task.task,
+    ...ROLES.map(r=>x.plan.manday[r.key]||0),
+    Object.values(x.plan.manday).reduce((a,b)=>a+Number(b||0),0),
+    x.scheduledStart?fmtDate(x.scheduledStart):'', x.scheduledEnd?fmtDate(x.scheduledEnd):''
+  ])];
+  downloadCsv(rows, `ncbs-timeline-${new Date().toISOString().slice(0,10)}.csv`);
+}
 
-let allCollapsed = false;
-document.getElementById('toggleAll').addEventListener('click', ()=>{
-  allCollapsed = !allCollapsed;
-  document.querySelectorAll('.feature-head').forEach(head=>{
-    const isCollapsed = head.classList.contains('collapsed');
-    if(isCollapsed !== allCollapsed) head.click();
-  });
+// ============================================================================
+// Boot — โหลด data file ทั้งหมดตาม data/manifest.json ก่อน แล้วค่อย build UI
+// ============================================================================
+function loadEpicScripts(){
+  return fetch('data/manifest.json')
+    .then(r=>{ if(!r.ok) throw new Error('manifest.json not found'); return r.json(); })
+    .then(files=> Promise.all(files.map(f=> new Promise(resolve=>{
+      const s = document.createElement('script');
+      s.src = 'data/' + f;
+      s.onload = resolve;
+      s.onerror = ()=>{ console.warn('โหลดไม่สำเร็จ:', f); resolve(); };
+      document.body.appendChild(s);
+    }))))
+    .catch(err=>{ console.warn('อ่าน data/manifest.json ไม่สำเร็จ — ตรวจว่ามีไฟล์นี้อยู่ใน data/ และรัน update-manifest.sh แล้วหรือยัง', err); });
+}
+
+loadEpicScripts().then(loadPlanState).then(()=>{
+  buildSidebar();
+  switchView('overview');
 });
 
-// ---------- boot ----------
-buildEpicTabs();
-const firstEpicId = Object.keys(window.NCBS_EPICS || {})[0];
-if(firstEpicId) switchEpic(firstEpicId);
 </script>
 </body>
 </html>
