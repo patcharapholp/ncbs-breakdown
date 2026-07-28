@@ -267,6 +267,17 @@
   .workload-seg{ flex:1; text-align:center; padding:10px 4px; border-radius:var(--radius-sm); background:var(--surface-sunk); }
   .workload-seg .role{ font-size:10px; color:var(--ink-faint); font-weight:600; }
   .workload-seg .val{ font-family:'IBM Plex Mono'; font-size:15px; font-weight:700; margin-top:2px; }
+  .workload-seg.workload-total{ background:var(--primary-bg); flex:1.15; }
+  .workload-seg.workload-total .role{ color:var(--primary); font-weight:700; }
+  .workload-seg.workload-total .val{ color:var(--primary); font-size:16px; }
+
+  .epic-workload-strip{ display:flex; flex-wrap:wrap; gap:8px; padding:0 20px 18px; }
+  .epic-workload-chip{
+    display:flex; align-items:center; gap:7px; padding:7px 11px; border-radius:8px;
+    background:var(--surface-sunk); border:1px solid var(--border); font-size:11.5px;
+  }
+  .epic-workload-chip .ewc-name{ max-width:170px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:600; }
+  .epic-workload-chip .ewc-val{ font-family:'IBM Plex Mono'; font-weight:700; color:var(--primary); flex-shrink:0; }
 
   .og-scroll{ overflow-x:auto; overflow-y:visible; }
   .timeline-toolbar{ display:flex; gap:8px; align-items:center; padding:14px 20px 0; flex-wrap:wrap; }
@@ -874,7 +885,12 @@ function addBusinessDays(start, days){
   while(added<days){ d.setDate(d.getDate()+1); if(!isWeekend(d)) added++; }
   return d;
 }
-function fmtDate(d){ if(!d) return '–'; return d.toLocaleDateString('th-TH',{ year:'numeric', month:'short', day:'numeric' }); }
+function fmtDate(d){
+  if(!d) return '–';
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  return `${mm}/${dd}/${d.getFullYear()}`; // Gregorian MM/DD/YYYY — ให้ตรงกับ format ของ <input type="date"> ด้านบน
+}
 
 function keyEpic(epicId){ return `E::${epicId}`; }
 function keyFeature(epicId, featureId){ return `F::${epicId}::${featureId}`; }
@@ -1023,6 +1039,8 @@ function renderTimeline(){
       </div>
       <div class="timeline-hint" style="padding-top:6px;">Mock estimate เดาจาก keyword ใน task/description + clarity (🟢🟡🔴) — เป็นตัวเลขตั้งต้น ไม่ใช่ estimate จริง ควรให้ Tech Lead/Dev ยืนยันก่อน commit sprint จริง</div>
       <div class="workload-strip" id="workloadStrip"></div>
+      <div class="timeline-hint" style="padding-bottom:6px;">รวม manday ต่อ Epic (ทุก role รวมกัน) — เรียงจากมากไปน้อย</div>
+      <div class="epic-workload-strip" id="epicWorkloadStrip"></div>
     </div>
 
     <div class="card">
@@ -1102,10 +1120,34 @@ function renderOutlineGantt(){
   } else varEl.textContent = '';
 
   const totals = Object.fromEntries(ROLES.map(r=>[r.key,0]));
-  Object.values(scheduleMap).forEach(s=> ROLES.forEach(r=> totals[r.key] += Number(s.plan.manday[r.key]||0)));
+  const epicTotals = {}; // epicId -> total manday across all roles/tasks
+  Object.entries(scheduleMap).forEach(([key, s])=>{
+    ROLES.forEach(r=> totals[r.key] += Number(s.plan.manday[r.key]||0));
+    const epicId = key.slice(0, key.indexOf('::')===-1 ? key.length : key.indexOf('::'));
+    const rowTotal = Object.values(s.plan.manday).reduce((a,b)=>a+Number(b||0),0);
+    epicTotals[epicId] = (epicTotals[epicId]||0) + rowTotal;
+  });
+  const grandTotal = Object.values(totals).reduce((a,b)=>a+b,0);
+
   document.getElementById('workloadStrip').innerHTML = ROLES.map((r,i)=>`
     <div class="workload-seg"><div class="role">${r.label}</div><div class="val" style="color:${ROLE_COLORS[i]}">${totals[r.key]||0}</div></div>
-  `).join('');
+  `).join('') + `
+    <div class="workload-seg workload-total"><div class="role">รวมทั้งหมด</div><div class="val">${grandTotal}</div></div>
+  `;
+
+  const epicWorkloadEl = document.getElementById('epicWorkloadStrip');
+  if(epicWorkloadEl){
+    const rows = tree
+      .map(epicNode=>({ name: epicNode.data.name, system: epicNode.data.system||'', total: epicTotals[epicNode.epicId]||0 }))
+      .sort((a,b)=> b.total-a.total);
+    epicWorkloadEl.innerHTML = rows.map(r=>`
+      <div class="epic-workload-chip" title="${r.name}">
+        <span class="og-sys">${r.system}</span>
+        <span class="ewc-name">${r.name}</span>
+        <span class="ewc-val">${r.total}d</span>
+      </div>
+    `).join('');
+  }
 
   const projStart = planState.projectStart ? nextBusinessDay(new Date(planState.projectStart)) : null;
   const overallEnd = projectEnd;
