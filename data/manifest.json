@@ -1,1 +1,25 @@
-["credit-transfer.js", "_cross-epic-flags.js"]
+[
+  "_cross-epic-flags.js",
+  "api-management.js",
+  "blockchain-credential.js",
+  "blocked-integrations.js",
+  "credit-transfer.js",
+  "dashboards.js",
+  "data-ingestion.js",
+  "data-service-foundation.js",
+  "grade-credit-management.js",
+  "identity-auth.js",
+  "institution-structure.js",
+  "landing-cms-recommendation.js",
+  "learner-identity-linking.js",
+  "learner-profile-portfolio.js",
+  "lms-integration.js",
+  "notification-service.js",
+  "pdpa-compliance.js",
+  "result-upload-integration.js",
+  "role-access-management.js",
+  "skill-matrix.js",
+  "strategic-gaps.js",
+  "university-payment-whitelabel.js",
+  "user-management.js"
+]
