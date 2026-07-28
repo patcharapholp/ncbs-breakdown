@@ -2,7 +2,7 @@
 // แก้ไขไฟล์นี้เพื่ออัปเดต task breakdown (Claude Code แก้ตรงนี้ได้โดยตรง)
 // โครงสร้าง: epicDeps / features[].tasks[].subs / priority / flags
 
-const DATA = {
+const CREDIT_TRANSFER_DATA = {
   epicDeps: [
     { name:"Identity & Auth (ThaID e-KYC, Officer/Admin login)", why:"Learner ต้อง login ก่อนยื่นคำร้อง, Officer ต้อง login ก่อน review", blocker:false },
     { name:"Institution Structure & Master Data (course/curriculum/CLO)", why:"Matching Engine ต้องมี course spec ปลายทางถึงจะคำนวณได้", blocker:false },
@@ -135,4 +135,19 @@ const DATA = {
     "<b>Evidence file storage (1.7)</b> — ไม่มีสเปค storage backend ที่ไหนเลยในทั้ง wiki (ปัญหาข้าม epic — Foundation gap)",
     "<b>สถานะ SRS จริง</b> — SCR-006/008/009/010/013 ทั้งหมดยังเป็น draft delta ในวิกิ ไม่เคยถูก merge เข้า SRS ฉบับจริง — ควรมี BA/PO sign-off ก่อน ไม่ใช่แค่ wiki draft",
   ]
+};
+
+
+// ---------- register into multi-epic registry ----------
+window.NCBS_EPICS = window.NCBS_EPICS || {};
+window.NCBS_EPICS['credit-transfer'] = {
+  id: 'credit-transfer',
+  system: 'CTP',
+  name: 'Credit Transfer',
+  thaiName: 'การเทียบโอนหน่วยกิต',
+  status: 'Data/Service Foundation เริ่มพัฒนาบางส่วน · business logic ยังไม่เริ่มพัฒนาเต็มรูปแบบ',
+  epicDeps: CREDIT_TRANSFER_DATA.epicDeps,
+  features: CREDIT_TRANSFER_DATA.features,
+  priority: CREDIT_TRANSFER_DATA.priority,
+  flags: CREDIT_TRANSFER_DATA.flags,
 };

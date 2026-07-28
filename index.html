@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NCBS Breakdown Ledger — Credit Transfer</title>
+<title>NCBS Breakdown Ledger</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -69,7 +69,21 @@
   .ledger-folio{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-faint); text-align:right; line-height:1.5;}
   .ledger-folio b{ color:var(--ink); font-size:13px; }
 
-  .controls{ display:flex; align-items:center; gap:10px; margin-top:14px; flex-wrap:wrap; }
+  .epic-tabs{ display:flex; align-items:center; gap:6px; margin-top:14px; flex-wrap:wrap; }
+  .epic-tab{
+    font-size:12.8px; font-weight:600; padding:7px 14px; border-radius:2px 2px 0 0;
+    border:1.5px solid var(--rule-strong); border-bottom:none; background:var(--paper-deep);
+    color:var(--ink-soft); cursor:pointer; position:relative; top:1px; user-select:none;
+    display:flex; align-items:center; gap:7px; transition:.12s ease;
+  }
+  .epic-tab:hover{ background:var(--paper-card); color:var(--ink); }
+  .epic-tab.current{ background:var(--paper-card); color:var(--ink); border-bottom:1.5px solid var(--paper-card); }
+  .epic-tab .sys{ font-family:'JetBrains Mono'; font-size:9.5px; color:var(--ink-faint); border:1px solid var(--rule-strong); padding:1px 5px; border-radius:8px; }
+  .epic-tab .status-dots{ display:flex; gap:2px; }
+  .epic-tab .status-dots i{ width:5px; height:5px; border-radius:50%; display:block; }
+  .epic-tab-empty{ font-size:12px; color:var(--ink-faint); padding:8px 4px; }
+
+  .controls{ display:flex; align-items:center; gap:10px; margin-top:14px; flex-wrap:wrap; border-top:1px solid var(--rule); padding-top:12px; }
   .search-wrap{ position:relative; flex:1; min-width:220px; max-width:360px; }
   .search-wrap input{
     width:100%; padding:8px 12px 8px 30px; border:1.5px solid var(--rule-strong); border-radius:2px;
@@ -236,15 +250,16 @@
   <div class="header-top">
     <div class="brand">
       <div>
-        <h1>NCBS Breakdown Ledger<span class="thai">บันทึกแตกงาน — โครงการเทียบโอนหน่วยกิต (Credit Transfer)</span></h1>
-        <div class="subtitle">สถานะปัจจุบัน: Data/Service Foundation เริ่มพัฒนาบางส่วน · business logic ยังไม่เริ่มพัฒนาเต็มรูปแบบ · เอกสารนี้ synthesize จาก ncbs-wiki (ไม่ผูกกับ commit ของ wiki)</div>
+        <h1>NCBS Breakdown Ledger<span class="thai" id="epicSubtitle">บันทึกแตกงาน</span></h1>
+        <div class="subtitle" id="epicStatus">กำลังโหลดข้อมูล…</div>
       </div>
     </div>
     <div class="ledger-folio">
-      Epic <b>Credit Transfer</b><br>
-      7 Features · <span id="totalTaskCount">–</span> tasks
+      Epic <b id="folioEpicName">–</b><br>
+      <span id="folioFeatureCount">–</span> Features · <span id="totalTaskCount">–</span> tasks
     </div>
   </div>
+  <div class="epic-tabs" id="epicTabs"></div>
   <div class="controls">
     <div class="search-wrap"><input id="searchBox" type="text" placeholder="ค้นหา task, source, dependency…"></div>
     <div class="chip active" data-c="all">ทั้งหมด <span class="chip-count" id="cnt-all"></span></div>
@@ -289,10 +304,33 @@
 
 <footer>ncbs-breakdown · prototype dashboard · ข้อมูล derive จาก ncbs-wiki ผ่าน Claude Code session (auto mode) · ไม่ commit กลับ wiki repo</footer>
 
+<!-- โหลด data file ของแต่ละ epic ตรงนี้ — เพิ่มบรรทัดใหม่เวลามี epic เพิ่ม ไม่ต้องแก้ JS ด้านล่างเลย -->
 <script src="data/credit-transfer.js"></script>
+<script src="data/api-management.js"></script>
+<script src="data/blockchain-credential.js"></script>
+<script src="data/blocked-integrations.js"></script>
+<script src="data/dashboards.js"></script>
+<script src="data/data-ingestion.js"></script>
+<script src="data/data-service-foundation.js"></script>
+<script src="data/grade-credit-management.js"></script>
+<script src="data/identity-auth.js"></script>
+<script src="data/institution-structure.js"></script>
+<script src="data/landing-cms-recommendation.js"></script>
+<script src="data/learner-identity-linking.js"></script>
+<script src="data/learner-profile-portfolio.js"></script>
+<script src="data/lms-integration.js"></script>
+<script src="data/notification-service.js"></script>
+<script src="data/pdpa-compliance.js"></script>
+<script src="data/result-upload-integration.js"></script>
+<script src="data/role-access-management.js"></script>
+<script src="data/skill-matrix.js"></script>
+<script src="data/strategic-gaps.js"></script>
+<script src="data/university-payment-whitelabel.js"></script>
+<script src="data/user-management.js"></script>
+
 <script>
 
-// ---------- render ----------
+// ---------- shared helpers ----------
 const clarityLabel = { green:"พร้อม dev", yellow:"ต้องเช็คก่อน confirm", red:"ยังเป็นแค่ proposed / block" };
 
 function stamp(c, note){
@@ -310,95 +348,155 @@ function taskRow(t, isSub){
   </tr>`;
 }
 
-let totalTasks = 0;
-const counts = { green:0, yellow:0, red:0 };
-
 function featureTally(f){
   const t = { green:0, yellow:0, red:0 };
   f.tasks.forEach(x=>{ t[x.c]++; if(x.subs) x.subs.forEach(s=>t[s.c]++); });
   return t;
 }
 
-const container = document.getElementById('featureContainer');
-const railList = document.getElementById('railList');
+const container   = document.getElementById('featureContainer');
+const railList    = document.getElementById('railList');
+const epicDepsEl  = document.getElementById('epicDeps');
+const priorityList= document.getElementById('priorityList');
+const flagsList   = document.getElementById('flagsList');
+const epicTabsEl  = document.getElementById('epicTabs');
+const searchBox   = document.getElementById('searchBox');
 
-DATA.features.forEach((f, idx)=>{
-  const tally = featureTally(f);
-  totalTasks += tally.green + tally.yellow + tally.red;
-  counts.green += tally.green; counts.yellow += tally.yellow; counts.red += tally.red;
+let activeFilters = new Set(['green','yellow','red']);
+let currentEpicId = null;
 
-  let rows = '';
-  f.tasks.forEach(t=>{
-    rows += taskRow(t,false);
-    if(t.subs) t.subs.forEach(s=> rows += taskRow(s,true));
+// ---------- epic tab bar (built once from whatever data files were loaded) ----------
+function buildEpicTabs(){
+  const ids = Object.keys(window.NCBS_EPICS || {});
+  epicTabsEl.innerHTML = '';
+  if(ids.length === 0){
+    epicTabsEl.innerHTML = '<div class="epic-tab-empty">ไม่พบข้อมูล epic — ตรวจว่ามี &lt;script src="data/…js"&gt; ใน index.html หรือยัง</div>';
+    return;
+  }
+  ids.forEach(id=>{
+    const epic = window.NCBS_EPICS[id];
+    const t = { green:0, yellow:0, red:0 };
+    epic.features.forEach(f=>{
+      const ft = featureTally(f);
+      t.green+=ft.green; t.yellow+=ft.yellow; t.red+=ft.red;
+    });
+    const tab = document.createElement('div');
+    tab.className = 'epic-tab';
+    tab.dataset.epic = id;
+    tab.innerHTML = `<span class="sys">${epic.system||''}</span><span>${epic.name}</span>
+      <span class="status-dots">
+        ${t.green ? '<i style="background:var(--green)"></i>' : ''}
+        ${t.yellow ? '<i style="background:var(--amber)"></i>' : ''}
+        ${t.red ? '<i style="background:var(--red)"></i>' : ''}
+      </span>`;
+    tab.addEventListener('click', ()=> switchEpic(id));
+    epicTabsEl.appendChild(tab);
+  });
+}
+
+function switchEpic(id){
+  currentEpicId = id;
+  document.querySelectorAll('.epic-tab').forEach(t=> t.classList.toggle('current', t.dataset.epic === id));
+  // reset search + clarity filters when switching epic — cleaner starting point each time
+  searchBox.value = '';
+  activeFilters = new Set(['green','yellow','red']);
+  document.querySelectorAll('.chip').forEach(ch=> ch.classList.add('active'));
+  renderEpic(id);
+  window.scrollTo({top:0, behavior:'instant'});
+}
+
+// ---------- render a single epic into the page ----------
+function renderEpic(id){
+  const epic = window.NCBS_EPICS[id];
+  if(!epic) return;
+
+  container.innerHTML = '';
+  railList.innerHTML = '';
+  epicDepsEl.innerHTML = '';
+  priorityList.innerHTML = '';
+  flagsList.innerHTML = '';
+
+  document.getElementById('epicSubtitle').textContent = `บันทึกแตกงาน — ${epic.thaiName || epic.name}`;
+  document.getElementById('epicStatus').textContent = (epic.status || '') + ' · เอกสารนี้ synthesize จาก ncbs-wiki (ไม่ผูกกับ commit ของ wiki)';
+  document.getElementById('folioEpicName').textContent = epic.name;
+  document.getElementById('folioFeatureCount').textContent = epic.features.length;
+
+  let totalTasks = 0;
+  const counts = { green:0, yellow:0, red:0 };
+
+  epic.features.forEach((f, idx)=>{
+    const tally = featureTally(f);
+    totalTasks += tally.green + tally.yellow + tally.red;
+    counts.green += tally.green; counts.yellow += tally.yellow; counts.red += tally.red;
+
+    let rows = '';
+    f.tasks.forEach(t=>{
+      rows += taskRow(t,false);
+      if(t.subs) t.subs.forEach(s=> rows += taskRow(s,true));
+    });
+
+    const section = document.createElement('section');
+    section.className = 'feature';
+    section.id = f.id;
+    section.innerHTML = `
+      <div class="feature-head" data-target="${f.id}">
+        <span class="fnum">${f.id}</span>
+        <h2>${f.name}</h2>
+        <div class="feature-tally">
+          <span class="tally-green">${tally.green}</span>
+          <span class="tally-yellow">${tally.yellow}</span>
+          <span class="tally-red">${tally.red}</span>
+        </div>
+        <span class="caret">▾</span>
+      </div>
+      ${f.sources && f.sources.length ? `<div class="feature-source"><b>Source หลัก:</b> ${f.sources.join(' · ')}</div>` : ''}
+      ${f.note ? `<div class="feature-note">${f.note}</div>` : ''}
+      <div class="feature-body">
+        <table>
+          <thead><tr><th>#</th><th>Task</th><th>คำอธิบาย</th><th>Dependency</th><th>Source</th><th>Clarity</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `;
+    container.appendChild(section);
+
+    const tabItem = document.createElement('div');
+    tabItem.className = 'tab-item' + (idx===0 ? ' current' : '');
+    tabItem.dataset.target = f.id;
+    tabItem.innerHTML = `<span class="tab-num">${f.id}</span><span>${f.name.split('(')[0].trim()}</span>
+      <span class="tab-status">
+        ${tally.green ? '<i style="background:var(--green)"></i>' : ''}
+        ${tally.yellow ? '<i style="background:var(--amber)"></i>' : ''}
+        ${tally.red ? '<i style="background:var(--red)"></i>' : ''}
+      </span>`;
+    railList.appendChild(tabItem);
   });
 
-  const section = document.createElement('section');
-  section.className = 'feature';
-  section.id = f.id;
-  section.innerHTML = `
-    <div class="feature-head" data-target="${f.id}">
-      <span class="fnum">${f.id}</span>
-      <h2>${f.name}</h2>
-      <div class="feature-tally">
-        <span class="tally-green">${tally.green}</span>
-        <span class="tally-yellow">${tally.yellow}</span>
-        <span class="tally-red">${tally.red}</span>
-      </div>
-      <span class="caret">▾</span>
-    </div>
-    ${f.sources && f.sources.length ? `<div class="feature-source"><b>Source หลัก:</b> ${f.sources.join(' · ')}</div>` : ''}
-    ${f.note ? `<div class="feature-note">${f.note}</div>` : ''}
-    <div class="feature-body">
-      <table>
-        <thead><tr><th>#</th><th>Task</th><th>คำอธิบาย</th><th>Dependency</th><th>Source</th><th>Clarity</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>
-  `;
-  container.appendChild(section);
+  document.getElementById('totalTaskCount').textContent = totalTasks;
+  document.getElementById('cnt-all').textContent = totalTasks;
+  document.getElementById('cnt-green').textContent = counts.green;
+  document.getElementById('cnt-yellow').textContent = counts.yellow;
+  document.getElementById('cnt-red').textContent = counts.red;
 
-  const tabItem = document.createElement('div');
-  tabItem.className = 'tab-item' + (idx===0 ? ' current' : '');
-  tabItem.dataset.target = f.id;
-  tabItem.innerHTML = `<span class="tab-num">${f.id}</span><span>${f.name.split('(')[0].trim()}</span>
-    <span class="tab-status">
-      ${tally.green ? '<i style="background:var(--green)"></i>' : ''}
-      ${tally.yellow ? '<i style="background:var(--amber)"></i>' : ''}
-      ${tally.red ? '<i style="background:var(--red)"></i>' : ''}
-    </span>`;
-  railList.appendChild(tabItem);
-});
+  (epic.epicDeps||[]).forEach(d=>{
+    const row = document.createElement('div');
+    row.className = 'dep-row' + (d.blocker ? ' blocker' : '');
+    row.innerHTML = `<div class="name">${d.name}</div><div>${d.why}</div>`;
+    epicDepsEl.appendChild(row);
+  });
 
-document.getElementById('totalTaskCount').textContent = totalTasks;
-document.getElementById('cnt-all').textContent = totalTasks;
-document.getElementById('cnt-green').textContent = counts.green;
-document.getElementById('cnt-yellow').textContent = counts.yellow;
-document.getElementById('cnt-red').textContent = counts.red;
+  (epic.priority||[]).forEach(p=>{
+    const li = document.createElement('li'); li.innerHTML = p; priorityList.appendChild(li);
+  });
 
-// epic deps
-const epicDepsEl = document.getElementById('epicDeps');
-DATA.epicDeps.forEach(d=>{
-  const row = document.createElement('div');
-  row.className = 'dep-row' + (d.blocker ? ' blocker' : '');
-  row.innerHTML = `<div class="name">${d.name}</div><div>${d.why}</div>`;
-  epicDepsEl.appendChild(row);
-});
+  (epic.flags||[]).forEach(fl=>{
+    const li = document.createElement('li'); li.innerHTML = fl; flagsList.appendChild(li);
+  });
 
-// priority
-const priorityList = document.getElementById('priorityList');
-DATA.priority.forEach(p=>{
-  const li = document.createElement('li'); li.innerHTML = p; priorityList.appendChild(li);
-});
+  applyFilters();
+}
 
-// flags
-const flagsList = document.getElementById('flagsList');
-DATA.flags.forEach(f=>{
-  const li = document.createElement('li'); li.innerHTML = f; flagsList.appendChild(li);
-});
-
-// ---------- interactions ----------
-// collapse/expand feature
+// ---------- interactions (event-delegated, safe across re-renders) ----------
 container.addEventListener('click', (e)=>{
   const head = e.target.closest('.feature-head');
   if(!head) return;
@@ -412,7 +510,6 @@ container.addEventListener('click', (e)=>{
   if(note) note.style.display = collapsed ? 'none' : '';
 });
 
-// rail click -> scroll + collapse/expand nothing, just navigate
 railList.addEventListener('click', (e)=>{
   const item = e.target.closest('.tab-item');
   if(!item) return;
@@ -424,27 +521,22 @@ railList.addEventListener('click', (e)=>{
   target.scrollIntoView({behavior:'smooth', block:'start'});
 });
 
-// filter chips
-const chips = document.querySelectorAll('.chip');
-let activeFilters = new Set(['green','yellow','red']);
-chips.forEach(chip=>{
+document.querySelectorAll('.chip').forEach(chip=>{
   chip.addEventListener('click', ()=>{
     const c = chip.dataset.c;
+    const allChip = document.querySelector('.chip[data-c="all"]');
     if(c === 'all'){
       activeFilters = new Set(['green','yellow','red']);
-      chips.forEach(ch=>ch.classList.add('active'));
+      document.querySelectorAll('.chip').forEach(ch=>ch.classList.add('active'));
     } else {
       if(activeFilters.has(c)){ activeFilters.delete(c); chip.classList.remove('active'); }
       else { activeFilters.add(c); chip.classList.add('active'); }
-      const allChip = document.querySelector('.chip[data-c="all"]');
       if(activeFilters.size === 3) allChip.classList.add('active'); else allChip.classList.remove('active');
     }
     applyFilters();
   });
 });
 
-// search
-const searchBox = document.getElementById('searchBox');
 searchBox.addEventListener('input', applyFilters);
 
 function applyFilters(){
@@ -457,7 +549,6 @@ function applyFilters(){
     row.classList.toggle('dim', !show);
     if(show) anyVisible = true;
   });
-  // hide whole feature section if no visible rows
   document.querySelectorAll('section.feature').forEach(section=>{
     const visibleRows = section.querySelectorAll('table tbody tr:not(.dim)').length;
     section.style.display = visibleRows === 0 ? 'none' : '';
@@ -465,7 +556,7 @@ function applyFilters(){
   document.getElementById('emptyState').style.display = anyVisible ? 'none' : 'block';
 }
 
-// ---------- CSV export (for Google Sheets) ----------
+// ---------- CSV export (for Google Sheets) — exports the currently active epic ----------
 function csvEscape(val){
   const s = (val === undefined || val === null) ? '' : String(val);
   if(/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
@@ -473,22 +564,12 @@ function csvEscape(val){
 }
 
 function buildCsvRows(){
+  const epic = window.NCBS_EPICS[currentEpicId];
   const header = ["Epic","Feature ID","Feature","Task ID","Task","Description","Dependency","Source","Clarity","Clarity Note"];
   const rows = [header];
-  DATA.features.forEach(f=>{
-    const pushTask = (t, parentId) => {
-      rows.push([
-        "Credit Transfer",
-        f.id,
-        f.name,
-        t.id,
-        t.task,
-        t.desc || "",
-        t.dep || "",
-        t.src || "",
-        clarityLabel[t.c] || t.c,
-        t.note || ""
-      ]);
+  epic.features.forEach(f=>{
+    const pushTask = (t) => {
+      rows.push([epic.name, f.id, f.name, t.id, t.task, t.desc||"", t.dep||"", t.src||"", clarityLabel[t.c]||t.c, t.note||""]);
     };
     f.tasks.forEach(t=>{
       pushTask(t);
@@ -499,7 +580,6 @@ function buildCsvRows(){
 }
 
 function exportCsv(){
-  // ใช้ตัวกรอง/คำค้นหาปัจจุบัน — export เฉพาะแถวที่มองเห็นอยู่บนจอ
   const visibleIds = new Set();
   document.querySelectorAll('table tbody tr:not(.dim)').forEach(row=>{
     visibleIds.add(row.querySelector('.id').textContent.trim());
@@ -510,12 +590,12 @@ function exportCsv(){
   const finalRows = [header, ...dataRows];
 
   const csvContent = finalRows.map(r => r.map(csvEscape).join(",")).join("\r\n");
-  const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" }); // BOM เพื่อให้ Excel/Sheets อ่านภาษาไทยถูก
+  const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  const stamp = new Date().toISOString().slice(0,10);
+  const dstamp = new Date().toISOString().slice(0,10);
   a.href = url;
-  a.download = `ncbs-credit-transfer-breakdown-${stamp}.csv`;
+  a.download = `ncbs-${currentEpicId}-breakdown-${dstamp}.csv`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -524,7 +604,6 @@ function exportCsv(){
 
 document.getElementById('exportCsv').addEventListener('click', exportCsv);
 
-// expand/collapse all
 let allCollapsed = false;
 document.getElementById('toggleAll').addEventListener('click', ()=>{
   allCollapsed = !allCollapsed;
@@ -533,6 +612,11 @@ document.getElementById('toggleAll').addEventListener('click', ()=>{
     if(isCollapsed !== allCollapsed) head.click();
   });
 });
+
+// ---------- boot ----------
+buildEpicTabs();
+const firstEpicId = Object.keys(window.NCBS_EPICS || {})[0];
+if(firstEpicId) switchEpic(firstEpicId);
 </script>
 </body>
 </html>
