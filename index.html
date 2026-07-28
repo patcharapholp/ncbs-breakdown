@@ -103,27 +103,53 @@
 
   .auth-screen{
     min-height:100vh; display:flex; align-items:center; justify-content:center;
-    background:var(--bg); padding:24px;
+    padding:24px; position:relative; overflow:hidden; background:#000000;
+  }
+  .auth-screen::before{
+    content:""; position:absolute; inset:-25%; z-index:0;
+    background:
+      radial-gradient(circle at 30% 30%, rgba(10,132,255,.55), transparent 45%),
+      radial-gradient(circle at 72% 22%, rgba(191,90,242,.50), transparent 45%),
+      radial-gradient(circle at 62% 72%, rgba(255,55,95,.42), transparent 45%),
+      radial-gradient(circle at 22% 76%, rgba(255,159,10,.38), transparent 45%),
+      radial-gradient(circle at 50% 50%, rgba(100,210,255,.30), transparent 50%);
+    filter: blur(90px);
+    animation: authGlow 20s ease-in-out infinite alternate;
+  }
+  @keyframes authGlow{
+    0%{ transform: rotate(0deg) scale(1); }
+    100%{ transform: rotate(28deg) scale(1.18); }
   }
   .auth-card{
-    width:100%; max-width:380px; background:var(--surface); border:1px solid var(--border);
-    border-radius:var(--radius); box-shadow:var(--shadow-md); padding:28px 26px;
+    position:relative; z-index:1; width:100%; max-width:400px;
+    background:rgba(22,22,26,0.70); backdrop-filter: blur(26px) saturate(160%); -webkit-backdrop-filter: blur(26px) saturate(160%);
+    border:1px solid rgba(255,255,255,0.12); border-radius:20px;
+    box-shadow: 0 24px 70px rgba(0,0,0,0.6); padding:40px 34px; color:#F5F5F7;
   }
-  .auth-brand{ display:flex; align-items:center; gap:12px; margin-bottom:22px; }
-  .auth-brand .logo{ width:36px; height:36px; border-radius:8px; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px; font-family:'IBM Plex Mono'; flex-shrink:0; }
-  .auth-title{ font-size:16px; font-weight:700; }
-  .auth-sub{ font-size:11.5px; color:var(--ink-faint); margin-top:2px; }
-  .auth-card .field{ margin-bottom:14px; }
+  .auth-brand{ display:flex; flex-direction:column; align-items:center; text-align:center; gap:16px; margin-bottom:30px; }
+  .auth-brand .logo-img{ width:68px; height:68px; object-fit:contain; filter: drop-shadow(0 0 26px rgba(140,120,255,0.55)); }
+  .auth-title{ font-size:22px; font-weight:600; letter-spacing:-0.01em; color:#fff; }
+  .auth-sub{ font-size:12.5px; color:rgba(255,255,255,0.55); margin-top:5px; line-height:1.5; }
+  .auth-card .field{ margin-bottom:16px; }
+  .auth-card .field label{ font-size:10.5px; font-weight:600; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:.05em; display:block; margin-bottom:7px; }
   .auth-card .field input{
-    width:100%; padding:9px 11px; border:1px solid var(--border); border-radius:var(--radius-sm);
-    font-size:13.5px; font-family:inherit; color:var(--ink);
+    width:100%; padding:11px 13px; border:1px solid rgba(255,255,255,0.14); border-radius:11px;
+    font-size:14px; font-family:inherit; color:#fff; background:rgba(255,255,255,0.06);
   }
-  .auth-card .field input:focus{ outline:none; border-color:var(--primary); }
-  .auth-btn{ width:100%; justify-content:center; margin-bottom:8px; padding:10px; font-size:13.5px; }
+  .auth-card .field input::placeholder{ color:rgba(255,255,255,0.32); }
+  .auth-card .field input:focus{ outline:none; border-color:rgba(130,150,255,0.7); background:rgba(255,255,255,0.09); }
+  .auth-btn{
+    width:100%; justify-content:center; margin-bottom:8px; padding:13px; font-size:14px; font-weight:600;
+    border-radius:12px; border:none; cursor:pointer; color:#fff;
+    background:linear-gradient(120deg, #0A84FF, #BF5AF2 55%, #FF375F);
+    transition:filter .15s ease;
+  }
+  .auth-btn:hover{ filter:brightness(1.1); }
   .auth-error{
-    background:var(--red-bg); color:var(--red); font-size:12px; padding:9px 12px; border-radius:var(--radius-sm); margin-bottom:14px;
+    background:rgba(255,55,95,0.15); color:#FF8095; border:1px solid rgba(255,55,95,0.3);
+    font-size:12.5px; padding:10px 13px; border-radius:10px; margin-bottom:16px;
   }
-  .auth-hint{ font-size:11px; color:var(--ink-faint); text-align:center; margin-top:10px; line-height:1.5; }
+  .auth-hint{ font-size:11.5px; color:rgba(255,255,255,0.45); text-align:center; margin-top:16px; line-height:1.6; }
 
   /* ================= SHELL / TOPBAR ================= */
   .shell{ flex:1; min-width:0; display:flex; flex-direction:column; }
@@ -432,19 +458,32 @@
 <div id="authScreen" class="auth-screen">
   <div class="auth-card">
     <div class="auth-brand">
-      <div class="logo">N</div>
+      <img class="logo-img" src="assets/logo.png" alt="NCBS Planning Console">
       <div>
         <div class="auth-title">NCBS Planning Console</div>
         <div class="auth-sub">Workspace ที่ทีมช่วยกันวางแผนร่วมกัน</div>
       </div>
     </div>
     <div id="authError" class="auth-error" hidden></div>
-    <div class="field" id="authNameField"><label>ชื่อที่แสดง (กรอกตอนสมัครใหม่เท่านั้น)</label><input id="authName" type="text" placeholder="เช่น Patcharaphol"></div>
     <div class="field"><label>Email</label><input id="authEmail" type="email" placeholder="you@example.com"></div>
-    <div class="field"><label>Password</label><input id="authPassword" type="password" placeholder="อย่างน้อย 6 ตัวอักษร"></div>
-    <button id="authLoginBtn" class="btn primary auth-btn">เข้าสู่ระบบ</button>
-    <button id="authSignupBtn" class="btn auth-btn">สมัครสมาชิกใหม่</button>
-    <div class="auth-hint">Workspace นี้ใช้ร่วมกันทั้งทีม — ทุกคนที่ login เห็นและแก้ไข Timeline &amp; Planning เดียวกันได้</div>
+    <div class="field"><label>Password</label><input id="authPassword" type="password" placeholder="Password"></div>
+    <button id="authLoginBtn" class="btn auth-btn">เข้าสู่ระบบ</button>
+    <div class="auth-hint">ยังไม่มีบัญชี? ติดต่อผู้ดูแลระบบเพื่อขอสิทธิ์เข้าใช้งาน</div>
+  </div>
+</div>
+
+<div id="nameSetupScreen" class="auth-screen" hidden>
+  <div class="auth-card">
+    <div class="auth-brand">
+      <img class="logo-img" src="assets/logo.png" alt="NCBS Planning Console">
+      <div>
+        <div class="auth-title">ยินดีต้อนรับ 👋</div>
+        <div class="auth-sub">ตั้งชื่อที่แสดงของคุณก่อนเริ่มใช้งาน (ครั้งแรกเท่านั้น)</div>
+      </div>
+    </div>
+    <div id="nameSetupError" class="auth-error" hidden></div>
+    <div class="field"><label>ชื่อที่แสดง</label><input id="setupNameInput" type="text" placeholder="เช่น Patcharaphol"></div>
+    <button id="setupNameBtn" class="btn auth-btn">เริ่มใช้งาน</button>
   </div>
 </div>
 
@@ -1910,17 +1949,16 @@ document.getElementById('authLoginBtn').addEventListener('click', async ()=>{
   try{ await auth.signInWithEmailAndPassword(email, pw); }
   catch(err){ showAuthError(translateFirebaseError(err)); }
 });
-document.getElementById('authSignupBtn').addEventListener('click', async ()=>{
-  clearAuthError();
-  const name = document.getElementById('authName').value.trim();
-  const email = document.getElementById('authEmail').value.trim();
-  const pw = document.getElementById('authPassword').value;
-  if(!name) return showAuthError('กรุณากรอกชื่อที่แสดง');
-  if(!email || !pw) return showAuthError('กรุณากรอก email และ password');
+
+document.getElementById('setupNameBtn').addEventListener('click', async ()=>{
+  const errEl = document.getElementById('nameSetupError');
+  errEl.hidden = true;
+  const name = document.getElementById('setupNameInput').value.trim();
+  if(!name){ errEl.textContent = 'กรุณากรอกชื่อที่แสดง'; errEl.hidden = false; return; }
   try{
-    const cred = await auth.createUserWithEmailAndPassword(email, pw);
-    await cred.user.updateProfile({ displayName: name });
-  } catch(err){ showAuthError(translateFirebaseError(err)); }
+    await auth.currentUser.updateProfile({ displayName: name });
+    await bootAppForUser({ uid: auth.currentUser.uid, name });
+  }catch(err){ errEl.textContent = translateFirebaseError(err); errEl.hidden = false; }
 });
 
 // ============================================================================
@@ -1942,22 +1980,35 @@ function loadEpicScripts(){
 const epicsReadyPromise = loadEpicScripts();
 let appBooted = false;
 
+async function bootAppForUser(user){
+  currentUser = { uid: user.uid, name: user.name };
+  document.getElementById('authScreen').hidden = true;
+  document.getElementById('nameSetupScreen').hidden = true;
+  document.getElementById('appRoot').hidden = false;
+  document.getElementById('currentUserLabel').innerHTML =
+    `👤 ${currentUser.name} <span class="logout-link" id="logoutLink">ออกจากระบบ</span>`;
+  document.getElementById('logoutLink').addEventListener('click', ()=> auth.signOut());
+
+  await epicsReadyPromise;
+  await loadScenariosFromFirestore();
+  if(!appBooted){ buildSidebar(); switchView('overview'); appBooted = true; }
+  else { renderEpicList(); if(currentView==='timeline') renderTimeline(); }
+}
+
 auth.onAuthStateChanged(async (user)=>{
   if(user){
-    currentUser = { uid: user.uid, name: user.displayName || user.email };
-    document.getElementById('authScreen').hidden = true;
-    document.getElementById('appRoot').hidden = false;
-    document.getElementById('currentUserLabel').innerHTML =
-      `👤 ${currentUser.name} <span class="logout-link" id="logoutLink">ออกจากระบบ</span>`;
-    document.getElementById('logoutLink').addEventListener('click', ()=> auth.signOut());
-
-    await epicsReadyPromise;
-    await loadScenariosFromFirestore();
-    if(!appBooted){ buildSidebar(); switchView('overview'); appBooted = true; }
-    else { renderEpicList(); if(currentView==='timeline') renderTimeline(); }
+    if(!user.displayName){
+      // บัญชีที่ผู้ดูแลระบบสร้างให้ผ่าน Firebase Console ยังไม่มีชื่อ — ให้ตั้งชื่อก่อนเข้าใช้งานครั้งแรก
+      document.getElementById('authScreen').hidden = true;
+      document.getElementById('appRoot').hidden = true;
+      document.getElementById('nameSetupScreen').hidden = false;
+      return;
+    }
+    await bootAppForUser({ uid: user.uid, name: user.displayName });
   } else {
     currentUser = null;
     document.getElementById('authScreen').hidden = false;
+    document.getElementById('nameSetupScreen').hidden = true;
     document.getElementById('appRoot').hidden = true;
   }
 });
