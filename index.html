@@ -95,7 +95,35 @@
   .epic-list-item .dots i{ width:5px; height:5px; border-radius:50%; display:block; }
   .epic-list-empty{ padding:16px 10px; font-size:12px; color:var(--ink-faint); text-align:center; }
 
-  .sidebar-footer{ padding:12px 18px; border-top:1px solid var(--border-soft); font-size:10.8px; color:var(--ink-faint); }
+  .sidebar-footer{ padding:12px 18px; border-top:1px solid var(--border-soft); }
+  .current-user-label{ font-size:11.5px; font-weight:600; color:var(--ink-soft); margin-bottom:4px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .current-user-label .logout-link{ font-size:10.5px; font-weight:500; color:var(--primary); cursor:pointer; }
+  .current-user-label .logout-link:hover{ text-decoration:underline; }
+  .footer-meta{ font-size:10.5px; color:var(--ink-faint); }
+
+  .auth-screen{
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    background:var(--bg); padding:24px;
+  }
+  .auth-card{
+    width:100%; max-width:380px; background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); box-shadow:var(--shadow-md); padding:28px 26px;
+  }
+  .auth-brand{ display:flex; align-items:center; gap:12px; margin-bottom:22px; }
+  .auth-brand .logo{ width:36px; height:36px; border-radius:8px; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px; font-family:'IBM Plex Mono'; flex-shrink:0; }
+  .auth-title{ font-size:16px; font-weight:700; }
+  .auth-sub{ font-size:11.5px; color:var(--ink-faint); margin-top:2px; }
+  .auth-card .field{ margin-bottom:14px; }
+  .auth-card .field input{
+    width:100%; padding:9px 11px; border:1px solid var(--border); border-radius:var(--radius-sm);
+    font-size:13.5px; font-family:inherit; color:var(--ink);
+  }
+  .auth-card .field input:focus{ outline:none; border-color:var(--primary); }
+  .auth-btn{ width:100%; justify-content:center; margin-bottom:8px; padding:10px; font-size:13.5px; }
+  .auth-error{
+    background:var(--red-bg); color:var(--red); font-size:12px; padding:9px 12px; border-radius:var(--radius-sm); margin-bottom:14px;
+  }
+  .auth-hint{ font-size:11px; color:var(--ink-faint); text-align:center; margin-top:10px; line-height:1.5; }
 
   /* ================= SHELL / TOPBAR ================= */
   .shell{ flex:1; min-width:0; display:flex; flex-direction:column; }
@@ -262,6 +290,7 @@
     font-size:12.5px; font-weight:600; color:var(--ink-soft); cursor:pointer; max-width:220px;
   }
   .scenario-tab .st-name{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .scenario-tab .st-owner{ font-size:9.5px; color:var(--ink-faint); font-weight:500; background:var(--surface); border:1px solid var(--border); padding:1px 6px; border-radius:8px; flex-shrink:0; }
   .scenario-tab.current{ background:var(--surface); color:var(--primary); position:relative; top:1px; border-bottom:1px solid var(--surface); }
   .scenario-tab .st-del{ color:var(--ink-faint); font-size:11px; flex-shrink:0; }
   .scenario-tab .st-del:hover{ color:var(--red); }
@@ -400,7 +429,26 @@
 </head>
 <body>
 
-<div class="app">
+<div id="authScreen" class="auth-screen">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="logo">N</div>
+      <div>
+        <div class="auth-title">NCBS Planning Console</div>
+        <div class="auth-sub">Workspace ที่ทีมช่วยกันวางแผนร่วมกัน</div>
+      </div>
+    </div>
+    <div id="authError" class="auth-error" hidden></div>
+    <div class="field" id="authNameField"><label>ชื่อที่แสดง (กรอกตอนสมัครใหม่เท่านั้น)</label><input id="authName" type="text" placeholder="เช่น Patcharaphol"></div>
+    <div class="field"><label>Email</label><input id="authEmail" type="email" placeholder="you@example.com"></div>
+    <div class="field"><label>Password</label><input id="authPassword" type="password" placeholder="อย่างน้อย 6 ตัวอักษร"></div>
+    <button id="authLoginBtn" class="btn primary auth-btn">เข้าสู่ระบบ</button>
+    <button id="authSignupBtn" class="btn auth-btn">สมัครสมาชิกใหม่</button>
+    <div class="auth-hint">Workspace นี้ใช้ร่วมกันทั้งทีม — ทุกคนที่ login เห็นและแก้ไข Timeline &amp; Planning เดียวกันได้</div>
+  </div>
+</div>
+
+<div class="app" id="appRoot" hidden>
   <aside class="sidebar">
     <div class="sidebar-brand">
       <div class="mark"><div class="logo">N</div><h1>NCBS Planning<br>Console</h1></div>
@@ -419,7 +467,10 @@
       <div class="epic-list" id="epicList"></div>
     </div>
 
-    <div class="sidebar-footer">ncbs-breakdown · synthesize จาก ncbs-wiki · ไม่ผูกกับ commit ของ wiki</div>
+    <div class="sidebar-footer">
+      <div id="currentUserLabel" class="current-user-label">–</div>
+      <div class="footer-meta">ncbs-breakdown · synthesize จาก ncbs-wiki · ไม่ผูกกับ commit ของ wiki</div>
+    </div>
   </aside>
 
   <div class="shell">
@@ -429,11 +480,16 @@
       <section class="view" id="viewTimeline" hidden></section>
       <section class="view" id="viewEpic" hidden></section>
     </main>
-    <footer class="app-footer">NCBS Planning Console · prototype · ข้อมูล timeline เก็บใน localStorage ของเบราว์เซอร์ (export/import เป็น JSON เพื่อแชร์ทีมได้)</footer>
+    <footer class="app-footer">NCBS Planning Console · Timeline &amp; Planning เก็บบน Firestore (cloud) ร่วมกันทั้งทีม</footer>
   </div>
 </div>
 
 <!-- ไม่ต้องแก้ไฟล์นี้เพื่อเพิ่ม epic ใหม่อีกต่อไป — ระบบจะโหลดตาม data/manifest.json อัตโนมัติ (ดู README) -->
+
+<!-- Firebase (compat SDK — ใช้ global `firebase` namespace ไม่ต้องแปลงทั้งไฟล์เป็น ES module) -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 
 <script>
 // ============================================================================
@@ -958,19 +1014,95 @@ function getCapacity(){
   return s.capacity;
 }
 
-function loadPlanState(){
-  return fetch('data/planning-state.json').then(r=>{
-    if(!r.ok) throw new Error('no file');
-    return r.json();
-  }).catch(()=>{
-    try{ const raw = localStorage.getItem(PLAN_STORAGE_KEY); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
-  }).then(data=>{
-    planState = migratePlanState(data);
-  });
+// ============================================================================
+// Firebase — auth + Firestore-backed shared workspace
+// ============================================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyBqEEtGuLbgLVPknk8jVleUwTCnu_zSgYo",
+  authDomain: "ncbs-planning.firebaseapp.com",
+  projectId: "ncbs-planning",
+  storageBucket: "ncbs-planning.firebasestorage.app",
+  messagingSenderId: "645773259375",
+  appId: "1:645773259375:web:1e233b85730acdf2fe539a"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const SCENARIOS_COLLECTION = 'scenarios';
+const ACTIVE_SCENARIO_KEY = 'ncbs-active-scenario-id';
+let currentUser = null;
+
+// Firestore map field names can't safely round-trip "." reliably across all
+// SDK code paths, and our keys use it a lot (e.g. "credit-transfer::1.1") —
+// encode before writing, decode after reading, just to be safe.
+function encodeFsKey(k){ return String(k).replace(/\./g, '\u2024'); }
+function decodeFsKey(k){ return String(k).replace(/\u2024/g, '.'); }
+function encodeKeyedMap(obj){ const out={}; Object.entries(obj||{}).forEach(([k,v])=> out[encodeFsKey(k)]=v); return out; }
+function decodeKeyedMap(obj){ const out={}; Object.entries(obj||{}).forEach(([k,v])=> out[decodeFsKey(k)]=v); return out; }
+
+function encodeScenarioForFirestore(scen){
+  const clone = JSON.parse(JSON.stringify(scen));
+  clone.tasks = encodeKeyedMap(clone.tasks);
+  clone.hidden = encodeKeyedMap(clone.hidden);
+  clone.taskOrder = encodeKeyedMap(clone.taskOrder);
+  return clone;
 }
+function decodeScenarioFromFirestore(data){
+  const clone = JSON.parse(JSON.stringify(data));
+  clone.tasks = decodeKeyedMap(clone.tasks);
+  clone.hidden = decodeKeyedMap(clone.hidden);
+  clone.taskOrder = decodeKeyedMap(clone.taskOrder);
+  return clone;
+}
+function scenarioDocRef(id){ return db.collection(SCENARIOS_COLLECTION).doc(id); }
+
+async function loadScenariosFromFirestore(){
+  const snap = await db.collection(SCENARIOS_COLLECTION).get();
+  const scenarios = {};
+  snap.forEach(doc=>{ scenarios[doc.id] = decodeScenarioFromFirestore(doc.data()); });
+
+  if(Object.keys(scenarios).length === 0){
+    // ยังไม่มีข้อมูลบน cloud เลย (คนแรกที่ login) — ถ้าเครื่องนี้เคยมีข้อมูลใน localStorage
+    // จากก่อนเปลี่ยนมาใช้ Firestore ให้อัปโหลดขึ้นไปให้อัตโนมัติ ไม่ให้งานที่ทำไว้หาย
+    let localData = null;
+    try{ const raw = localStorage.getItem(PLAN_STORAGE_KEY); localData = raw ? JSON.parse(raw) : null; }catch(e){}
+    const migrated = migratePlanState(localData);
+    for(const scen of Object.values(migrated.scenarios)){
+      const newId = db.collection(SCENARIOS_COLLECTION).doc().id;
+      scen.ownerUid = currentUser.uid;
+      scen.ownerName = currentUser.name;
+      scen.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      await scenarioDocRef(newId).set(encodeScenarioForFirestore(scen));
+      scenarios[newId] = scen;
+    }
+  }
+
+  const savedActive = localStorage.getItem(ACTIVE_SCENARIO_KEY);
+  planState = {
+    activeScenarioId: (savedActive && scenarios[savedActive]) ? savedActive : Object.keys(scenarios)[0],
+    scenarios,
+  };
+}
+
+let saveDebounceTimer = null;
 function savePlanState(){
-  try{ localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(planState)); }catch(e){}
+  try{ localStorage.setItem(ACTIVE_SCENARIO_KEY, planState.activeScenarioId); }catch(e){}
+  clearTimeout(saveDebounceTimer);
+  saveDebounceTimer = setTimeout(()=>{
+    const id = planState.activeScenarioId;
+    const scen = currentScenario();
+    scenarioDocRef(id).set(Object.assign(
+      encodeScenarioForFirestore(scen),
+      { updatedAt: firebase.firestore.FieldValue.serverTimestamp() }
+    )).catch(err=> console.warn('บันทึกขึ้น Firestore ไม่สำเร็จ:', err));
+  }, 500);
 }
+
+async function refreshFromCloud(){
+  await loadScenariosFromFirestore();
+  renderTimeline();
+}
+
 function getTaskPlan(key){
   const s = currentScenario();
   if(!s.tasks[key]) s.tasks[key] = { seq:0, manday:Object.fromEntries(ROLES.map(r=>[r.key,0])) };
@@ -1240,9 +1372,21 @@ function renderTimeline(){
   document.getElementById('importPlanJson').addEventListener('change', e=>{
     const file = e.target.files[0]; if(!file) return;
     const reader = new FileReader();
-    reader.onload = ev=>{
-      try{ planState = migratePlanState(JSON.parse(ev.target.result)); savePlanState(); renderTimeline(); }
-      catch(err){ alert('ไฟล์ JSON ไม่ถูกต้อง'); }
+    reader.onload = async ev=>{
+      try{
+        const imported = migratePlanState(JSON.parse(ev.target.result));
+        if(!confirm('Import จะสร้าง scenario ใหม่ขึ้น cloud ตามไฟล์นี้ทั้งหมด (ไม่ทับของเดิมที่มีอยู่) ยืนยันหรือไม่?')) return;
+        for(const scen of Object.values(imported.scenarios)){
+          const newId = db.collection(SCENARIOS_COLLECTION).doc().id;
+          scen.ownerUid = currentUser.uid; scen.ownerName = currentUser.name;
+          scen.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+          await scenarioDocRef(newId).set(encodeScenarioForFirestore(scen));
+          planState.scenarios[newId] = scen;
+          planState.activeScenarioId = newId;
+        }
+        savePlanState();
+        renderTimeline();
+      } catch(err){ alert('ไฟล์ JSON ไม่ถูกต้อง'); console.warn(err); }
     };
     reader.readAsText(file);
   });
@@ -1281,14 +1425,16 @@ function renderScenarioTabs(){
   el.innerHTML = ids.map(id=>{
     const s = planState.scenarios[id];
     const isCurrent = id===planState.activeScenarioId;
-    return `<div class="scenario-tab ${isCurrent?'current':''}" data-scenario-id="${id}" title="${s.name}">
+    return `<div class="scenario-tab ${isCurrent?'current':''}" data-scenario-id="${id}" title="${s.name}${s.ownerName?' · โดย '+s.ownerName:''}">
       <span class="st-name">${s.name}</span>
+      ${s.ownerName ? `<span class="st-owner">${s.ownerName}</span>` : ''}
       ${ids.length>1 ? `<span class="st-del" data-del-scenario="${id}" title="ลบแผนนี้">✕</span>` : ''}
     </div>`;
   }).join('') + `
     <button type="button" class="scenario-tab-add" id="addScenarioBtn">+ Approach ใหม่</button>
     <button type="button" class="scenario-tab-add" id="dupScenarioBtn">⧉ ทำสำเนา</button>
     <button type="button" class="scenario-tab-add" id="renameScenarioBtn">✎ เปลี่ยนชื่อ</button>
+    <button type="button" class="scenario-tab-add" id="refreshCloudBtn" title="ดึงข้อมูลล่าสุดจากทีม (ไม่ได้ sync แบบ realtime อัตโนมัติ)">🔄 รีเฟรชจาก cloud</button>
   `;
 
   el.querySelectorAll('.scenario-tab').forEach(tab=>{
@@ -1300,21 +1446,24 @@ function renderScenarioTabs(){
     });
   });
   el.querySelectorAll('.st-del').forEach(delBtn=>{
-    delBtn.addEventListener('click', e=>{
+    delBtn.addEventListener('click', async e=>{
       e.stopPropagation();
       const id = delBtn.dataset.delScenario;
-      if(!confirm(`ลบแผน "${planState.scenarios[id].name}" ทิ้ง — กู้คืนไม่ได้ ยืนยันหรือไม่?`)) return;
+      if(!confirm(`ลบแผน "${planState.scenarios[id].name}" ทิ้ง — กู้คืนไม่ได้ (ลบออกจาก cloud ด้วย) ยืนยันหรือไม่?`)) return;
       delete planState.scenarios[id];
       if(planState.activeScenarioId===id) planState.activeScenarioId = Object.keys(planState.scenarios)[0];
       savePlanState();
       renderTimeline();
+      try{ await scenarioDocRef(id).delete(); }catch(err){ console.warn('ลบออกจาก Firestore ไม่สำเร็จ:', err); }
     });
   });
   document.getElementById('addScenarioBtn').addEventListener('click', ()=>{
     const name = prompt('ตั้งชื่อ approach ใหม่ (เริ่มจากศูนย์ ไม่มีข้อมูลเดิม):', 'Approach ใหม่');
     if(!name) return;
-    const id = 'scenario-' + Date.now();
-    planState.scenarios[id] = defaultScenario(name);
+    const id = db.collection(SCENARIOS_COLLECTION).doc().id;
+    const scen = defaultScenario(name);
+    scen.ownerUid = currentUser.uid; scen.ownerName = currentUser.name;
+    planState.scenarios[id] = scen;
     planState.activeScenarioId = id;
     savePlanState();
     renderTimeline();
@@ -1323,9 +1472,10 @@ function renderScenarioTabs(){
     const cur = currentScenario();
     const name = prompt('ตั้งชื่อสำเนาของ "'+cur.name+'":', cur.name+' (สำเนา)');
     if(!name) return;
-    const id = 'scenario-' + Date.now();
-    planState.scenarios[id] = JSON.parse(JSON.stringify(cur));
-    planState.scenarios[id].name = name;
+    const id = db.collection(SCENARIOS_COLLECTION).doc().id;
+    const scen = JSON.parse(JSON.stringify(cur));
+    scen.name = name; scen.ownerUid = currentUser.uid; scen.ownerName = currentUser.name;
+    planState.scenarios[id] = scen;
     planState.activeScenarioId = id;
     savePlanState();
     renderTimeline();
@@ -1337,6 +1487,12 @@ function renderScenarioTabs(){
     cur.name = name;
     savePlanState();
     renderScenarioTabs();
+  });
+  document.getElementById('refreshCloudBtn').addEventListener('click', async ()=>{
+    const btn = document.getElementById('refreshCloudBtn');
+    btn.textContent = '🔄 กำลังโหลด…';
+    try{ await refreshFromCloud(); }
+    catch(err){ alert('รีเฟรชไม่สำเร็จ — เช็ค internet connection'); console.warn(err); }
   });
 }
 
@@ -1723,7 +1879,52 @@ function exportTimelineCsv(){
 }
 
 // ============================================================================
-// Boot — โหลด data file ทั้งหมดตาม data/manifest.json ก่อน แล้วค่อย build UI
+// Auth screen wiring
+// ============================================================================
+function showAuthError(msg){
+  const el = document.getElementById('authError');
+  el.textContent = msg;
+  el.hidden = false;
+}
+function clearAuthError(){ document.getElementById('authError').hidden = true; }
+
+function translateFirebaseError(err){
+  const code = err && err.code || '';
+  const map = {
+    'auth/invalid-email': 'รูปแบบ email ไม่ถูกต้อง',
+    'auth/user-not-found': 'ไม่พบบัญชีนี้ในระบบ',
+    'auth/wrong-password': 'password ไม่ถูกต้อง',
+    'auth/email-already-in-use': 'email นี้มีบัญชีอยู่แล้ว — ลอง "เข้าสู่ระบบ" แทน',
+    'auth/weak-password': 'password สั้นเกินไป (อย่างน้อย 6 ตัวอักษร)',
+    'auth/invalid-credential': 'email หรือ password ไม่ถูกต้อง',
+    'auth/too-many-requests': 'ลองผิดหลายครั้งเกินไป กรุณารอสักครู่แล้วลองใหม่',
+  };
+  return map[code] || (err && err.message) || 'เกิดข้อผิดพลาด กรุณาลองใหม่';
+}
+
+document.getElementById('authLoginBtn').addEventListener('click', async ()=>{
+  clearAuthError();
+  const email = document.getElementById('authEmail').value.trim();
+  const pw = document.getElementById('authPassword').value;
+  if(!email || !pw) return showAuthError('กรุณากรอก email และ password');
+  try{ await auth.signInWithEmailAndPassword(email, pw); }
+  catch(err){ showAuthError(translateFirebaseError(err)); }
+});
+document.getElementById('authSignupBtn').addEventListener('click', async ()=>{
+  clearAuthError();
+  const name = document.getElementById('authName').value.trim();
+  const email = document.getElementById('authEmail').value.trim();
+  const pw = document.getElementById('authPassword').value;
+  if(!name) return showAuthError('กรุณากรอกชื่อที่แสดง');
+  if(!email || !pw) return showAuthError('กรุณากรอก email และ password');
+  try{
+    const cred = await auth.createUserWithEmailAndPassword(email, pw);
+    await cred.user.updateProfile({ displayName: name });
+  } catch(err){ showAuthError(translateFirebaseError(err)); }
+});
+
+// ============================================================================
+// Boot — โหลด epic data (ไม่ผูกกับ login) → รอ login → โหลด scenario จาก Firestore → build UI
 // ============================================================================
 function loadEpicScripts(){
   return fetch('data/manifest.json')
@@ -1738,9 +1939,27 @@ function loadEpicScripts(){
     .catch(err=>{ console.warn('อ่าน data/manifest.json ไม่สำเร็จ — ตรวจว่ามีไฟล์นี้อยู่ใน data/ และรัน update-manifest.sh แล้วหรือยัง', err); });
 }
 
-loadEpicScripts().then(loadPlanState).then(()=>{
-  buildSidebar();
-  switchView('overview');
+const epicsReadyPromise = loadEpicScripts();
+let appBooted = false;
+
+auth.onAuthStateChanged(async (user)=>{
+  if(user){
+    currentUser = { uid: user.uid, name: user.displayName || user.email };
+    document.getElementById('authScreen').hidden = true;
+    document.getElementById('appRoot').hidden = false;
+    document.getElementById('currentUserLabel').innerHTML =
+      `👤 ${currentUser.name} <span class="logout-link" id="logoutLink">ออกจากระบบ</span>`;
+    document.getElementById('logoutLink').addEventListener('click', ()=> auth.signOut());
+
+    await epicsReadyPromise;
+    await loadScenariosFromFirestore();
+    if(!appBooted){ buildSidebar(); switchView('overview'); appBooted = true; }
+    else { renderEpicList(); if(currentView==='timeline') renderTimeline(); }
+  } else {
+    currentUser = null;
+    document.getElementById('authScreen').hidden = false;
+    document.getElementById('appRoot').hidden = true;
+  }
 });
 
 </script>
