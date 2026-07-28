@@ -8,30 +8,41 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#F7F8FA;
-    --surface:#FFFFFF;
-    --surface-sunk:#F4F5F7;
-    --border:#DFE1E6;
-    --border-soft:#EBECF0;
-    --ink:#172B4D;
-    --ink-soft:#5E6C84;
-    --ink-faint:#8993A4;
-    --primary:#0052CC;
-    --primary-hover:#0747A6;
-    --primary-bg:#E9F2FF;
-    --green:#22874E; --green-bg:#E3FCEF;
-    --amber:#A54800; --amber-bg:#FFF7D6;
-    --red:#AE2E24; --red-bg:#FFECEB;
-    --purple:#5243AA; --purple-bg:#EAE6FF;
+    color-scheme: dark;
+    --bg:#0B0B0F;
+    --surface:#18181D;
+    --surface-sunk:#121216;
+    --border:rgba(255,255,255,0.12);
+    --border-soft:rgba(255,255,255,0.07);
+    --ink:#F5F5F7;
+    --ink-soft:rgba(255,255,255,0.65);
+    --ink-faint:rgba(255,255,255,0.42);
+    --primary:#0A84FF;
+    --primary-hover:#3B9EFF;
+    --primary-bg:rgba(10,132,255,0.16);
+    --green:#32D74B; --green-bg:rgba(50,215,75,0.14);
+    --amber:#FF9F0A; --amber-bg:rgba(255,159,10,0.16);
+    --red:#FF453A; --red-bg:rgba(255,69,58,0.14);
+    --purple:#BF5AF2; --purple-bg:rgba(191,90,242,0.16);
     --radius:8px; --radius-sm:6px;
-    --shadow-sm:0 1px 2px rgba(9,30,66,.08);
-    --shadow-md:0 3px 5px rgba(9,30,66,.10), 0 0 1px rgba(9,30,66,.20);
+    --shadow-sm:0 1px 2px rgba(0,0,0,.35);
+    --shadow-md:0 10px 28px rgba(0,0,0,.5), 0 0 1px rgba(0,0,0,.7);
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;height:100%;}
   body{
     background:var(--bg); color:var(--ink); font-family:'IBM Plex Sans Thai',sans-serif;
     font-size:14px; line-height:1.55; -webkit-font-smoothing:antialiased;
+    position:relative;
+  }
+  body::before{
+    content:""; position:fixed; inset:-20%; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(circle at 12% 15%, rgba(10,132,255,.10), transparent 40%),
+      radial-gradient(circle at 88% 10%, rgba(191,90,242,.09), transparent 40%),
+      radial-gradient(circle at 80% 90%, rgba(255,69,58,.07), transparent 40%),
+      radial-gradient(circle at 15% 88%, rgba(255,159,10,.07), transparent 40%);
+    filter: blur(110px);
   }
   a{ color:var(--primary); text-decoration:none; }
   a:hover{ text-decoration:underline; }
@@ -39,7 +50,8 @@
   button, input{ font-family:inherit; }
   ::selection{ background:var(--primary-bg); }
 
-  .app{ display:flex; min-height:100vh; }
+  .app{ display:flex; min-height:100vh; position:relative; z-index:1; }
+  .app[hidden]{ display:none; }
 
   /* ================= SIDEBAR ================= */
   .sidebar{
@@ -78,7 +90,7 @@
     font-family:'IBM Plex Mono'; font-size:10px; font-weight:600; padding:3px 8px; border-radius:12px;
     border:1px solid var(--border); color:var(--ink-faint); cursor:pointer; background:var(--surface);
   }
-  .sys-chip.active{ background:var(--ink); color:#fff; border-color:var(--ink); }
+  .sys-chip.active{ background:var(--primary); color:#fff; border-color:var(--primary); }
   .epic-list{ overflow-y:auto; flex:1; }
   .epic-list-item{
     display:flex; align-items:center; gap:8px; padding:7px 10px; border-radius:var(--radius-sm);
@@ -105,6 +117,7 @@
     min-height:100vh; display:flex; align-items:center; justify-content:center;
     padding:24px; position:relative; overflow:hidden; background:#000000;
   }
+  .auth-screen[hidden]{ display:none; }
   .auth-screen::before{
     content:""; position:absolute; inset:-25%; z-index:0;
     background:
@@ -178,7 +191,7 @@
     display:flex; align-items:center; gap:6px; color:var(--ink-soft); user-select:none; transition:.1s ease;
   }
   .chip:hover{ border-color:var(--ink-faint); }
-  .chip.active{ background:var(--ink); color:#fff; border-color:var(--ink); }
+  .chip.active{ background:var(--primary); color:#fff; border-color:var(--primary); }
   .chip .dot{ width:7px; height:7px; border-radius:50%; display:inline-block; }
   .chip[data-c="green"] .dot{ background:var(--green); }
   .chip[data-c="yellow"] .dot{ background:var(--amber); }
@@ -372,7 +385,7 @@
   .capacity-seg .role{ font-size:10px; color:var(--ink-faint); font-weight:600; margin-bottom:5px; }
   .capacity-seg input{
     width:48px; padding:4px 3px; text-align:center; border:1px solid var(--border); border-radius:5px;
-    font-family:'IBM Plex Mono'; font-size:13px; font-weight:700; color:var(--primary);
+    font-family:'IBM Plex Mono'; font-size:13px; font-weight:700; color:var(--primary); background:var(--surface);
   }
   .capacity-seg input:focus{ outline:none; border-color:var(--primary); }
   .workload-seg.workload-total{ background:var(--primary-bg); flex:1.15; }
@@ -438,7 +451,7 @@
   .og-manday-inputs{ display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
   .og-manday-inputs .mini-field{ display:flex; flex-direction:column; gap:3px; }
   .og-manday-inputs label{ font-size:9.5px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; }
-  .og-manday-inputs input, .og-sub-row input{ width:56px; padding:5px 6px; border:1px solid var(--border); border-radius:5px; text-align:center; font-family:'IBM Plex Mono'; font-size:12px; }
+  .og-manday-inputs input, .og-sub-row input{ width:56px; padding:5px 6px; border:1px solid var(--border); border-radius:5px; text-align:center; font-family:'IBM Plex Mono'; font-size:12px; background:var(--surface); color:var(--ink); }
   .og-manday-inputs input:focus, .og-sub-row input:focus{ outline:none; border-color:var(--primary); }
   .og-sub-list{ margin-top:10px; border-top:1px dashed var(--border); padding-top:8px; }
   .og-sub-list-label{ font-size:9.5px; text-transform:uppercase; color:var(--ink-faint); font-weight:700; margin-bottom:6px; letter-spacing:.04em; }
@@ -467,7 +480,7 @@
     <div id="authError" class="auth-error" hidden></div>
     <div class="field"><label>Email</label><input id="authEmail" type="email" placeholder="you@example.com"></div>
     <div class="field"><label>Password</label><input id="authPassword" type="password" placeholder="Password"></div>
-    <button id="authLoginBtn" class="btn auth-btn">เข้าสู่ระบบ</button>
+    <button id="authLoginBtn" class="auth-btn">เข้าสู่ระบบ</button>
     <div class="auth-hint">ยังไม่มีบัญชี? ติดต่อผู้ดูแลระบบเพื่อขอสิทธิ์เข้าใช้งาน</div>
   </div>
 </div>
@@ -483,7 +496,7 @@
     </div>
     <div id="nameSetupError" class="auth-error" hidden></div>
     <div class="field"><label>ชื่อที่แสดง</label><input id="setupNameInput" type="text" placeholder="เช่น Patcharaphol"></div>
-    <button id="setupNameBtn" class="btn auth-btn">เริ่มใช้งาน</button>
+    <button id="setupNameBtn" class="auth-btn">เริ่มใช้งาน</button>
   </div>
 </div>
 
@@ -544,7 +557,7 @@ const ROLES = [
   { key:'pm',       label:'PM' },
   { key:'dm',       label:'DM' },
 ];
-const ROLE_COLORS = ['#0052CC','#5243AA','#00875A','#FF8B00','#DE350B','#006644','#403294'];
+const ROLE_COLORS = ['#4C9AFF','#B39DDB','#36B37E','#FFAB00','#FF5630','#57D9A3','#E6B8FF'];
 
 let currentView = 'overview';
 let currentEpicId = null;
@@ -1064,12 +1077,35 @@ const firebaseConfig = {
   messagingSenderId: "645773259375",
   appId: "1:645773259375:web:1e233b85730acdf2fe539a"
 };
-firebase.initializeApp(firebaseConfig);
+try{
+  firebase.initializeApp(firebaseConfig);
+}catch(err){
+  console.error('Firebase init failed:', err);
+  alert('เชื่อมต่อ Firebase ไม่สำเร็จ: ' + err.message);
+}
 const auth = firebase.auth();
 const db = firebase.firestore();
 const SCENARIOS_COLLECTION = 'scenarios';
 const ACTIVE_SCENARIO_KEY = 'ncbs-active-scenario-id';
 let currentUser = null;
+
+// เผื่อ error ที่ไม่คาดคิด (network, Firestore rules, ฯลฯ) ไม่ให้เงียบหายไปเฉยๆ —
+// โชว์ในกล่อง error ที่มองเห็นอยู่ตอนนั้น (login หรือ name-setup) ไม่งั้น alert() แทน
+function surfaceUnexpectedError(msg){
+  const authBox = document.getElementById('authError');
+  const nameBox = document.getElementById('nameSetupError');
+  if(authBox && !document.getElementById('authScreen').hidden){ authBox.textContent = msg; authBox.hidden = false; }
+  else if(nameBox && !document.getElementById('nameSetupScreen').hidden){ nameBox.textContent = msg; nameBox.hidden = false; }
+  else console.error(msg);
+}
+window.addEventListener('error', e=>{
+  surfaceUnexpectedError('เกิดข้อผิดพลาดที่ไม่คาดคิด: ' + (e.message||'unknown error') + ' — เปิด Developer Console (F12) เพื่อดูรายละเอียด');
+});
+window.addEventListener('unhandledrejection', e=>{
+  const msg = (e.reason && (e.reason.message || e.reason.code)) || String(e.reason);
+  surfaceUnexpectedError('เกิดข้อผิดพลาดที่ไม่คาดคิด: ' + msg + ' — เปิด Developer Console (F12) เพื่อดูรายละเอียด');
+});
+
 
 // Firestore map field names can't safely round-trip "." reliably across all
 // SDK code paths, and our keys use it a lot (e.g. "credit-transfer::1.1") —
@@ -1946,8 +1982,18 @@ document.getElementById('authLoginBtn').addEventListener('click', async ()=>{
   const email = document.getElementById('authEmail').value.trim();
   const pw = document.getElementById('authPassword').value;
   if(!email || !pw) return showAuthError('กรุณากรอก email และ password');
-  try{ await auth.signInWithEmailAndPassword(email, pw); }
-  catch(err){ showAuthError(translateFirebaseError(err)); }
+  const btn = document.getElementById('authLoginBtn');
+  const originalText = btn.textContent;
+  btn.textContent = 'กำลังเข้าสู่ระบบ…'; btn.disabled = true;
+  try{
+    await auth.signInWithEmailAndPassword(email, pw);
+    // onAuthStateChanged จะจัดการหน้าจอต่อเอง — ถ้าไม่มีอะไรเกิดขึ้นภายใน 1-2 วิ ให้เปิด F12 เช็ค console
+  }
+  catch(err){
+    console.error('Login error:', err);
+    showAuthError(translateFirebaseError(err));
+  }
+  finally{ btn.textContent = originalText; btn.disabled = false; }
 });
 
 document.getElementById('setupNameBtn').addEventListener('click', async ()=>{
