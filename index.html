@@ -370,14 +370,14 @@ function epicTally(epic){
   return t;
 }
 function flattenAllTasks(){
-  // returns [{key, epicId, epicName, featureId, featureName, task}]
+  // returns [{key, epicId, epicName, featureId, featureName, task, isSub}]
   const out = [];
   epicIds().forEach(id=>{
     const epic = allEpics()[id];
     epic.features.forEach(f=>{
       f.tasks.forEach(t=>{
-        out.push({ key:`${id}::${t.id}`, epicId:id, epicName:epic.name, featureId:f.id, featureName:f.name, task:t });
-        if(t.subs) t.subs.forEach(s=> out.push({ key:`${id}::${s.id}`, epicId:id, epicName:epic.name, featureId:f.id, featureName:f.name, task:s }));
+        out.push({ key:`${id}::${t.id}`, epicId:id, epicName:epic.name, featureId:f.id, featureName:f.name, task:t, isSub:false });
+        if(t.subs) t.subs.forEach(s=> out.push({ key:`${id}::${s.id}`, epicId:id, epicName:epic.name, featureId:f.id, featureName:f.name, task:s, isSub:true }));
       });
     });
   });
@@ -713,6 +713,65 @@ function renderOverview(){
 // ============================================================================
 // Timeline & Planning
 // ============================================================================
+// ============================================================================
+// Mock manday estimator — เดา effort คร่าวๆ จาก keyword + clarity ของแต่ละ task
+// ไม่ใช่ estimate จริงจากทีม — เป็นแค่ตัวเลขตั้งต้นให้เริ่มคุยกันง่ายขึ้น
+// ============================================================================
+const EFFORT_TIERS = [
+  { tier:5, kws:['engine','algorithm','matching','state machine','multi-level','approval chain','blockchain','anchor','workflow','orchestrat','สถาปัตยกรรม','เอนจิน'] },
+  { tier:4, kws:['integration','sync','dashboard','queue','notification','schedul','gateway','ingestion','pipeline','etl','เชื่อมต่อ'] },
+  { tier:3, kws:['model','schema','validation','api','page','form','config','migration','erd','ตรวจสอบ','แบบฟอร์ม'] },
+  { tier:2, kws:['toggle','flag','field','button','display','label','rule','ui:','เพิ่ม','ปรับปรุง','ปุ่ม'] },
+];
+const TIER_BASE_DEV = { 1:0.5, 2:1, 3:2, 4:3.5, 5:6 };
+const CLARITY_DEV_MULT = { green:1, yellow:1.25, red:1.5 };
+const CLARITY_POBA_BONUS = { green:0, yellow:0.25, red:0.75 };
+const CLARITY_PM = { green:0.1, yellow:0.25, red:0.5 };
+
+function detectEffortTier(text){
+  for(const g of EFFORT_TIERS){ if(g.kws.some(k=>text.includes(k))) return g.tier; }
+  return 1;
+}
+function roundQuarter(n){ return Math.round(n*4)/4; }
+
+function generateMockManday(task, isSub){
+  const text = (task.task+' '+(task.desc||'')).toLowerCase();
+  const tier = detectEffortTier(text);
+  let dev = TIER_BASE_DEV[tier];
+  if(isSub) dev *= 0.7; // sub-task มักแคบกว่า parent เสมอแม้ keyword จะจับ tier เดียวกัน
+  dev *= (CLARITY_DEV_MULT[task.c] || 1);
+
+  const poba    = roundQuarter(dev*0.15 + (CLARITY_POBA_BONUS[task.c]||0));
+  const techLead= roundQuarter(Math.max(0.25, dev*0.15));
+  const qaLead  = roundQuarter(Math.max(0.25, dev*0.10));
+  const qa      = roundQuarter(dev*0.35);
+  const pm      = roundQuarter(CLARITY_PM[task.c] ?? 0.1);
+  const dm      = /sync|migrat|etl|batch|anchor|ซิงค์|ย้ายข้อมูล/.test(text) ? roundQuarter(dev*0.3) : 0;
+
+  return { po_ba:poba, tech_lead:techLead, dev:roundQuarter(dev), qa_lead:qaLead, qa, pm, dm };
+}
+
+function applyMockEstimates(overwrite){
+  const flat = flattenAllTasks();
+  flat.forEach(x=>{
+    const p = getTaskPlan(x.key);
+    const mock = generateMockManday(x.task, x.isSub);
+    ROLES.forEach(r=>{
+      const current = Number(p.manday[r.key]||0);
+      if(overwrite || !current) p.manday[r.key] = mock[r.key];
+    });
+  });
+  savePlanState();
+  renderTimelineBody();
+}
+
+function clearAllManday(){
+  Object.values(planState.tasks).forEach(p=>{ ROLES.forEach(r=> p.manday[r.key]=0); });
+  savePlanState();
+  renderTimelineBody();
+}
+
+
 const PLAN_STORAGE_KEY = 'ncbs-planning-v1';
 let planState = { projectStart:'', targetEnd:'', tasks:{} }; // tasks[key] = { seq, manday:{role:val}, }
 
@@ -779,6 +838,12 @@ function renderTimeline(){
         <input type="file" id="importPlanJson" accept=".json" style="display:none;">
         <button class="btn" id="exportTimelineCsv">⇩ Export timeline (CSV)</button>
       </div>
+      <div class="timeline-toolbar" style="padding-top:0;">
+        <button class="btn primary" id="applyMockFill">🪄 เติม mock estimate (เฉพาะช่องว่าง)</button>
+        <button class="btn" id="applyMockOverwrite">🪄 เขียนทับทั้งหมดด้วย mock estimate</button>
+        <button class="btn ghost-dashed" id="clearAllManday">↺ ล้าง manday ทั้งหมด</button>
+      </div>
+      <div class="timeline-hint" style="padding-top:6px;">Mock estimate เดาจาก keyword ใน task/description + clarity (🟢🟡🔴) ของแต่ละ task — เป็นแค่ตัวเลขตั้งต้นให้เริ่มคุยกับทีมง่ายขึ้น ไม่ใช่ estimate จริง ควรให้ Tech Lead/Dev ยืนยันก่อน commit sprint จริง</div>
       <div class="workload-strip" id="workloadStrip"></div>
     </div>
 
@@ -819,6 +884,15 @@ function renderTimeline(){
     reader.readAsText(file);
   });
   document.getElementById('exportTimelineCsv').addEventListener('click', exportTimelineCsv);
+  document.getElementById('applyMockFill').addEventListener('click', ()=>{
+    if(confirm('เติม manday เบื้องต้น (mock estimate) ให้เฉพาะช่องที่ยังเป็น 0 — ช่องที่กรอกไว้แล้วจะไม่ถูกแตะต้อง ดำเนินการต่อไหม?')) applyMockEstimates(false);
+  });
+  document.getElementById('applyMockOverwrite').addEventListener('click', ()=>{
+    if(confirm('⚠️ จะเขียนทับ manday ทุกช่องด้วย mock estimate ใหม่ทั้งหมด (รวมช่องที่เคยกรอกไว้แล้ว) — ยืนยันหรือไม่?')) applyMockEstimates(true);
+  });
+  document.getElementById('clearAllManday').addEventListener('click', ()=>{
+    if(confirm('ล้างค่า manday ทุก task ทุก role กลับเป็น 0 ทั้งหมด — ยืนยันหรือไม่?')) clearAllManday();
+  });
   document.getElementById('planSearch').addEventListener('input', filterPlanTable);
   document.getElementById('collapseAllPlan').addEventListener('click', ()=>{
     const heads = document.querySelectorAll('#planTableWrap .feature-head');
