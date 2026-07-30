@@ -412,6 +412,20 @@
   .epic-workload-chip .ewc-val{ font-family:'IBM Plex Mono'; font-weight:700; color:var(--primary); flex-shrink:0; }
 
   .timeline-toolbar{ display:flex; gap:8px; align-items:center; padding:14px 20px 0; flex-wrap:wrap; }
+
+  .view-mode-toggle{ display:flex; gap:6px; margin-bottom:14px; }
+  .vm-btn{
+    font-size:12.6px; font-weight:600; padding:8px 16px; border-radius:8px; border:1px solid var(--border);
+    background:var(--surface); color:var(--ink-soft); cursor:pointer; font-family:inherit;
+  }
+  .vm-btn:hover{ border-color:var(--primary); color:var(--primary); }
+  .vm-btn.active{ background:var(--primary); border-color:var(--primary); color:#fff; }
+  .graph-level-toggle{ display:flex; gap:6px; }
+  .graph-level-toggle .vm-btn{ padding:6px 13px; font-size:12px; }
+
+  .graph-paper-wrap{ padding:18px 20px 24px; overflow-x:auto; }
+  .graph-paper{ background:#FFFFFF; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,.3); display:inline-block; }
+  .graph-paper svg{ display:block; }
   .timeline-hint{ font-size:12.6px; color:var(--ink-faint); padding:0 20px 14px; }
 
   /* ---- Fixed header (never scrolls vertically; its timeline part scrolls horizontally in sync with body via JS) ---- */
@@ -1500,6 +1514,8 @@ function computeRollups(tree, scheduleMap){
 // ============================================================================
 let collapsedNodes = new Set();   // session-only: which epic/feature keys are collapsed
 let openTaskDetailKey = null;      // session-only: which task's detail is expanded inline (null = none)
+let timelineViewMode = 'input';    // session-only: 'input' (manday entry table) | 'graph' (presentation-style chart)
+let graphViewLevel = 'epic';       // session-only: 'epic' | 'task' — granularity of the graph view
 let planSearchQuery = '';
 const PX_PER_DAY = 26;
 
@@ -1538,6 +1554,12 @@ function renderTimeline(){
       <div class="epic-workload-strip" id="epicWorkloadStrip"></div>
     </div>
 
+    <div class="view-mode-toggle">
+      <button class="vm-btn" data-vm="input" id="vmBtnInput">📝 กรอกข้อมูล</button>
+      <button class="vm-btn" data-vm="graph" id="vmBtnGraph">📊 Graph View</button>
+    </div>
+
+    <div id="timelineInputModeWrap">
     <div class="card">
       <div class="timeline-toolbar">
         <div class="search-wrap"><input id="planSearch" type="text" placeholder="ค้นหา task…"></div>
@@ -1547,6 +1569,24 @@ function renderTimeline(){
       <div class="timeline-hint">ลาก ☰ เพื่อจัดลำดับใหม่ (ในกลุ่มเดียวกันเท่านั้น) · กด 👁 เพื่อซ่อน/แสดง · คลิกชื่อ task เพื่อดูรายละเอียด + กรอก manday · ข้อมูลบันทึกอัตโนมัติในเบราว์เซอร์นี้<br>⚙️ Task ใน feature เดียวกันเรียงต่อกันเสมอ · task คนละ feature/epic จะขนานกันอัตโนมัติถ้า Team Capacity พอ · <b>dependency ข้าม feature/epic ไม่ได้ตรวจสอบอัตโนมัติ</b> — เช็คกับ epic-level dependencies เองด้วย</div>
       <div class="og-fixed-header" id="ogFixedHeader"></div>
       <div class="og-body-outer" id="ogBodyOuter"></div>
+    </div>
+    </div>
+
+    <div id="timelineGraphModeWrap" hidden>
+      <div class="card">
+        <div class="timeline-toolbar">
+          <div class="graph-level-toggle">
+            <button class="vm-btn" data-level="epic" id="graphLevelEpic">Epic (ภาพรวม)</button>
+            <button class="vm-btn" data-level="task" id="graphLevelTask">Task (ละเอียด)</button>
+          </div>
+          <div style="flex:1"></div>
+          <button class="btn primary" id="exportGraphPng">⇩ Export เป็น PNG</button>
+        </div>
+        <div class="timeline-hint">Graph นี้แสดงตาม manday ที่กรอกไว้ในแผน "${currentScenario().name}" — สลับดูภาพรวมระดับ Epic หรือละเอียดระดับ Task ได้ แล้ว export เป็น PNG ไปใส่ slide ได้เลย</div>
+        <div class="graph-paper-wrap">
+          <div class="graph-paper" id="graphPaper"></div>
+        </div>
+      </div>
     </div>
   `;
 
@@ -1642,6 +1682,21 @@ function renderTimeline(){
     renderOutlineGantt();
   });
   document.getElementById('expandAllPlan').addEventListener('click', ()=>{ collapsedNodes.clear(); renderOutlineGantt(); });
+
+  // ---- Input / Graph View mode toggle (ไม่กระทบ logic เดิมของหน้ากรอกข้อมูลเลย) ----
+  function applyViewMode(){
+    document.getElementById('timelineInputModeWrap').hidden = (timelineViewMode!=='input');
+    document.getElementById('timelineGraphModeWrap').hidden = (timelineViewMode!=='graph');
+    document.getElementById('vmBtnInput').classList.toggle('active', timelineViewMode==='input');
+    document.getElementById('vmBtnGraph').classList.toggle('active', timelineViewMode==='graph');
+    if(timelineViewMode==='graph') renderGraphView();
+  }
+  document.getElementById('vmBtnInput').addEventListener('click', ()=>{ timelineViewMode='input'; applyViewMode(); });
+  document.getElementById('vmBtnGraph').addEventListener('click', ()=>{ timelineViewMode='graph'; applyViewMode(); });
+  document.getElementById('graphLevelEpic').addEventListener('click', ()=>{ graphViewLevel='epic'; document.getElementById('graphLevelEpic').classList.add('active'); document.getElementById('graphLevelTask').classList.remove('active'); renderGraphView(); });
+  document.getElementById('graphLevelTask').addEventListener('click', ()=>{ graphViewLevel='task'; document.getElementById('graphLevelTask').classList.add('active'); document.getElementById('graphLevelEpic').classList.remove('active'); renderGraphView(); });
+  document.getElementById('exportGraphPng').addEventListener('click', exportGraphAsPng);
+  applyViewMode();
 
   wireOutlineGanttEvents(); // delegated listeners, attached once
   renderOutlineGantt();
@@ -2195,6 +2250,144 @@ function exportTimelineCsv(){
     ];
   })];
   downloadCsv(rows, `ncbs-timeline-${new Date().toISOString().slice(0,10)}.csv`);
+}
+
+// ============================================================================
+// Graph View — โหมดดูภาพรวมสำหรับ presentation (แยกจาก input mode เดิมทั้งหมด
+// ไม่แตะ state/logic ของตารางกรอก manday เลย, ใช้ข้อมูลจาก computeSchedule()/
+// computeRollups() ตัวเดียวกัน อ่านอย่างเดียวไม่มี side effect)
+// ============================================================================
+const GRAPH_PX_PER_DAY = 22;
+const GRAPH_ROW_HEIGHT = 28;
+const GRAPH_LABEL_WIDTH = 280;
+const GRAPH_PADDING = 24;
+
+function clarityColorHex(c){ return c==='green' ? '#22874E' : (c==='yellow' ? '#A54800' : '#AE2E24'); }
+
+function buildGraphRows(level){
+  const { tree, scheduleMap } = computeSchedule();
+  const { taskRange, featureRange, epicRange } = computeRollups(tree, scheduleMap);
+  const rows = [];
+
+  tree.forEach(epicNode=>{
+    if(epicNode.hidden) return;
+    const r = epicRange[epicNode.key];
+    if(!r || !r.start) return;
+    if(level==='epic'){
+      rows.push({ label: epicNode.data.name, sys: epicNode.data.system||'', start:r.start, end:r.end, color:'#0A84FF', bold:true });
+    } else {
+      rows.push({ label: epicNode.data.name, sys: epicNode.data.system||'', start:r.start, end:r.end, color:'#0A84FF', bold:true, isGroupHeader:true });
+      epicNode.features.forEach(featNode=>{
+        if(featNode.hidden) return;
+        featNode.tasks.forEach(taskNode=>{
+          if(taskNode.hidden) return;
+          const tr = taskRange[taskNode.planKey];
+          if(!tr || !tr.start) return;
+          rows.push({
+            label: `${taskNode.data.id}  ${taskNode.data.task}`, sys:'', start:tr.start, end:tr.end,
+            color: clarityColorHex(taskNode.data.c), bold:false, indent:true,
+          });
+        });
+      });
+    }
+  });
+  return rows;
+}
+
+function renderGraphView(){
+  const paper = document.getElementById('graphPaper');
+  if(!paper) return;
+  document.getElementById('graphLevelEpic').classList.toggle('active', graphViewLevel==='epic');
+  document.getElementById('graphLevelTask').classList.toggle('active', graphViewLevel==='task');
+
+  const rows = buildGraphRows(graphViewLevel);
+  if(rows.length===0){
+    paper.innerHTML = `<div style="padding:40px; text-align:center; color:#8993A4; font-family:'IBM Plex Sans Thai';">ยังไม่มีข้อมูลให้แสดง — ต้องตั้ง Project Start Date และกรอก manday อย่างน้อย 1 task ก่อน (สลับไปหน้า "กรอกข้อมูล")</div>`;
+    return;
+  }
+
+  const projStart = new Date(Math.min(...rows.map(r=>r.start.getTime())));
+  const projEndAll = new Date(Math.max(...rows.map(r=>r.end.getTime())));
+  const totalDays = Math.max(7, Math.ceil((projEndAll-projStart)/86400000) + 3);
+  const chartWidth = GRAPH_LABEL_WIDTH + totalDays*GRAPH_PX_PER_DAY + GRAPH_PADDING*2;
+  const headerHeight = 46;
+  const chartHeight = headerHeight + rows.length*GRAPH_ROW_HEIGHT + GRAPH_PADDING*2;
+  const dateToX = d => GRAPH_LABEL_WIDTH + GRAPH_PADDING + Math.max(0,(d-projStart)/86400000)*GRAPH_PX_PER_DAY;
+
+  // แกนวันที่ (เดือน) ด้านบน
+  let monthMarks = '';
+  let gridLines = '';
+  {
+    let d = new Date(projStart.getFullYear(), projStart.getMonth(), 1);
+    while(d <= projEndAll){
+      const x = dateToX(d < projStart ? projStart : d);
+      monthMarks += `<text x="${x+4}" y="${GRAPH_PADDING+16}" font-size="11" font-weight="700" fill="#5E6C84" font-family="IBM Plex Sans Thai, sans-serif">${d.toLocaleDateString('en-GB',{month:'short',year:'numeric'})}</text>`;
+      gridLines += `<line x1="${x}" y1="${GRAPH_PADDING+headerHeight-10}" x2="${x}" y2="${chartHeight-GRAPH_PADDING}" stroke="#EBECF0" stroke-width="1"/>`;
+      d = new Date(d.getFullYear(), d.getMonth()+1, 1);
+    }
+  }
+
+  let rowsSvg = '';
+  rows.forEach((row,i)=>{
+    const y = GRAPH_PADDING + headerHeight + i*GRAPH_ROW_HEIGHT;
+    const labelX = row.indent ? 34 : 16;
+    const labelColor = row.bold ? '#172B4D' : '#42526E';
+    const fontWeight = row.bold ? '700' : '500';
+    if(i%2===0) rowsSvg += `<rect x="0" y="${y}" width="${chartWidth}" height="${GRAPH_ROW_HEIGHT}" fill="#F7F8FA"/>`;
+    rowsSvg += `<text x="${labelX}" y="${y+GRAPH_ROW_HEIGHT/2+4}" font-size="12" font-weight="${fontWeight}" fill="${labelColor}" font-family="IBM Plex Sans Thai, sans-serif">${escapeHtml(row.label).slice(0,48)}</text>`;
+    if(!row.isGroupHeader){
+      const bx = dateToX(row.start);
+      const bw = Math.max(3, dateToX(row.end) - bx);
+      const barH = row.bold ? 10 : 14;
+      const barY = y + (GRAPH_ROW_HEIGHT-barH)/2;
+      rowsSvg += `<rect x="${bx}" y="${barY}" width="${bw}" height="${barH}" rx="3" fill="${row.color}" opacity="${row.bold?0.9:1}"/>`;
+    }
+  });
+
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="${chartWidth}" height="${chartHeight}" viewBox="0 0 ${chartWidth} ${chartHeight}">
+      <rect x="0" y="0" width="${chartWidth}" height="${chartHeight}" fill="#FFFFFF"/>
+      <text x="${GRAPH_PADDING}" y="${GRAPH_PADDING+2}" font-size="10" font-weight="600" fill="#8993A4" font-family="IBM Plex Mono, monospace" letter-spacing="0.5">${escapeHtml(currentScenario().name)} · ${graphViewLevel==='epic'?'EPIC LEVEL':'TASK LEVEL'}</text>
+      <line x1="${GRAPH_LABEL_WIDTH+GRAPH_PADDING}" y1="${GRAPH_PADDING+headerHeight-10}" x2="${GRAPH_LABEL_WIDTH+GRAPH_PADDING}" y2="${chartHeight-GRAPH_PADDING}" stroke="#C1C7D0" stroke-width="1.5"/>
+      ${gridLines}
+      ${monthMarks}
+      ${rowsSvg}
+    </svg>
+  `;
+  paper.innerHTML = svg;
+}
+
+function exportGraphAsPng(){
+  const svgEl = document.querySelector('#graphPaper svg');
+  if(!svgEl){ showToast('ยังไม่มี graph ให้ export — ตั้ง Project Start Date และกรอก manday ก่อน', 'error'); return; }
+  const width = Number(svgEl.getAttribute('width'));
+  const height = Number(svgEl.getAttribute('height'));
+  const svgString = new XMLSerializer().serializeToString(svgEl);
+  const svgBlob = new Blob([svgString], { type:'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+  const img = new Image();
+  img.onload = ()=>{
+    const scale = 2; // export ที่ 2x เพื่อความคมชัดตอนเอาไปวางใน slide
+    const canvas = document.createElement('canvas');
+    canvas.width = width*scale; canvas.height = height*scale;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0,0,width,height);
+    ctx.drawImage(img, 0, 0, width, height);
+    URL.revokeObjectURL(url);
+    canvas.toBlob(blob=>{
+      const dlUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = dlUrl;
+      a.download = `ncbs-timeline-${graphViewLevel}-${new Date().toISOString().slice(0,10)}.png`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(dlUrl);
+      showToast('ดาวน์โหลด PNG แล้ว', 'success');
+    }, 'image/png');
+  };
+  img.onerror = ()=>{ URL.revokeObjectURL(url); showToast('Export PNG ไม่สำเร็จ', 'error'); };
+  img.src = url;
 }
 
 // ============================================================================
