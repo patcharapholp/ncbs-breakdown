@@ -73,6 +73,10 @@
   .nav-item:hover{ background:var(--surface-sunk); color:var(--ink); }
   .nav-item.current{ background:var(--primary-bg); color:var(--primary); font-weight:600; }
   .nav-item .icon{ width:16px; text-align:center; flex-shrink:0; font-size:14px; }
+  .nav-badge{
+    margin-left:auto; background:var(--red); color:#fff; font-family:'IBM Plex Mono'; font-size:10.5px; font-weight:700;
+    min-width:18px; height:18px; border-radius:9px; display:flex; align-items:center; justify-content:center; padding:0 5px;
+  }
 
   .epic-nav{ flex:1; min-height:0; display:flex; flex-direction:column; padding:0 10px 10px; }
   .epic-search{ position:relative; margin:4px 0 8px; }
@@ -566,7 +570,7 @@
     <div class="nav-section">
       <div class="nav-item" data-view="overview"><span class="icon">▤</span> Overview</div>
       <div class="nav-item" data-view="timeline"><span class="icon">▦</span> Timeline &amp; Planning</div>
-      <div class="nav-item" data-view="forum"><span class="icon">💬</span> กระทู้ทีม</div>
+      <div class="nav-item" data-view="forum"><span class="icon">💬</span> NCBS Forum</div>
     </div>
 
     <div class="epic-nav">
@@ -756,7 +760,7 @@ function renderTopbar(){
   } else if(currentView==='timeline'){
     bar.innerHTML = `<div class="topbar-title-row"><div><h2>Timeline &amp; Planning</h2><div class="desc">กำหนด start date ของโครงการ ใส่ manday ต่อ role ต่อ task แล้วดูตารางเวลาที่คำนวณให้อัตโนมัติ</div></div></div>`;
   } else if(currentView==='forum'){
-    bar.innerHTML = `<div class="topbar-title-row"><div><h2>กระทู้ทีม</h2><div class="desc">ตั้งคำถาม/แชร์ความเห็นกับทีม แล้วให้คนอื่นมา comment ได้</div></div></div>`;
+    bar.innerHTML = `<div class="topbar-title-row"><div><h2>NCBS Forum</h2><div class="desc">ตั้งคำถาม/แชร์ความเห็นกับทีม แล้วให้คนอื่นมา comment ได้</div></div></div>`;
   } else if(currentView==='epic'){
     const epic = allEpics()[currentEpicId];
     if(!epic) return;
@@ -1246,6 +1250,12 @@ async function loadScenariosFromFirestore(){
 }
 
 let saveDebounceTimer = null;
+function setActiveScenarioLocally(id){
+  // สลับดู scenario เฉยๆ (ไม่ได้แก้ข้อมูล) — ไม่ต้อง sync ขึ้น Firestore เลย
+  planState.activeScenarioId = id;
+  try{ localStorage.setItem(ACTIVE_SCENARIO_KEY, id); }catch(e){}
+}
+
 function savePlanState(){
   try{ localStorage.setItem(ACTIVE_SCENARIO_KEY, planState.activeScenarioId); }catch(e){}
   clearTimeout(saveDebounceTimer);
@@ -1255,7 +1265,13 @@ function savePlanState(){
     scenarioDocRef(id).set(Object.assign(
       encodeScenarioForFirestore(scen),
       { updatedAt: firebase.firestore.FieldValue.serverTimestamp() }
-    )).catch(err=>{ console.warn('บันทึกขึ้น Firestore ไม่สำเร็จ:', err); showToast('บันทึกขึ้น cloud ไม่สำเร็จ — เช็ค internet connection', 'error'); });
+    )).catch(err=>{
+      console.warn('บันทึกขึ้น Firestore ไม่สำเร็จ:', err);
+      const msg = err && err.code === 'permission-denied'
+        ? 'บันทึกไม่สำเร็จ — คุณไม่มีสิทธิ์แก้ไขแผนนี้ (ไม่ใช่เจ้าของ)'
+        : 'บันทึกขึ้น cloud ไม่สำเร็จ — เช็ค internet connection';
+      showToast(msg, 'error');
+    });
   }, 500);
 }
 
@@ -1640,8 +1656,7 @@ function renderScenarioTabs(){
   el.querySelectorAll('.scenario-tab').forEach(tab=>{
     tab.addEventListener('click', e=>{
       if(e.target.closest('.st-del')) return;
-      planState.activeScenarioId = tab.dataset.scenarioId;
-      savePlanState();
+      setActiveScenarioLocally(tab.dataset.scenarioId);
       renderTimeline();
     });
   });
@@ -2136,6 +2151,45 @@ async function loadForumComments(threadId){
 
 function canEditPost(post){ return currentUser && post.authorUid === currentUser.uid; }
 
+// ---------- Unread activity badge (นับ thread ที่มีความเคลื่อนไหวใหม่ตั้งแต่ครั้งก่อนที่เปิดดู) ----------
+const USER_META_COLLECTION = 'userMeta';
+let forumUnreadCount = 0;
+
+async function computeForumUnread(){
+  try{
+    const metaDoc = await db.collection(USER_META_COLLECTION).doc(currentUser.uid).get();
+    const lastSeen = (metaDoc.exists && metaDoc.data().lastSeenForumAt) ? tsToDate(metaDoc.data().lastSeenForumAt) : null;
+    const snap = await db.collection(THREADS_COLLECTION).get();
+    let count = 0;
+    snap.forEach(doc=>{
+      const d = doc.data();
+      const activity = tsToDate(d.lastActivityAt) || tsToDate(d.createdAt);
+      if(!lastSeen || (activity && activity > lastSeen)) count++;
+    });
+    forumUnreadCount = count;
+  }catch(err){ console.warn('เช็ค unread กระทู้ไม่สำเร็จ:', err); }
+  renderForumBadge();
+}
+function renderForumBadge(){
+  const navItem = document.querySelector('.nav-item[data-view="forum"]');
+  if(!navItem) return;
+  let badge = navItem.querySelector('.nav-badge');
+  if(forumUnreadCount > 0){
+    if(!badge){ badge = document.createElement('span'); badge.className = 'nav-badge'; navItem.appendChild(badge); }
+    badge.textContent = forumUnreadCount > 99 ? '99+' : forumUnreadCount;
+  } else if(badge){ badge.remove(); }
+}
+async function markForumSeen(){
+  try{
+    await db.collection(USER_META_COLLECTION).doc(currentUser.uid).set(
+      { lastSeenForumAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge:true }
+    );
+  }catch(err){ console.warn('บันทึกสถานะอ่านกระทู้ไม่สำเร็จ:', err); }
+  forumUnreadCount = 0;
+  renderForumBadge();
+}
+
+
 async function renderForum(){
   const root = document.getElementById('viewForum');
   root.innerHTML = `<div class="card"><div class="timeline-hint" style="padding:20px;">🔄 กำลังโหลดกระทู้…</div></div>`;
@@ -2143,6 +2197,7 @@ async function renderForum(){
     await loadForumThreads();
     if(currentThreadId && forumThreads[currentThreadId]) renderThreadDetail();
     else { currentThreadId = null; renderThreadList(); }
+    markForumSeen(); // เปิดหน้ากระทู้แล้วถือว่าอ่านแล้ว เคลียร์ badge
   }catch(err){
     root.innerHTML = `<div class="card"><div class="timeline-hint" style="padding:20px; color:var(--red);">โหลดกระทู้ไม่สำเร็จ — เช็ค internet connection</div></div>`;
     console.error(err);
@@ -2208,6 +2263,7 @@ function renderThreadList(){
         title, body,
         authorUid: currentUser.uid, authorName: currentUser.name,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        lastActivityAt: firebase.firestore.FieldValue.serverTimestamp(),
         commentCount: 0,
       });
       showToast('ตั้งกระทู้สำเร็จ', 'success');
@@ -2338,7 +2394,10 @@ async function renderThreadDetail(){
         body, authorUid: currentUser.uid, authorName: currentUser.name,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
-      await db.collection(THREADS_COLLECTION).doc(currentThreadId).update({ commentCount: firebase.firestore.FieldValue.increment(1) });
+      await db.collection(THREADS_COLLECTION).doc(currentThreadId).update({
+        commentCount: firebase.firestore.FieldValue.increment(1),
+        lastActivityAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
       showToast('ส่งความคิดเห็นแล้ว', 'success');
       renderForum();
     }catch(err){ showToast('ส่งไม่สำเร็จ: '+(err.message||err), 'error'); btn.disabled=false; }
@@ -2472,6 +2531,7 @@ async function bootAppForUser(user, welcomeMsg){
   if(!appBooted){ buildSidebar(); appBooted = true; }
   else { renderEpicList(); }
   switchView('overview'); // ทุกครั้งที่ login ให้ landing ที่ Overview เสมอ
+  computeForumUnread(); // เช็ค badge แจ้งเตือนกระทู้ใหม่ (ไม่ realtime — เช็คตอน login/เปิดแอปเท่านั้น)
 
   showToast(welcomeMsg || `เข้าสู่ระบบสำเร็จ — ยินดีต้อนรับ ${currentUser.name}`, 'success');
 }
