@@ -426,9 +426,13 @@
 
   /* ---- Body: label column (frozen, no scroll of its own) + timeline column (its own horizontal scroll) ---- */
   /* Both columns move together vertically because they are plain flex children of ONE vertically-scrolling row. */
-  .og-body{ display:flex; overflow-y:auto; max-height:64vh; }
-  .og-labels-col{ width:430px; flex-shrink:0; border-right:1px solid var(--border); }
-  .og-timeline-col-scroll{ flex:1; overflow-x:auto; overflow-y:hidden; min-width:0; }
+  .og-body{ display:flex; align-items:flex-start; }
+  .og-labels-col{
+    width:430px; flex-shrink:0; border-right:1px solid var(--border);
+    overflow-y:auto; max-height:64vh; scrollbar-width:none; /* Firefox: hide, still scrolls via JS sync */
+  }
+  .og-labels-col::-webkit-scrollbar{ display:none; } /* Chrome/Safari: hide, still scrolls via JS sync */
+  .og-timeline-col-scroll{ flex:1; overflow:auto; max-height:64vh; min-width:0; }
 
   .og-row-label{
     display:flex; align-items:center; gap:6px; padding:0 10px; min-height:37px;
@@ -463,13 +467,15 @@
 
   /* ---- Task detail modal (decoupled from row layout entirely — no row-height-sync problem) ---- */
   #taskDetailModal[hidden]{ display:none; }
-  #taskDetailModal{ position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center; padding:24px; }
-  .modal-backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.6); }
-  .modal-card{
-    position:relative; z-index:1; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
-    box-shadow:var(--shadow-md); max-width:640px; width:100%; max-height:82vh; overflow-y:auto; padding:24px 26px;
+  #taskDetailModal{ position:fixed; inset:0; z-index:200; }
+  .task-popover-catcher{ position:absolute; inset:0; background:transparent; } /* invisible — just catches outside clicks to close, no dimming */
+  .task-popover-card{
+    position:absolute; z-index:1; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    box-shadow:var(--shadow-md); overflow-y:auto; padding:20px 24px;
+    animation: popoverIn .12s ease;
   }
-  .modal-close{ position:absolute; top:14px; right:14px; background:none; border:none; color:var(--ink-faint); font-size:16px; cursor:pointer; }
+  @keyframes popoverIn{ from{ opacity:0; transform:translateY(-6px); } to{ opacity:1; transform:translateY(0); } }
+  .modal-close{ position:absolute; top:12px; right:12px; background:none; border:none; color:var(--ink-faint); font-size:15px; cursor:pointer; }
   .modal-close:hover{ color:var(--red); }
 
   .og-detail-header{ margin-bottom:14px; padding-bottom:12px; border-bottom:1px dashed var(--border); padding-right:28px; }
@@ -1997,12 +2003,20 @@ function renderOutlineGantt(){
     headerScroll.addEventListener('scroll', ()=>{ bodyScroll.scrollLeft = headerScroll.scrollLeft; });
     bodyScroll.dataset.syncWired = '1';
   }
+  // sync vertical scroll: labels column ↔ timeline column (each scrolls vertically on its own bounded height now)
+  const labelsCol = document.getElementById('ogLabelsCol');
+  if(labelsCol && bodyScroll && !bodyScroll.dataset.vsyncWired){
+    bodyScroll.addEventListener('scroll', ()=>{ labelsCol.scrollTop = bodyScroll.scrollTop; });
+    labelsCol.addEventListener('scroll', ()=>{ bodyScroll.scrollTop = labelsCol.scrollTop; });
+    bodyScroll.dataset.vsyncWired = '1';
+  }
 
   if(openTaskDetailKey) renderTaskModal(openTaskDetailKey, { tree, taskRange, editableNow });
 }
 
 // ---------- Task detail modal (แยกจาก row layout ทั้งหมด กันปัญหาความสูงแถวไม่ตรงกันระหว่าง 2 คอลัมน์) ----------
 let openTaskDetailKey = null;
+let openTaskDetailAnchorRect = null;
 
 function findTaskNodeByKey(tree, key){
   for(const epicNode of tree){
@@ -2028,8 +2042,8 @@ function renderTaskModal(key, ctx){
 
   modalRoot.hidden = false;
   modalRoot.innerHTML = `
-    <div class="modal-backdrop" id="taskModalBackdrop"></div>
-    <div class="modal-card">
+    <div class="task-popover-catcher" id="taskModalBackdrop"></div>
+    <div class="task-popover-card" id="taskPopoverCard">
       <button class="modal-close" id="taskModalClose">✕</button>
       <div class="og-detail-header">
         <div class="og-detail-breadcrumb">${taskNode.epicName} › ${taskNode.featureName}</div>
@@ -2063,11 +2077,29 @@ function renderTaskModal(key, ctx){
       </div>` : ''}
     </div>
   `;
+
+  // จัดตำแหน่ง popover ให้โผล่ออกมาจากแถวที่คลิกจริงๆ (ให้ความรู้สึกเหมือนขยายออกจากตาราง ไม่ใช่ dialog ลอยกลางจอ)
+  const card = document.getElementById('taskPopoverCard');
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const cardWidth = Math.min(620, vw - 32);
+  let top, left;
+  if(openTaskDetailAnchorRect){
+    top = openTaskDetailAnchorRect.bottom + 6;
+    left = Math.max(12, Math.min(openTaskDetailAnchorRect.left, vw - cardWidth - 12));
+  } else { top = 100; left = Math.max(12,(vw-cardWidth)/2); }
+  card.style.width = cardWidth + 'px';
+  card.style.left = left + 'px';
+  card.style.top = top + 'px';
+  // ถ้าเนื้อหาจะล้นจอด้านล่าง ให้จำกัดความสูงแล้ว scroll ในตัวเองแทน
+  const maxCardHeight = vh - top - 20;
+  card.style.maxHeight = Math.max(200, maxCardHeight) + 'px';
+
   document.getElementById('taskModalClose').addEventListener('click', closeTaskModal);
   document.getElementById('taskModalBackdrop').addEventListener('click', closeTaskModal);
 }
 function closeTaskModal(){
   openTaskDetailKey = null;
+  openTaskDetailAnchorRect = null;
   const modalRoot = document.getElementById('taskDetailModal');
   if(modalRoot){ modalRoot.hidden = true; modalRoot.innerHTML = ''; }
 }
@@ -2106,6 +2138,7 @@ function wireOutlineGanttEvents(){
     const opener = e.target.closest('[data-task-open]');
     if(opener){
       openTaskDetailKey = opener.dataset.taskOpen;
+      openTaskDetailAnchorRect = opener.getBoundingClientRect();
       renderOutlineGantt();
       return;
     }
