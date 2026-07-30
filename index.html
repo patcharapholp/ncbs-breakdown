@@ -467,6 +467,35 @@
 
   footer.app-footer{ text-align:center; padding:26px; color:var(--ink-faint); font-size:11.8px; font-family:'IBM Plex Mono'; }
 
+  /* ================= FORUM ================= */
+  .forum-new{ padding:18px 20px; display:flex; flex-direction:column; gap:10px; }
+  .forum-new input, .forum-new textarea, .forum-new-comment textarea{
+    width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-sm);
+    background:var(--surface); color:var(--ink); font-family:inherit; font-size:13.4px; resize:vertical;
+  }
+  .forum-new input:focus, .forum-new textarea:focus, .forum-new-comment textarea:focus{ outline:none; border-color:var(--primary); }
+  .forum-row{ display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:1px solid var(--border-soft); cursor:pointer; }
+  .forum-row:last-child{ border-bottom:none; }
+  .forum-row:hover{ background:rgba(255,255,255,.03); }
+  .forum-row-title{ font-size:14px; font-weight:600; margin-bottom:4px; }
+  .forum-row-meta{ font-size:11.8px; color:var(--ink-faint); }
+  .forum-del{ color:var(--ink-faint); font-size:13px; cursor:pointer; flex-shrink:0; padding:4px 8px; }
+  .forum-del:hover{ color:var(--red); }
+
+  .forum-detail-header{ padding:20px 20px 14px; border-bottom:1px solid var(--border-soft); }
+  .forum-detail-title{ font-size:18px; font-weight:700; margin-bottom:6px; }
+  .forum-detail-meta{ font-size:12px; color:var(--ink-faint); }
+  .forum-actions{ margin-top:8px; display:flex; gap:14px; }
+  .forum-edit-link, .forum-del-link{ font-size:11.8px; cursor:pointer; color:var(--ink-faint); margin-left:10px; }
+  .forum-edit-link:hover{ color:var(--primary); }
+  .forum-del-link:hover{ color:var(--red); }
+  .forum-body-text{ padding:16px 20px; white-space:pre-wrap; word-break:break-word; font-size:13.6px; line-height:1.7; }
+  .forum-comment{ padding:14px 20px; border-bottom:1px solid var(--border-soft); }
+  .forum-comment-meta{ font-size:11.8px; color:var(--ink-faint); margin-bottom:4px; }
+  .forum-comment-body{ padding:0; font-size:13px; }
+  .forum-new-comment{ padding:16px 20px; display:flex; gap:10px; align-items:flex-start; border-top:1px solid var(--border-soft); }
+  .forum-new-comment textarea{ flex:1; }
+
   .toast-container{
     position:fixed; bottom:22px; right:22px; z-index:9999;
     display:flex; flex-direction:column; gap:10px; align-items:flex-end; pointer-events:none;
@@ -537,6 +566,7 @@
     <div class="nav-section">
       <div class="nav-item" data-view="overview"><span class="icon">▤</span> Overview</div>
       <div class="nav-item" data-view="timeline"><span class="icon">▦</span> Timeline &amp; Planning</div>
+      <div class="nav-item" data-view="forum"><span class="icon">💬</span> กระทู้ทีม</div>
     </div>
 
     <div class="epic-nav">
@@ -557,6 +587,7 @@
     <main>
       <section class="view" id="viewOverview"></section>
       <section class="view" id="viewTimeline" hidden></section>
+      <section class="view" id="viewForum" hidden></section>
       <section class="view" id="viewEpic" hidden></section>
     </main>
     <footer class="app-footer">NCBS Planning Console · Timeline &amp; Planning เก็บบน Firestore (cloud) ร่วมกันทั้งทีม</footer>
@@ -700,10 +731,12 @@ function switchView(view){
   document.querySelectorAll('.nav-item').forEach(i=> i.classList.toggle('current', i.dataset.view===view));
   document.getElementById('viewOverview').hidden = view!=='overview';
   document.getElementById('viewTimeline').hidden = view!=='timeline';
+  document.getElementById('viewForum').hidden = view!=='forum';
   document.getElementById('viewEpic').hidden = view!=='epic';
   renderEpicList();
   if(view==='overview') renderOverview();
   if(view==='timeline') renderTimeline();
+  if(view==='forum') renderForum();
   renderTopbar();
 }
 
@@ -722,6 +755,8 @@ function renderTopbar(){
     bar.innerHTML = `<div class="topbar-title-row"><div><h2>ภาพรวมโครงการ</h2><div class="desc">สรุปสถานะ readiness ของทุก epic + ประเด็นที่กระทบข้าม epic</div></div></div>`;
   } else if(currentView==='timeline'){
     bar.innerHTML = `<div class="topbar-title-row"><div><h2>Timeline &amp; Planning</h2><div class="desc">กำหนด start date ของโครงการ ใส่ manday ต่อ role ต่อ task แล้วดูตารางเวลาที่คำนวณให้อัตโนมัติ</div></div></div>`;
+  } else if(currentView==='forum'){
+    bar.innerHTML = `<div class="topbar-title-row"><div><h2>กระทู้ทีม</h2><div class="desc">ตั้งคำถาม/แชร์ความเห็นกับทีม แล้วให้คนอื่นมา comment ได้</div></div></div>`;
   } else if(currentView==='epic'){
     const epic = allEpics()[currentEpicId];
     if(!epic) return;
@@ -1580,7 +1615,11 @@ function renderTimeline(){
 function renderScenarioTabs(){
   const el = document.getElementById('scenarioTabs');
   if(!el) return;
-  const ids = Object.keys(planState.scenarios);
+  const ids = Object.keys(planState.scenarios).sort((a,b)=>{
+    const aSys = isSystemScenario(planState.scenarios[a]) ? 0 : 1;
+    const bSys = isSystemScenario(planState.scenarios[b]) ? 0 : 1;
+    return aSys - bSys; // system scenario(s) มาก่อนเสมอ ที่เหลือคงลำดับเดิม
+  });
   el.innerHTML = ids.map(id=>{
     const s = planState.scenarios[id];
     const isCurrent = id===planState.activeScenarioId;
@@ -2054,6 +2093,256 @@ function exportTimelineCsv(){
     ];
   })];
   downloadCsv(rows, `ncbs-timeline-${new Date().toISOString().slice(0,10)}.csv`);
+}
+
+// ============================================================================
+// กระทู้ทีม (Forum) — post ได้แค่ text, ใครก็ comment ได้, แก้/ลบได้เฉพาะเจ้าของ
+// ============================================================================
+const THREADS_COLLECTION = 'threads';
+let forumThreads = {};      // cache: threadId -> {title, body, authorUid, authorName, createdAt, commentCount}
+let forumComments = {};     // cache: threadId -> [{id, body, authorUid, authorName, createdAt}]
+let currentThreadId = null; // null = list view, ตั้งค่า = detail view
+let forumEditingKey = null; // 'thread' | `comment:${commentId}` — กำลังแก้ไขอะไรอยู่
+
+function escapeHtml(str){
+  const div = { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' };
+  return String(str==null?'':str).replace(/[&<>"']/g, ch=>div[ch]);
+}
+function relativeTime(date){
+  if(!date) return '';
+  const diffMs = Date.now() - date.getTime();
+  const mins = Math.floor(diffMs/60000);
+  if(mins < 1) return 'เมื่อสักครู่';
+  if(mins < 60) return `${mins} นาทีที่แล้ว`;
+  const hours = Math.floor(mins/60);
+  if(hours < 24) return `${hours} ชม.ที่แล้ว`;
+  const days = Math.floor(hours/24);
+  if(days === 1) return 'เมื่อวาน';
+  if(days < 7) return `${days} วันที่แล้ว`;
+  return fmtDate(date);
+}
+function tsToDate(ts){ return (ts && typeof ts.toDate === 'function') ? ts.toDate() : null; }
+
+async function loadForumThreads(){
+  const snap = await db.collection(THREADS_COLLECTION).orderBy('createdAt','desc').get();
+  forumThreads = {};
+  snap.forEach(doc=>{ forumThreads[doc.id] = doc.data(); });
+}
+async function loadForumComments(threadId){
+  const snap = await db.collection(THREADS_COLLECTION).doc(threadId).collection('comments').orderBy('createdAt','asc').get();
+  forumComments[threadId] = [];
+  snap.forEach(doc=>{ forumComments[threadId].push(Object.assign({id:doc.id}, doc.data())); });
+}
+
+function canEditPost(post){ return currentUser && post.authorUid === currentUser.uid; }
+
+async function renderForum(){
+  const root = document.getElementById('viewForum');
+  root.innerHTML = `<div class="card"><div class="timeline-hint" style="padding:20px;">🔄 กำลังโหลดกระทู้…</div></div>`;
+  try{
+    await loadForumThreads();
+    if(currentThreadId && forumThreads[currentThreadId]) renderThreadDetail();
+    else { currentThreadId = null; renderThreadList(); }
+  }catch(err){
+    root.innerHTML = `<div class="card"><div class="timeline-hint" style="padding:20px; color:var(--red);">โหลดกระทู้ไม่สำเร็จ — เช็ค internet connection</div></div>`;
+    console.error(err);
+  }
+}
+
+function renderThreadList(){
+  const root = document.getElementById('viewForum');
+  const ids = Object.keys(forumThreads);
+  root.innerHTML = `
+    <div class="card" style="margin-bottom:16px;">
+      <div class="forum-new">
+        <input type="text" id="newThreadTitle" placeholder="ตั้งชื่อกระทู้…" maxlength="120">
+        <textarea id="newThreadBody" placeholder="รายละเอียด (ข้อความล้วน)…" rows="3"></textarea>
+        <button class="btn primary" id="postThreadBtn">📝 ตั้งกระทู้ใหม่</button>
+      </div>
+    </div>
+    <div class="card">
+      ${ids.length===0 ? `<div class="timeline-hint" style="padding:24px; text-align:center;">ยังไม่มีกระทู้ — เริ่มตั้งกระทู้แรกได้เลย</div>` : ids.map(id=>{
+        const t = forumThreads[id];
+        const canEdit = canEditPost(t);
+        return `<div class="forum-row" data-thread-id="${id}">
+          <div class="forum-row-main">
+            <div class="forum-row-title">${escapeHtml(t.title)}</div>
+            <div class="forum-row-meta">โดย ${escapeHtml(t.authorName||'')} · ${relativeTime(tsToDate(t.createdAt))} · 💬 ${t.commentCount||0}</div>
+          </div>
+          ${canEdit ? `<span class="forum-del" data-del-thread="${id}" title="ลบกระทู้นี้">✕</span>` : ''}
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+
+  root.querySelectorAll('.forum-row').forEach(row=>{
+    row.addEventListener('click', e=>{
+      if(e.target.closest('.forum-del')) return;
+      currentThreadId = row.dataset.threadId;
+      renderForum();
+    });
+  });
+  root.querySelectorAll('.forum-del').forEach(delBtn=>{
+    delBtn.addEventListener('click', async e=>{
+      e.stopPropagation();
+      const id = delBtn.dataset.delThread;
+      if(!canEditPost(forumThreads[id])){ showToast('ลบได้เฉพาะเจ้าของกระทู้เท่านั้น', 'error'); return; }
+      if(!confirm(`ลบกระทู้ "${forumThreads[id].title}" ทิ้ง — กู้คืนไม่ได้ ยืนยันหรือไม่?`)) return;
+      try{
+        await db.collection(THREADS_COLLECTION).doc(id).delete();
+        showToast('ลบกระทู้แล้ว', 'info');
+        renderForum();
+      }catch(err){ showToast('ลบไม่สำเร็จ: '+(err.message||err), 'error'); }
+    });
+  });
+
+  document.getElementById('postThreadBtn').addEventListener('click', async ()=>{
+    const title = document.getElementById('newThreadTitle').value.trim();
+    const body = document.getElementById('newThreadBody').value.trim();
+    if(!title || !body){ showToast('กรุณากรอกทั้งชื่อกระทู้และรายละเอียด', 'error'); return; }
+    const btn = document.getElementById('postThreadBtn');
+    btn.disabled = true; btn.textContent = 'กำลังโพสต์…';
+    try{
+      const id = db.collection(THREADS_COLLECTION).doc().id;
+      await db.collection(THREADS_COLLECTION).doc(id).set({
+        title, body,
+        authorUid: currentUser.uid, authorName: currentUser.name,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        commentCount: 0,
+      });
+      showToast('ตั้งกระทู้สำเร็จ', 'success');
+      await renderForum();
+    }catch(err){ showToast('ตั้งกระทู้ไม่สำเร็จ: '+(err.message||err), 'error'); btn.disabled=false; btn.textContent='📝 ตั้งกระทู้ใหม่'; }
+  });
+}
+
+async function renderThreadDetail(){
+  const root = document.getElementById('viewForum');
+  const t = forumThreads[currentThreadId];
+  if(!t){ currentThreadId = null; renderThreadList(); return; }
+  root.innerHTML = `<div class="card"><div class="timeline-hint" style="padding:20px;">🔄 กำลังโหลดความคิดเห็น…</div></div>`;
+  await loadForumComments(currentThreadId);
+  const comments = forumComments[currentThreadId] || [];
+  const canEditThread = canEditPost(t);
+
+  root.innerHTML = `
+    <button class="btn ghost-dashed" id="backToListBtn" style="margin-bottom:12px;">← กลับไปหน้ารายการกระทู้</button>
+    <div class="card" style="margin-bottom:16px;">
+      <div class="forum-detail-header">
+        <div class="forum-detail-title" id="threadTitleDisplay">${escapeHtml(t.title)}</div>
+        <div class="forum-detail-meta">โดย ${escapeHtml(t.authorName||'')} · ${fmtDate(tsToDate(t.createdAt))}</div>
+        ${canEditThread ? `<div class="forum-actions">
+          <span class="forum-edit-link" id="editThreadBtn">✎ แก้ไข</span>
+          <span class="forum-del-link" id="deleteThreadBtn">✕ ลบกระทู้</span>
+        </div>` : ''}
+      </div>
+      <div class="forum-body-text" id="threadBodyDisplay">${escapeHtml(t.body)}</div>
+    </div>
+
+    <div class="card">
+      <h3 style="padding:16px 20px 0; margin:0; font-size:14px;">💬 ความคิดเห็น (${comments.length})</h3>
+      <div id="commentsList">
+        ${comments.length===0 ? `<div class="timeline-hint" style="padding:18px 20px;">ยังไม่มีความคิดเห็น — เป็นคนแรกที่ comment ได้เลย</div>` : comments.map(c=>`
+          <div class="forum-comment" data-comment-id="${c.id}">
+            <div class="forum-comment-meta">${escapeHtml(c.authorName||'')} · ${relativeTime(tsToDate(c.createdAt))}
+              ${canEditPost(c) ? `<span class="forum-edit-link" data-edit-comment="${c.id}">✎ แก้ไข</span><span class="forum-del-link" data-del-comment="${c.id}">✕ ลบ</span>` : ''}
+            </div>
+            <div class="forum-body-text forum-comment-body" data-comment-body="${c.id}">${escapeHtml(c.body)}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="forum-new-comment">
+        <textarea id="newCommentBody" placeholder="พิมพ์ความคิดเห็น…" rows="2"></textarea>
+        <button class="btn primary" id="postCommentBtn">ส่ง</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('backToListBtn').addEventListener('click', ()=>{ currentThreadId = null; renderForum(); });
+
+  if(canEditThread){
+    document.getElementById('deleteThreadBtn').addEventListener('click', async ()=>{
+      if(!confirm(`ลบกระทู้ "${t.title}" ทิ้ง — กู้คืนไม่ได้ ยืนยันหรือไม่?`)) return;
+      try{
+        await db.collection(THREADS_COLLECTION).doc(currentThreadId).delete();
+        showToast('ลบกระทู้แล้ว', 'info');
+        currentThreadId = null;
+        renderForum();
+      }catch(err){ showToast('ลบไม่สำเร็จ: '+(err.message||err), 'error'); }
+    });
+    document.getElementById('editThreadBtn').addEventListener('click', ()=>{
+      const bodyEl = document.getElementById('threadBodyDisplay');
+      const titleEl = document.getElementById('threadTitleDisplay');
+      titleEl.outerHTML = `<input type="text" id="threadTitleEdit" value="${escapeHtml(t.title)}" maxlength="120" style="width:100%; margin-bottom:8px;">`;
+      bodyEl.outerHTML = `<textarea id="threadBodyEdit" rows="4" style="width:100%;">${escapeHtml(t.body)}</textarea>
+        <div style="margin-top:8px; display:flex; gap:8px;">
+          <button class="btn primary" id="saveThreadEditBtn">บันทึก</button>
+          <button class="btn ghost-dashed" id="cancelThreadEditBtn">ยกเลิก</button>
+        </div>`;
+      document.getElementById('cancelThreadEditBtn').addEventListener('click', renderThreadDetail);
+      document.getElementById('saveThreadEditBtn').addEventListener('click', async ()=>{
+        const newTitle = document.getElementById('threadTitleEdit').value.trim();
+        const newBody = document.getElementById('threadBodyEdit').value.trim();
+        if(!newTitle || !newBody){ showToast('กรุณากรอกให้ครบ', 'error'); return; }
+        try{
+          await db.collection(THREADS_COLLECTION).doc(currentThreadId).update({ title:newTitle, body:newBody });
+          showToast('แก้ไขกระทู้แล้ว', 'success');
+          renderForum();
+        }catch(err){ showToast('แก้ไขไม่สำเร็จ: '+(err.message||err), 'error'); }
+      });
+    });
+  }
+
+  root.querySelectorAll('[data-del-comment]').forEach(delBtn=>{
+    delBtn.addEventListener('click', async ()=>{
+      const cid = delBtn.dataset.delComment;
+      if(!confirm('ลบความคิดเห็นนี้ทิ้ง — กู้คืนไม่ได้ ยืนยันหรือไม่?')) return;
+      try{
+        await db.collection(THREADS_COLLECTION).doc(currentThreadId).collection('comments').doc(cid).delete();
+        await db.collection(THREADS_COLLECTION).doc(currentThreadId).update({ commentCount: firebase.firestore.FieldValue.increment(-1) });
+        showToast('ลบความคิดเห็นแล้ว', 'info');
+        renderForum();
+      }catch(err){ showToast('ลบไม่สำเร็จ: '+(err.message||err), 'error'); }
+    });
+  });
+  root.querySelectorAll('[data-edit-comment]').forEach(editBtn=>{
+    editBtn.addEventListener('click', ()=>{
+      const cid = editBtn.dataset.editComment;
+      const c = comments.find(x=>x.id===cid);
+      const bodyEl = document.querySelector(`[data-comment-body="${cid}"]`);
+      bodyEl.outerHTML = `<textarea class="forum-comment-edit-box" rows="2" style="width:100%;">${escapeHtml(c.body)}</textarea>
+        <div style="margin-top:6px; display:flex; gap:8px;">
+          <button class="btn primary" data-save-comment="${cid}">บันทึก</button>
+          <button class="btn ghost-dashed" data-cancel-comment="${cid}">ยกเลิก</button>
+        </div>`;
+      document.querySelector(`[data-cancel-comment="${cid}"]`).addEventListener('click', renderThreadDetail);
+      document.querySelector(`[data-save-comment="${cid}"]`).addEventListener('click', async ()=>{
+        const newBody = document.querySelector('.forum-comment-edit-box').value.trim();
+        if(!newBody) return;
+        try{
+          await db.collection(THREADS_COLLECTION).doc(currentThreadId).collection('comments').doc(cid).update({ body:newBody });
+          showToast('แก้ไขความคิดเห็นแล้ว', 'success');
+          renderForum();
+        }catch(err){ showToast('แก้ไขไม่สำเร็จ: '+(err.message||err), 'error'); }
+      });
+    });
+  });
+
+  document.getElementById('postCommentBtn').addEventListener('click', async ()=>{
+    const body = document.getElementById('newCommentBody').value.trim();
+    if(!body){ showToast('กรุณาพิมพ์ความคิดเห็นก่อน', 'error'); return; }
+    const btn = document.getElementById('postCommentBtn');
+    btn.disabled = true;
+    try{
+      await db.collection(THREADS_COLLECTION).doc(currentThreadId).collection('comments').add({
+        body, authorUid: currentUser.uid, authorName: currentUser.name,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      await db.collection(THREADS_COLLECTION).doc(currentThreadId).update({ commentCount: firebase.firestore.FieldValue.increment(1) });
+      showToast('ส่งความคิดเห็นแล้ว', 'success');
+      renderForum();
+    }catch(err){ showToast('ส่งไม่สำเร็จ: '+(err.message||err), 'error'); btn.disabled=false; }
+  });
 }
 
 // ============================================================================
