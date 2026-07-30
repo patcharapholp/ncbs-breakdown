@@ -345,6 +345,14 @@
     color:var(--ink); background:var(--surface); min-width:190px;
   }
   .dp-field:hover{ border-color:var(--primary); }
+  .dp-field.dp-disabled{ opacity:.5; cursor:not-allowed; }
+  .dp-field.dp-disabled:hover{ border-color:var(--border); }
+
+  .readonly-banner{
+    background:var(--amber-bg); border:1px solid var(--amber); color:var(--amber);
+    border-radius:var(--radius-sm); padding:10px 16px; font-size:12.8px; margin-bottom:14px;
+  }
+  .readonly-banner b{ color:var(--ink); }
   .dp-display.dp-placeholder{ color:var(--ink-faint); }
   .dp-icon{ font-size:12.6px; flex-shrink:0; }
   .dp-popover{
@@ -1103,6 +1111,15 @@ function getCapacity(){
 }
 
 // ============================================================================
+// Scenario permissions — scenario ระบบ (ownerUid ว่าง) แก้ไขได้ทุกคน,
+// scenario ที่มีเจ้าของแก้ไข/ลบได้เฉพาะเจ้าของ คนอื่นดูได้อย่างเดียว
+// (บังคับจริงฝั่ง server ด้วย Firestore Security Rules — โค้ดนี้แค่ควบคุม UI)
+// ============================================================================
+function isSystemScenario(scen){ return !scen.ownerUid; }
+function canEditScenario(scen){ return isSystemScenario(scen) || (currentUser && scen.ownerUid === currentUser.uid); }
+function canDeleteScenario(scen){ return !isSystemScenario(scen) && currentUser && scen.ownerUid === currentUser.uid; }
+
+// ============================================================================
 // Firebase — auth + Firestore-backed shared workspace
 // ============================================================================
 const firebaseConfig = {
@@ -1177,8 +1194,9 @@ async function loadScenariosFromFirestore(){
     const migrated = migratePlanState(localData);
     for(const scen of Object.values(migrated.scenarios)){
       const newId = db.collection(SCENARIOS_COLLECTION).doc().id;
-      scen.ownerUid = currentUser.uid;
-      scen.ownerName = currentUser.name;
+      // scenario แรกสุดถือเป็นของระบบ (ไม่ผูกกับใครคนใดคนหนึ่ง) — ทุกคนแก้ไขร่วมกันได้
+      scen.ownerUid = null;
+      scen.ownerName = '(default)';
       scen.createdAt = firebase.firestore.FieldValue.serverTimestamp();
       await scenarioDocRef(newId).set(encodeScenarioForFirestore(scen));
       scenarios[newId] = scen;
@@ -1415,8 +1433,10 @@ const PX_PER_DAY = 26;
 
 function renderTimeline(){
   const root = document.getElementById('viewTimeline');
+  const editable = canEditScenario(currentScenario());
   root.innerHTML = `
     <div class="scenario-tabs" id="scenarioTabs"></div>
+    ${!editable ? `<div class="readonly-banner">🔒 คุณกำลังดูแผน "${currentScenario().name}" ของ <b>${currentScenario().ownerName}</b> — ดูได้อย่างเดียว แก้ไข/ลบได้เฉพาะเจ้าของ</div>` : ''}
 
     <div class="card" style="margin-bottom:18px;">
       <div class="project-config">
@@ -1431,10 +1451,10 @@ function renderTimeline(){
         <button class="btn" id="exportTimelineCsv">⇩ Export timeline (CSV)</button>
       </div>
       <div class="timeline-toolbar" style="padding-top:0;">
-        <button class="btn primary" id="applyMockFill">🪄 เติม mock estimate (เฉพาะช่องว่าง)</button>
-        <button class="btn" id="applyMockOverwrite">🪄 เขียนทับทั้งหมดด้วย mock estimate</button>
-        <button class="btn ghost-dashed" id="clearAllManday">↺ ล้าง manday ทั้งหมด</button>
-        <button class="btn" id="applyRecommendedOrder">📐 ใช้ลำดับ Epic ที่แนะนำ (ตาม dependency)</button>
+        <button class="btn primary" id="applyMockFill" ${!editable?'disabled':''}>🪄 เติม mock estimate (เฉพาะช่องว่าง)</button>
+        <button class="btn" id="applyMockOverwrite" ${!editable?'disabled':''}>🪄 เขียนทับทั้งหมดด้วย mock estimate</button>
+        <button class="btn ghost-dashed" id="clearAllManday" ${!editable?'disabled':''}>↺ ล้าง manday ทั้งหมด</button>
+        <button class="btn" id="applyRecommendedOrder" ${!editable?'disabled':''}>📐 ใช้ลำดับ Epic ที่แนะนำ (ตาม dependency)</button>
       </div>
       <div class="timeline-hint" style="padding-top:6px;">Mock estimate เดาจาก keyword ใน task/description + clarity (🟢🟡🔴) — เป็นตัวเลขตั้งต้น ไม่ใช่ estimate จริง ควรให้ Tech Lead/Dev ยืนยันก่อน commit sprint จริง · ทุกอย่างในหน้านี้ผูกกับ approach ที่เลือกอยู่ด้านบนเท่านั้น</div>
 
@@ -1463,11 +1483,13 @@ function renderTimeline(){
   createDatePicker(document.getElementById('projectStartPicker'), {
     value: currentScenario().projectStart,
     placeholder: 'เลือกวันที่เริ่มโครงการ',
+    disabled: !editable,
     onChange: iso=>{ currentScenario().projectStart=iso; savePlanState(); renderOutlineGantt(); },
   });
   createDatePicker(document.getElementById('targetEndPicker'), {
     value: currentScenario().targetEnd,
     placeholder: 'ไม่บังคับ',
+    disabled: !editable,
     onChange: iso=>{ currentScenario().targetEnd=iso; savePlanState(); renderOutlineGantt(); },
   });
 
@@ -1506,25 +1528,35 @@ function renderTimeline(){
     exportTimelineCsv();
     showToast('ดาวน์โหลด timeline CSV แล้ว', 'success');
   });
+  function requireEditPermission(){
+    if(canEditScenario(currentScenario())) return true;
+    showToast('แผนนี้เป็นของ "'+(currentScenario().ownerName||'คนอื่น')+'" — ดูได้อย่างเดียว แก้ไขไม่ได้', 'error');
+    return false;
+  }
+
   document.getElementById('applyMockFill').addEventListener('click', ()=>{
+    if(!requireEditPermission()) return;
     if(confirm('เติม manday เบื้องต้น (mock estimate) ให้เฉพาะช่องที่ยังเป็น 0 ในแผน "'+currentScenario().name+'" — ช่องที่กรอกไว้แล้วจะไม่ถูกแตะต้อง ดำเนินการต่อไหม?')){
       applyMockEstimates(false);
       showToast('เติม mock estimate เรียบร้อยแล้ว', 'success');
     }
   });
   document.getElementById('applyMockOverwrite').addEventListener('click', ()=>{
+    if(!requireEditPermission()) return;
     if(confirm('⚠️ จะเขียนทับ manday ทุกช่องด้วย mock estimate ใหม่ทั้งหมดในแผน "'+currentScenario().name+'" (รวมช่องที่เคยกรอกไว้แล้ว) — ยืนยันหรือไม่?')){
       applyMockEstimates(true);
       showToast('เขียนทับด้วย mock estimate เรียบร้อยแล้ว', 'success');
     }
   });
   document.getElementById('clearAllManday').addEventListener('click', ()=>{
+    if(!requireEditPermission()) return;
     if(confirm('ล้างค่า manday ทุก task ทุก role ในแผน "'+currentScenario().name+'" กลับเป็น 0 ทั้งหมด — ยืนยันหรือไม่?')){
       clearAllManday();
       showToast('ล้าง manday ทั้งหมดเรียบร้อยแล้ว', 'info');
     }
   });
   document.getElementById('applyRecommendedOrder').addEventListener('click', ()=>{
+    if(!requireEditPermission()) return;
     if(confirm('จะเรียง Epic ใหม่ตาม dependency ที่แนะนำ (Foundation → Core → Supporting → Secondary → Blocked/ทีหลัง) ในแผน "'+currentScenario().name+'" — ลำดับ Feature/Task ภายในแต่ละ Epic จะไม่เปลี่ยน ยืนยันหรือไม่?')){
       applyRecommendedEpicOrder();
       showToast('จัดลำดับ Epic ตามที่แนะนำเรียบร้อยแล้ว', 'success');
@@ -1552,10 +1584,12 @@ function renderScenarioTabs(){
   el.innerHTML = ids.map(id=>{
     const s = planState.scenarios[id];
     const isCurrent = id===planState.activeScenarioId;
-    return `<div class="scenario-tab ${isCurrent?'current':''}" data-scenario-id="${id}" title="${s.name}${s.ownerName?' · โดย '+s.ownerName:''}">
+    const ownerLabel = isSystemScenario(s) ? '(default)' : (s.ownerName || '');
+    const viewOnly = !canEditScenario(s);
+    return `<div class="scenario-tab ${isCurrent?'current':''}" data-scenario-id="${id}" title="${s.name} · ${ownerLabel}${viewOnly?' · ดูได้อย่างเดียว':''}">
       <span class="st-name">${s.name}</span>
-      ${s.ownerName ? `<span class="st-owner">${s.ownerName}</span>` : ''}
-      ${ids.length>1 ? `<span class="st-del" data-del-scenario="${id}" title="ลบแผนนี้">✕</span>` : ''}
+      <span class="st-owner">${ownerLabel}${viewOnly?' 🔒':''}</span>
+      ${canDeleteScenario(s) ? `<span class="st-del" data-del-scenario="${id}" title="ลบแผนนี้">✕</span>` : ''}
     </div>`;
   }).join('') + `
     <button type="button" class="scenario-tab-add" id="addScenarioBtn">+ Approach ใหม่</button>
@@ -1576,7 +1610,9 @@ function renderScenarioTabs(){
     delBtn.addEventListener('click', async e=>{
       e.stopPropagation();
       const id = delBtn.dataset.delScenario;
-      const delName = planState.scenarios[id].name;
+      const target = planState.scenarios[id];
+      if(!canDeleteScenario(target)){ showToast('ลบได้เฉพาะเจ้าของแผนเท่านั้น', 'error'); return; }
+      const delName = target.name;
       if(!confirm(`ลบแผน "${delName}" ทิ้ง — กู้คืนไม่ได้ (ลบออกจาก cloud ด้วย) ยืนยันหรือไม่?`)) return;
       delete planState.scenarios[id];
       if(planState.activeScenarioId===id) planState.activeScenarioId = Object.keys(planState.scenarios)[0];
@@ -1613,6 +1649,7 @@ function renderScenarioTabs(){
   });
   document.getElementById('renameScenarioBtn').addEventListener('click', ()=>{
     const cur = currentScenario();
+    if(!canEditScenario(cur)){ showToast('เปลี่ยนชื่อได้เฉพาะเจ้าของแผนเท่านั้น', 'error'); return; }
     const name = prompt('เปลี่ยนชื่อแผนปัจจุบัน:', cur.name);
     if(!name) return;
     cur.name = name;
@@ -1634,10 +1671,11 @@ function renderCapacityStrip(){
   const el = document.getElementById('capacityStrip');
   if(!el) return;
   const cap = getCapacity();
+  const editable = canEditScenario(currentScenario());
   el.innerHTML = ROLES.map(r=>`
     <div class="capacity-seg">
       <div class="role">${r.label}</div>
-      <input type="number" min="1" step="1" value="${cap[r.key]}" data-cap-role="${r.key}">
+      <input type="number" min="1" step="1" value="${cap[r.key]}" data-cap-role="${r.key}" ${!editable?'disabled':''}>
     </div>
   `).join('');
   el.querySelectorAll('input').forEach(inp=>{
@@ -1681,7 +1719,7 @@ function createDatePicker(root, opts){
 
   function render(){
     root.innerHTML = `
-      <div class="dp-field" tabindex="0">
+      <div class="dp-field ${opts.disabled?'dp-disabled':''}" tabindex="0">
         <span class="dp-display ${value?'':'dp-placeholder'}">${value ? fmtDate(isoToDate(value)) : (opts.placeholder||'เลือกวันที่')}</span>
         <span class="dp-icon">📅</span>
       </div>
@@ -1701,7 +1739,7 @@ function createDatePicker(root, opts){
         </div>
       </div>` : ''}
     `;
-    root.querySelector('.dp-field').addEventListener('click', e=>{ e.stopPropagation(); open=!open; render(); });
+    root.querySelector('.dp-field').addEventListener('click', e=>{ if(opts.disabled) return; e.stopPropagation(); open=!open; render(); });
     if(open){
       root.querySelector('.dp-prev').addEventListener('click', e=>{ e.stopPropagation(); viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()-1,1); render(); });
       root.querySelector('.dp-next').addEventListener('click', e=>{ e.stopPropagation(); viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()+1,1); render(); });
@@ -1728,6 +1766,7 @@ function matchesSearch(node){
 function renderOutlineGantt(){
   const { tree, scheduleMap, projectEnd } = computeSchedule();
   const { taskRange, featureRange, epicRange } = computeRollups(tree, scheduleMap);
+  const editableNow = canEditScenario(currentScenario());
 
   document.getElementById('computedEnd').innerHTML = projectEnd ? `<b>${fmtDate(projectEnd)}</b>` : 'กำหนด Start Date ก่อน';
   const varEl = document.getElementById('varianceReadout');
@@ -1802,7 +1841,7 @@ function renderOutlineGantt(){
 
     const eCollapsed = collapsedNodes.has(epicNode.key);
     rowsHtml += `
-      <div class="og-row level-epic ${epicNode.hidden?'hidden-item':''}" draggable="true" data-order-scope="epic" data-order-id="${epicNode.epicId}">
+      <div class="og-row level-epic ${epicNode.hidden?'hidden-item':''}" draggable="${editableNow}" data-order-scope="epic" data-order-id="${epicNode.epicId}">
         <div class="og-label-cell">
           <span class="og-drag-handle">☰</span>
           <span class="og-caret ${eCollapsed?'collapsed':''}" data-caret-key="${epicNode.key}">▾</span>
@@ -1819,7 +1858,7 @@ function renderOutlineGantt(){
       if(planSearchQuery && !featNode.tasks.some(t=>matchesSearch(t) || t.subs.some(s=>matchesSearch(s)))) return;
       const fCollapsed = collapsedNodes.has(featNode.key);
       rowsHtml += `
-        <div class="og-row level-feature ${featNode.hidden?'hidden-item':''}" draggable="true" data-order-scope="feat:${featNode.epicId}" data-order-id="${featNode.featureId}">
+        <div class="og-row level-feature ${featNode.hidden?'hidden-item':''}" draggable="${editableNow}" data-order-scope="feat:${featNode.epicId}" data-order-id="${featNode.featureId}">
           <div class="og-label-cell">
             <span class="og-drag-handle">☰</span>
             <span class="og-caret ${fCollapsed?'collapsed':''}" data-caret-key="${featNode.key}">▾</span>
@@ -1836,7 +1875,7 @@ function renderOutlineGantt(){
         const isOpen = expandedTasks.has(taskNode.key);
         const total = mandayTotal(taskNode.planKey);
         rowsHtml += `
-          <div class="og-row level-task ${taskNode.hidden?'hidden-item':''}" draggable="true" data-order-scope="task:${taskNode.epicId}::${taskNode.featureId}" data-order-id="${t.id}">
+          <div class="og-row level-task ${taskNode.hidden?'hidden-item':''}" draggable="${editableNow}" data-order-scope="task:${taskNode.epicId}::${taskNode.featureId}" data-order-id="${t.id}">
             <div class="og-label-cell" data-task-toggle="${taskNode.key}">
               <span class="og-drag-handle">☰</span>
               <span class="og-eye" data-hide-key="${taskNode.key}">${taskNode.hidden?'🚫':'👁'}</span>
@@ -1869,7 +1908,7 @@ function renderOutlineGantt(){
                 <div><b>Clarity note</b>${t.note||'–'}</div>
               </div>
               <div class="og-manday-inputs">
-                ${ROLES.map(r=>`<div class="mini-field"><label>${r.label}</label><input type="number" min="0" step="0.5" value="${p.manday[r.key]||0}" data-manday-key="${taskNode.planKey}" data-role="${r.key}"></div>`).join('')}
+                ${ROLES.map(r=>`<div class="mini-field"><label>${r.label}</label><input type="number" min="0" step="0.5" value="${p.manday[r.key]||0}" data-manday-key="${taskNode.planKey}" data-role="${r.key}" ${!editableNow?'disabled':''}></div>`).join('')}
               </div>
               ${taskNode.subs.length ? `<div class="og-sub-list">
                 <div class="og-sub-list-label">Sub-tasks</div>
@@ -1879,7 +1918,7 @@ function renderOutlineGantt(){
                     <span class="og-eye" data-hide-key="${s.key}">${s.hidden?'🚫':'👁'}</span>
                     <span class="og-dot" style="background:${clarityColor(s.data.c)}"></span>
                     <span class="og-name" title="${s.data.id} — ${s.data.task}">${s.data.id} ${s.data.task}</span>
-                    ${ROLES.map(r=>`<input type="number" min="0" step="0.5" title="${r.label}" value="${sp.manday[r.key]||0}" data-manday-key="${s.planKey}" data-role="${r.key}">`).join('')}
+                    ${ROLES.map(r=>`<input type="number" min="0" step="0.5" title="${r.label}" value="${sp.manday[r.key]||0}" data-manday-key="${s.planKey}" data-role="${r.key}" ${!editableNow?'disabled':''}>`).join('')}
                   </div>`;
                 }).join('')}
               </div>` : ''}
@@ -1909,7 +1948,10 @@ function wireOutlineGanttEvents(){
 
   container.addEventListener('click', e=>{
     const eye = e.target.closest('.og-eye');
-    if(eye){ toggleHiddenKey(eye.dataset.hideKey); renderOutlineGantt(); return; }
+    if(eye){
+      if(!canEditScenario(currentScenario())){ showToast('แผนนี้ดูได้อย่างเดียว แก้ไขไม่ได้', 'error'); return; }
+      toggleHiddenKey(eye.dataset.hideKey); renderOutlineGantt(); return;
+    }
 
     const caret = e.target.closest('.og-caret');
     if(caret){ const k=caret.dataset.caretKey; collapsedNodes.has(k)?collapsedNodes.delete(k):collapsedNodes.add(k); renderOutlineGantt(); return; }
@@ -1933,6 +1975,7 @@ function wireOutlineGanttEvents(){
   container.addEventListener('change', e=>{
     const inp = e.target.closest('input[data-manday-key]');
     if(!inp) return;
+    if(!canEditScenario(currentScenario())){ showToast('แผนนี้ดูได้อย่างเดียว แก้ไขไม่ได้', 'error'); renderOutlineGantt(); return; }
     const p = getTaskPlan(inp.dataset.mandayKey);
     p.manday[inp.dataset.role] = Number(inp.value)||0;
     savePlanState();
@@ -1940,6 +1983,7 @@ function wireOutlineGanttEvents(){
   });
 
   container.addEventListener('dragstart', e=>{
+    if(!canEditScenario(currentScenario())){ e.preventDefault(); return; }
     const row = e.target.closest('.og-row[draggable="true"]');
     if(!row) return;
     dragCtx = { scope: row.dataset.orderScope, fromId: row.dataset.orderId };
