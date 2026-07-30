@@ -424,15 +424,15 @@
   .og-month-band{ position:absolute; top:0; height:100%; display:flex; align-items:center; padding-left:6px; font-size:11px; font-weight:700; color:var(--ink-soft); border-left:1px solid var(--border-soft); white-space:nowrap; }
   .og-date-tick{ position:absolute; top:0; height:100%; display:flex; align-items:center; font-family:'IBM Plex Mono'; font-size:11px; color:var(--ink-faint); padding-left:5px; border-left:1px solid var(--border); white-space:nowrap; }
 
-  /* ---- Body: label column (frozen, no scroll of its own) + timeline column (its own horizontal scroll) ---- */
-  /* Both columns move together vertically because they are plain flex children of ONE vertically-scrolling row. */
-  .og-body{ display:flex; align-items:flex-start; }
-  .og-labels-col{
-    width:430px; flex-shrink:0; border-right:1px solid var(--border);
-    overflow-y:auto; max-height:64vh; scrollbar-width:none; /* Firefox: hide, still scrolls via JS sync */
-  }
-  .og-labels-col::-webkit-scrollbar{ display:none; } /* Chrome/Safari: hide, still scrolls via JS sync */
-  .og-timeline-col-scroll{ flex:1; overflow:auto; max-height:64vh; min-width:0; }
+  /* ---- Body: ONE vertically-scrolling outer container holding row-groups. ---- */
+  /* Each row-group is [label-part(430px) | timeline-part(flex, own horizontal scroll)].   */
+  /* When a task is expanded, its detail renders as a full-width band BETWEEN two groups — */
+  /* this is what makes it feel truly embedded (pushes everything below down) without ever */
+  /* needing to match heights between the two columns for the detail content itself.        */
+  .og-body-outer{ overflow-y:auto; overflow-x:hidden; max-height:64vh; }
+  .og-row-group{ display:flex; align-items:flex-start; }
+  .og-labels-col-part{ width:430px; flex-shrink:0; border-right:1px solid var(--border); }
+  .og-timeline-col-part{ flex:1; overflow-x:auto; min-width:0; }
 
   .og-row-label{
     display:flex; align-items:center; gap:6px; padding:0 10px; min-height:37px;
@@ -444,6 +444,7 @@
   .og-row-label.level-feature{ padding-left:28px; font-weight:600; }
   .og-row-label.level-task{ padding-left:46px; cursor:pointer; }
   .og-row-label.level-task:hover .og-name{ color:var(--primary); }
+  .og-row-label.is-open{ background:var(--primary-bg); }
   .og-row-label.dragging{ opacity:.35; }
   .og-row-label.drag-over-top{ box-shadow: inset 0 2px 0 var(--primary); }
   .og-row-label.drag-over-bottom{ box-shadow: inset 0 -2px 0 var(--primary); }
@@ -465,18 +466,13 @@
   .og-name{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12.8px; flex:1; min-width:0; }
   .og-badge{ font-family:'IBM Plex Mono'; font-size:10.5px; color:var(--ink-faint); flex-shrink:0; }
 
-  /* ---- Task detail modal (decoupled from row layout entirely — no row-height-sync problem) ---- */
-  #taskDetailModal[hidden]{ display:none; }
-  #taskDetailModal{ position:fixed; inset:0; z-index:200; }
-  .task-popover-catcher{ position:absolute; inset:0; background:transparent; } /* invisible — just catches outside clicks to close, no dimming */
-  .task-popover-card{
-    position:absolute; z-index:1; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
-    box-shadow:var(--shadow-md); overflow-y:auto; padding:20px 24px;
-    animation: popoverIn .12s ease;
+  /* ---- Inline detail band — true in-table expansion, full width, pushes rows below it down ---- */
+  .og-detail-inline-wrap{
+    padding:16px 24px 20px; background:var(--surface-sunk); border-top:2px solid var(--primary); border-bottom:1px solid var(--border);
+    position:relative;
   }
-  @keyframes popoverIn{ from{ opacity:0; transform:translateY(-6px); } to{ opacity:1; transform:translateY(0); } }
-  .modal-close{ position:absolute; top:12px; right:12px; background:none; border:none; color:var(--ink-faint); font-size:15px; cursor:pointer; }
-  .modal-close:hover{ color:var(--red); }
+  .og-detail-close{ position:absolute; top:14px; right:16px; background:none; border:none; color:var(--ink-faint); font-size:15px; cursor:pointer; }
+  .og-detail-close:hover{ color:var(--red); }
 
   .og-detail-header{ margin-bottom:14px; padding-bottom:12px; border-bottom:1px dashed var(--border); padding-right:28px; }
   .og-detail-breadcrumb{ font-size:11.5px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.03em; font-weight:600; margin-bottom:4px; }
@@ -552,7 +548,6 @@
 <body>
 
 <div id="toastContainer" class="toast-container"></div>
-<div id="taskDetailModal" hidden></div>
 
 <div id="authScreen" class="auth-screen">
   <div class="auth-card">
@@ -1092,13 +1087,13 @@ function applyMockEstimates(overwrite){
     });
   });
   savePlanState();
-  if(document.getElementById('ogBody')) renderOutlineGantt();
+  if(document.getElementById('ogBodyOuter')) renderOutlineGantt();
 }
 
 function clearAllManday(){
   Object.values(currentScenario().tasks).forEach(p=>{ ROLES.forEach(r=> p.manday[r.key]=0); });
   savePlanState();
-  if(document.getElementById('ogBody')) renderOutlineGantt();
+  if(document.getElementById('ogBodyOuter')) renderOutlineGantt();
 }
 
 
@@ -1129,7 +1124,7 @@ function applyRecommendedEpicOrder(){
   scored.sort((a,b)=> a.tier-b.tier); // stable sort — ties keep their relative order
   currentScenario().epicOrder = scored.map(s=>s.id);
   savePlanState();
-  if(document.getElementById('ogBody')) renderOutlineGantt();
+  if(document.getElementById('ogBodyOuter')) renderOutlineGantt();
 }
 
 const DEFAULT_CAPACITY = { po_ba:1, tech_lead:1, dev:7, qa_lead:1, qa:3, pm:1, dm:1 };
@@ -1504,6 +1499,7 @@ function computeRollups(tree, scheduleMap){
 // Timeline view — project config + unified Outline & Gantt tree
 // ============================================================================
 let collapsedNodes = new Set();   // session-only: which epic/feature keys are collapsed
+let openTaskDetailKey = null;      // session-only: which task's detail is expanded inline (null = none)
 let planSearchQuery = '';
 const PX_PER_DAY = 26;
 
@@ -1550,7 +1546,7 @@ function renderTimeline(){
       </div>
       <div class="timeline-hint">ลาก ☰ เพื่อจัดลำดับใหม่ (ในกลุ่มเดียวกันเท่านั้น) · กด 👁 เพื่อซ่อน/แสดง · คลิกชื่อ task เพื่อดูรายละเอียด + กรอก manday · ข้อมูลบันทึกอัตโนมัติในเบราว์เซอร์นี้<br>⚙️ Task ใน feature เดียวกันเรียงต่อกันเสมอ · task คนละ feature/epic จะขนานกันอัตโนมัติถ้า Team Capacity พอ · <b>dependency ข้าม feature/epic ไม่ได้ตรวจสอบอัตโนมัติ</b> — เช็คกับ epic-level dependencies เองด้วย</div>
       <div class="og-fixed-header" id="ogFixedHeader"></div>
-      <div class="og-body" id="ogBody"></div>
+      <div class="og-body-outer" id="ogBodyOuter"></div>
     </div>
   `;
 
@@ -1930,15 +1926,16 @@ function renderOutlineGantt(){
   function clarityColor(c){ return c==='green' ? 'var(--green)' : (c==='yellow' ? 'var(--amber)' : 'var(--red)'); }
   function mandayTotal(planKey){ return Object.values(getTaskPlan(planKey).manday).reduce((a,b)=>a+Number(b||0),0); }
 
-  let labelRows = '';
-  let barRows = '';
+  let labelSegs = [''];
+  let barSegs = [''];
+  let expandedDetailHtml = '';
   tree.forEach(epicNode=>{
     const epic = epicNode.data;
     const visibleFeatures = epicNode.features.filter(f=> f.tasks.some(t=>matchesSearch(t) || t.subs.some(s=>matchesSearch(s))));
     if(planSearchQuery && visibleFeatures.length===0) return;
 
     const eCollapsed = collapsedNodes.has(epicNode.key);
-    labelRows += `
+    labelSegs[labelSegs.length-1] += `
       <div class="og-row-label level-epic ${epicNode.hidden?'hidden-item':''}" draggable="${editableNow}" data-order-scope="epic" data-order-id="${epicNode.epicId}" data-node-key="${epicNode.key}">
         <span class="og-drag-handle">☰</span>
         <span class="og-caret ${eCollapsed?'collapsed':''}" data-caret-key="${epicNode.key}">▾</span>
@@ -1946,29 +1943,30 @@ function renderOutlineGantt(){
         <span class="og-sys">${epic.system||''}</span>
         <span class="og-name" title="${epic.name}">${epic.name}</span>
       </div>`;
-    barRows += `<div class="og-row-bar level-epic" data-node-key="${epicNode.key}">${barHtml(epicRange[epicNode.key], 'var(--primary)')}</div>`;
+    barSegs[barSegs.length-1] += `<div class="og-row-bar level-epic" data-node-key="${epicNode.key}">${barHtml(epicRange[epicNode.key], 'var(--primary)')}</div>`;
 
     if(eCollapsed) return;
     epicNode.features.forEach(featNode=>{
       const f = featNode.data;
       if(planSearchQuery && !featNode.tasks.some(t=>matchesSearch(t) || t.subs.some(s=>matchesSearch(s)))) return;
       const fCollapsed = collapsedNodes.has(featNode.key);
-      labelRows += `
+      labelSegs[labelSegs.length-1] += `
         <div class="og-row-label level-feature ${featNode.hidden?'hidden-item':''}" draggable="${editableNow}" data-order-scope="feat:${featNode.epicId}" data-order-id="${featNode.featureId}" data-node-key="${featNode.key}">
           <span class="og-drag-handle">☰</span>
           <span class="og-caret ${fCollapsed?'collapsed':''}" data-caret-key="${featNode.key}">▾</span>
           <span class="og-eye" data-hide-key="${featNode.key}">${featNode.hidden?'🚫':'👁'}</span>
           <span class="og-name" title="${f.name}">${f.name}</span>
         </div>`;
-      barRows += `<div class="og-row-bar level-feature" data-node-key="${featNode.key}">${barHtml(featureRange[featNode.key], 'var(--purple)')}</div>`;
+      barSegs[barSegs.length-1] += `<div class="og-row-bar level-feature" data-node-key="${featNode.key}">${barHtml(featureRange[featNode.key], 'var(--purple)')}</div>`;
 
       if(fCollapsed) return;
       featNode.tasks.forEach(taskNode=>{
         if(planSearchQuery && !matchesSearch(taskNode) && !taskNode.subs.some(s=>matchesSearch(s))) return;
         const t = taskNode.data;
         const total = mandayTotal(taskNode.planKey);
-        labelRows += `
-          <div class="og-row-label level-task ${taskNode.hidden?'hidden-item':''}" draggable="${editableNow}" data-order-scope="task:${taskNode.epicId}::${taskNode.featureId}" data-order-id="${t.id}" data-node-key="${taskNode.key}" data-task-open="${taskNode.key}">
+        const isOpen = openTaskDetailKey === taskNode.key;
+        labelSegs[labelSegs.length-1] += `
+          <div class="og-row-label level-task ${taskNode.hidden?'hidden-item':''} ${isOpen?'is-open':''}" draggable="${editableNow}" data-order-scope="task:${taskNode.epicId}::${taskNode.featureId}" data-order-id="${t.id}" data-node-key="${taskNode.key}" data-task-open="${taskNode.key}">
             <span class="og-drag-handle">☰</span>
             <span class="og-eye" data-hide-key="${taskNode.key}">${taskNode.hidden?'🚫':'👁'}</span>
             <span class="og-dot" style="background:${clarityColor(t.c)}"></span>
@@ -1976,12 +1974,22 @@ function renderOutlineGantt(){
             <span class="og-name" title="${t.id} — ${t.task}">${t.task}</span>
             <span class="og-badge">${total>0?total+'d':''}</span>
           </div>`;
-        barRows += `<div class="og-row-bar level-task" data-node-key="${taskNode.key}">${barHtml(taskRange[taskNode.planKey], clarityColor(t.c))}</div>`;
+        barSegs[barSegs.length-1] += `<div class="og-row-bar level-task" data-node-key="${taskNode.key}">${barHtml(taskRange[taskNode.planKey], clarityColor(t.c))}</div>`;
+
+        if(isOpen){
+          expandedDetailHtml = buildInlineDetailHtml(taskNode, taskRange, editableNow);
+          labelSegs.push(''); // เริ่มกลุ่มแถวใหม่ (ที่เหลือ) หลังจากจุดที่ขยาย
+          barSegs.push('');
+        }
       });
     });
   });
 
-  const bodyEl = document.getElementById('ogBody');
+  // จำตำแหน่ง scroll ปัจจุบันไว้ก่อน rebuild DOM กันไม่ให้กระโดดกลับบนสุดทุกครั้งที่เปิด/ปิดรายละเอียด
+  const prevBodyOuter = document.getElementById('ogBodyOuter');
+  const prevScrollTop = prevBodyOuter ? prevBodyOuter.scrollTop : 0;
+  const prevScrollLeft = document.getElementById('ogHeaderScroll') ? document.getElementById('ogHeaderScroll').scrollLeft : 0;
+
   const fixedHeaderEl = document.getElementById('ogFixedHeader');
   fixedHeaderEl.innerHTML = `
     <div class="og-label-col-head-spacer"></div>
@@ -1990,119 +1998,78 @@ function renderOutlineGantt(){
       <div class="og-date-tick-row">${headerTicks}</div>
     </div></div>
   `;
-  bodyEl.innerHTML = `
-    <div class="og-labels-col" id="ogLabelsCol">${labelRows || '<div class="timeline-hint" style="padding:16px 20px;">ไม่พบ task ที่ตรงกับคำค้นหา</div>'}</div>
-    <div class="og-timeline-col-scroll" id="ogTimelineScroll"><div class="og-timeline-inner" style="width:${timelineWidth}px;">${barRows}</div></div>
-  `;
 
-  // sync horizontal scroll: header ↔ body timeline
-  const headerScroll = document.getElementById('ogHeaderScroll');
-  const bodyScroll = document.getElementById('ogTimelineScroll');
-  if(headerScroll && bodyScroll && !bodyScroll.dataset.syncWired){
-    bodyScroll.addEventListener('scroll', ()=>{ headerScroll.scrollLeft = bodyScroll.scrollLeft; });
-    headerScroll.addEventListener('scroll', ()=>{ bodyScroll.scrollLeft = headerScroll.scrollLeft; });
-    bodyScroll.dataset.syncWired = '1';
-  }
-  // sync vertical scroll: labels column ↔ timeline column (each scrolls vertically on its own bounded height now)
-  const labelsCol = document.getElementById('ogLabelsCol');
-  if(labelsCol && bodyScroll && !bodyScroll.dataset.vsyncWired){
-    bodyScroll.addEventListener('scroll', ()=>{ labelsCol.scrollTop = bodyScroll.scrollTop; });
-    labelsCol.addEventListener('scroll', ()=>{ bodyScroll.scrollTop = labelsCol.scrollTop; });
-    bodyScroll.dataset.vsyncWired = '1';
-  }
+  const groupsHtml = labelSegs.map((labelSeg, i)=>{
+    const barSeg = barSegs[i];
+    const group = `
+      <div class="og-row-group">
+        <div class="og-labels-col-part">${labelSeg}</div>
+        <div class="og-timeline-col-part" data-tcol><div class="og-timeline-inner" style="width:${timelineWidth}px;">${barSeg}</div></div>
+      </div>`;
+    const detailAfterThisGroup = (i===0 && expandedDetailHtml) ? `<div class="og-detail-inline-wrap">${expandedDetailHtml}</div>` : '';
+    return group + detailAfterThisGroup;
+  }).join('');
 
-  if(openTaskDetailKey) renderTaskModal(openTaskDetailKey, { tree, taskRange, editableNow });
+  const bodyOuterEl = document.getElementById('ogBodyOuter');
+  bodyOuterEl.innerHTML = groupsHtml || '<div class="timeline-hint" style="padding:16px 20px;">ไม่พบ task ที่ตรงกับคำค้นหา</div>';
+
+  // คืนตำแหน่ง scroll เดิม
+  bodyOuterEl.scrollTop = prevScrollTop;
+  document.getElementById('ogHeaderScroll').scrollLeft = prevScrollLeft;
+  document.querySelectorAll('[data-tcol]').forEach(el=> el.scrollLeft = prevScrollLeft);
+
+  // sync horizontal scroll ระหว่าง header กับทุก timeline-col-part (อาจมีมากกว่า 1 กลุ่มถ้ามีการขยาย detail คั่นกลาง)
+  const headerScrollEl = document.getElementById('ogHeaderScroll');
+  const tcols = [...document.querySelectorAll('[data-tcol]')];
+  const allScrollers = [headerScrollEl, ...tcols];
+  allScrollers.forEach(el=>{
+    el.addEventListener('scroll', ()=>{
+      allScrollers.forEach(other=>{ if(other!==el) other.scrollLeft = el.scrollLeft; });
+    });
+  });
 }
 
-// ---------- Task detail modal (แยกจาก row layout ทั้งหมด กันปัญหาความสูงแถวไม่ตรงกันระหว่าง 2 คอลัมน์) ----------
-let openTaskDetailKey = null;
-let openTaskDetailAnchorRect = null;
-
-function findTaskNodeByKey(tree, key){
-  for(const epicNode of tree){
-    for(const featNode of epicNode.features){
-      for(const taskNode of featNode.tasks){
-        if(taskNode.key === key) return taskNode;
-      }
-    }
-  }
-  return null;
-}
-
-function renderTaskModal(key, ctx){
-  const { tree, taskRange, editableNow } = ctx;
-  const taskNode = findTaskNodeByKey(tree, key);
-  const modalRoot = document.getElementById('taskDetailModal');
-  if(!taskNode){ modalRoot.hidden = true; openTaskDetailKey = null; return; }
+function buildInlineDetailHtml(taskNode, taskRange, editableNow){
   const t = taskNode.data;
   const p = getTaskPlan(taskNode.planKey);
   const tr = taskRange[taskNode.planKey] || {};
   const total = Object.values(p.manday).reduce((a,b)=>a+Number(b||0),0);
   function clarityColorLocal(c){ return c==='green' ? 'var(--green)' : (c==='yellow' ? 'var(--amber)' : 'var(--red)'); }
-
-  modalRoot.hidden = false;
-  modalRoot.innerHTML = `
-    <div class="task-popover-catcher" id="taskModalBackdrop"></div>
-    <div class="task-popover-card" id="taskPopoverCard">
-      <button class="modal-close" id="taskModalClose">✕</button>
-      <div class="og-detail-header">
-        <div class="og-detail-breadcrumb">${taskNode.epicName} › ${taskNode.featureName}</div>
-        <div class="og-detail-title"><span class="mono">${t.id}</span> — ${t.task}</div>
-        <div class="og-detail-meta">
-          <span>${stamp(t.c, t.note)}</span>
-          <span class="mono">รวม ${total}d</span>
-          ${tr.start ? `<span class="mono">${fmtDate(tr.start)} → ${fmtDate(tr.end)}</span>` : ''}
-        </div>
+  return `
+    <div class="og-detail-header">
+      <button class="og-detail-close" data-close-detail title="ปิด">✕</button>
+      <div class="og-detail-breadcrumb">${taskNode.epicName} › ${taskNode.featureName}</div>
+      <div class="og-detail-title"><span class="mono">${t.id}</span> — ${t.task}</div>
+      <div class="og-detail-meta">
+        <span>${stamp(t.c, t.note)}</span>
+        <span class="mono">รวม ${total}d</span>
+        ${tr.start ? `<span class="mono">${fmtDate(tr.start)} → ${fmtDate(tr.end)}</span>` : ''}
       </div>
-      <div class="og-detail-grid">
-        <div><b>คำอธิบาย</b>${t.desc||'–'}</div>
-        <div><b>Dependency</b>${t.dep||'–'}</div>
-        <div><b>Source</b>${t.src||'–'}</div>
-        <div><b>Clarity note</b>${t.note||'–'}</div>
-      </div>
-      <div class="og-manday-inputs">
-        ${ROLES.map(r=>`<div class="mini-field"><label>${r.label}</label><input type="number" min="0" step="0.5" value="${p.manday[r.key]||0}" data-manday-key="${taskNode.planKey}" data-role="${r.key}" ${!editableNow?'disabled':''}></div>`).join('')}
-      </div>
-      ${taskNode.subs.length ? `<div class="og-sub-list">
-        <div class="og-sub-list-label">Sub-tasks</div>
-        ${taskNode.subs.map(s=>{
-          const sp = getTaskPlan(s.planKey);
-          return `<div class="og-sub-row ${s.hidden?'hidden-item':''}">
-            <span class="og-eye" data-hide-key="${s.key}">${s.hidden?'🚫':'👁'}</span>
-            <span class="og-dot" style="background:${clarityColorLocal(s.data.c)}"></span>
-            <span class="og-name" title="${s.data.id} — ${s.data.task}">${s.data.id} ${s.data.task}</span>
-            ${ROLES.map(r=>`<input type="number" min="0" step="0.5" title="${r.label}" value="${sp.manday[r.key]||0}" data-manday-key="${s.planKey}" data-role="${r.key}" ${!editableNow?'disabled':''}>`).join('')}
-          </div>`;
-        }).join('')}
-      </div>` : ''}
     </div>
+    <div class="og-detail-grid">
+      <div><b>คำอธิบาย</b>${t.desc||'–'}</div>
+      <div><b>Dependency</b>${t.dep||'–'}</div>
+      <div><b>Source</b>${t.src||'–'}</div>
+      <div><b>Clarity note</b>${t.note||'–'}</div>
+    </div>
+    <div class="og-manday-inputs">
+      ${ROLES.map(r=>`<div class="mini-field"><label>${r.label}</label><input type="number" min="0" step="0.5" value="${p.manday[r.key]||0}" data-manday-key="${taskNode.planKey}" data-role="${r.key}" ${!editableNow?'disabled':''}></div>`).join('')}
+    </div>
+    ${taskNode.subs.length ? `<div class="og-sub-list">
+      <div class="og-sub-list-label">Sub-tasks</div>
+      ${taskNode.subs.map(s=>{
+        const sp = getTaskPlan(s.planKey);
+        return `<div class="og-sub-row ${s.hidden?'hidden-item':''}">
+          <span class="og-eye" data-hide-key="${s.key}">${s.hidden?'🚫':'👁'}</span>
+          <span class="og-dot" style="background:${clarityColorLocal(s.data.c)}"></span>
+          <span class="og-name" title="${s.data.id} — ${s.data.task}">${s.data.id} ${s.data.task}</span>
+          ${ROLES.map(r=>`<input type="number" min="0" step="0.5" title="${r.label}" value="${sp.manday[r.key]||0}" data-manday-key="${s.planKey}" data-role="${r.key}" ${!editableNow?'disabled':''}>`).join('')}
+        </div>`;
+      }).join('')}
+    </div>` : ''}
   `;
-
-  // จัดตำแหน่ง popover ให้โผล่ออกมาจากแถวที่คลิกจริงๆ (ให้ความรู้สึกเหมือนขยายออกจากตาราง ไม่ใช่ dialog ลอยกลางจอ)
-  const card = document.getElementById('taskPopoverCard');
-  const vw = window.innerWidth, vh = window.innerHeight;
-  const cardWidth = Math.min(620, vw - 32);
-  let top, left;
-  if(openTaskDetailAnchorRect){
-    top = openTaskDetailAnchorRect.bottom + 6;
-    left = Math.max(12, Math.min(openTaskDetailAnchorRect.left, vw - cardWidth - 12));
-  } else { top = 100; left = Math.max(12,(vw-cardWidth)/2); }
-  card.style.width = cardWidth + 'px';
-  card.style.left = left + 'px';
-  card.style.top = top + 'px';
-  // ถ้าเนื้อหาจะล้นจอด้านล่าง ให้จำกัดความสูงแล้ว scroll ในตัวเองแทน
-  const maxCardHeight = vh - top - 20;
-  card.style.maxHeight = Math.max(200, maxCardHeight) + 'px';
-
-  document.getElementById('taskModalClose').addEventListener('click', closeTaskModal);
-  document.getElementById('taskModalBackdrop').addEventListener('click', closeTaskModal);
 }
-function closeTaskModal(){
-  openTaskDetailKey = null;
-  openTaskDetailAnchorRect = null;
-  const modalRoot = document.getElementById('taskDetailModal');
-  if(modalRoot){ modalRoot.hidden = true; modalRoot.innerHTML = ''; }
-}
+
 
 
 // ============================================================================
@@ -2111,8 +2078,7 @@ function closeTaskModal(){
 let dragCtx = null;
 
 function wireOutlineGanttEvents(){
-  const bodyEl = document.getElementById('ogBody');
-  const modalEl = document.getElementById('taskDetailModal');
+  const bodyEl = document.getElementById('ogBodyOuter');
 
   bodyEl.addEventListener('click', e=>{
     const eye = e.target.closest('.og-eye');
@@ -2135,17 +2101,19 @@ function wireOutlineGanttEvents(){
       return;
     }
 
+    const closeBtn = e.target.closest('[data-close-detail]');
+    if(closeBtn){ openTaskDetailKey = null; renderOutlineGantt(); return; }
+
     const opener = e.target.closest('[data-task-open]');
     if(opener){
-      openTaskDetailKey = opener.dataset.taskOpen;
-      openTaskDetailAnchorRect = opener.getBoundingClientRect();
+      const k = opener.dataset.taskOpen;
+      openTaskDetailKey = (openTaskDetailKey === k) ? null : k; // คลิกซ้ำ task เดิม = ปิด
       renderOutlineGantt();
       return;
     }
   });
 
-  // manday inputs ตอนนี้อยู่ใน modal (แยกจาก ogBody) — ฟังที่ modal container แทน
-  modalEl.addEventListener('change', e=>{
+  bodyEl.addEventListener('change', e=>{
     const inp = e.target.closest('input[data-manday-key]');
     if(!inp) return;
     if(!canEditScenario(currentScenario())){ showToast('แผนนี้ดูได้อย่างเดียว แก้ไขไม่ได้', 'error'); renderOutlineGantt(); return; }
@@ -2153,13 +2121,6 @@ function wireOutlineGanttEvents(){
     p.manday[inp.dataset.role] = Number(inp.value)||0;
     savePlanState();
     renderOutlineGantt();
-  });
-  modalEl.addEventListener('click', e=>{
-    const eye = e.target.closest('.og-eye');
-    if(eye){
-      if(!canEditScenario(currentScenario())){ showToast('แผนนี้ดูได้อย่างเดียว แก้ไขไม่ได้', 'error'); return; }
-      toggleHiddenKey(eye.dataset.hideKey); renderOutlineGantt(); return;
-    }
   });
 
   bodyEl.addEventListener('dragstart', e=>{
