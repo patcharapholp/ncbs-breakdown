@@ -664,6 +664,7 @@ function showToast(message, type='info', duration=3200){
 const clarityLabel = { green:"พร้อม dev", yellow:"ต้องเช็คก่อน confirm", red:"ยังเป็นแค่ proposed / block" };
 const ROLES = [
   { key:'po_ba',    label:'PO/BA' },
+  { key:'ux_designer', label:'UX Designer' },
   { key:'tech_lead',label:'Tech Lead' },
   { key:'dev',      label:'Dev' },
   { key:'qa_lead',  label:'QA Lead' },
@@ -671,7 +672,7 @@ const ROLES = [
   { key:'pm',       label:'PM' },
   { key:'dm',       label:'DM' },
 ];
-const ROLE_COLORS = ['#4C9AFF','#B39DDB','#36B37E','#FFAB00','#FF5630','#57D9A3','#E6B8FF'];
+const ROLE_COLORS = ['#4C9AFF','#FF9F1C','#B39DDB','#36B37E','#FFAB00','#FF5630','#57D9A3','#E6B8FF'];
 
 let currentView = 'overview';
 let currentEpicId = null;
@@ -1065,10 +1066,10 @@ function roundQuarter(n){ return Math.round(n*4)/4; }
 
 const CEREMONY_MANDAY_OVERRIDES = {
   // ระยะเวลาที่ PO ระบุตรงๆ (1 เดือน ≈ 20 วันทำการ) — ใช้แทน keyword-tier logic เพราะงานพวกนี้ไม่ใช่ dev task ทั่วไป
-  'CER-1': { po_ba:5, tech_lead:0, dev:8,  qa_lead:8,  qa:20, pm:0,  dm:0 },  // SIT
-  'CER-2': { po_ba:20,tech_lead:0, dev:0,  qa_lead:0,  qa:10, pm:5,  dm:0 },  // UAT
-  'CER-3': { po_ba:0, tech_lead:5, dev:10, qa_lead:20, qa:0,  pm:0,  dm:0 },  // Pen Test & Performance
-  'TRN-1': { po_ba:40,tech_lead:0, dev:0,  qa_lead:0,  qa:0,  pm:15, dm:0 },  // Training
+  'CER-1': { po_ba:5, ux_designer:0, tech_lead:0, dev:8,  qa_lead:8,  qa:20, pm:0,  dm:0 },  // SIT
+  'CER-2': { po_ba:20,ux_designer:0, tech_lead:0, dev:0,  qa_lead:0,  qa:10, pm:5,  dm:0 },  // UAT
+  'CER-3': { po_ba:0, ux_designer:0, tech_lead:5, dev:10, qa_lead:20, qa:0,  pm:0,  dm:0 },  // Pen Test & Performance
+  'TRN-1': { po_ba:40,ux_designer:0, tech_lead:0, dev:0,  qa_lead:0,  qa:0,  pm:15, dm:0 },  // Training
 };
 
 function generateMockManday(task, isSub){
@@ -1081,13 +1082,15 @@ function generateMockManday(task, isSub){
   dev *= (CLARITY_DEV_MULT[task.c] || 1);
 
   const poba    = roundQuarter(dev*0.15 + (CLARITY_POBA_BONUS[task.c]||0));
+  const uxKeywordMatch = /\bui\b|\bux\b|design|wireframe|mockup|หน้าจอ|frontend|portal|landing|cms|banner|dashboard|ฟอร์ม|form/.test(text);
+  const uxDesigner = uxKeywordMatch ? roundQuarter(Math.max(0.5, dev*0.2)) : 0;
   const techLead= roundQuarter(Math.max(0.25, dev*0.15));
   const qaLead  = roundQuarter(Math.max(0.25, dev*0.10));
   const qa      = roundQuarter(dev*0.35);
   const pm      = roundQuarter(CLARITY_PM[task.c] ?? 0.1);
   const dm      = /sync|migrat|etl|batch|anchor|ซิงค์|ย้ายข้อมูล/.test(text) ? roundQuarter(dev*0.3) : 0;
 
-  return { po_ba:poba, tech_lead:techLead, dev:roundQuarter(dev), qa_lead:qaLead, qa, pm, dm };
+  return { po_ba:poba, ux_designer:uxDesigner, tech_lead:techLead, dev:roundQuarter(dev), qa_lead:qaLead, qa, pm, dm };
 }
 
 function applyMockEstimates(overwrite){
@@ -1141,7 +1144,7 @@ function applyRecommendedEpicOrder(){
   if(document.getElementById('ogBodyOuter')) renderOutlineGantt();
 }
 
-const DEFAULT_CAPACITY = { po_ba:1, tech_lead:1, dev:7, qa_lead:1, qa:3, pm:1, dm:1 };
+const DEFAULT_CAPACITY = { po_ba:1, ux_designer:1, tech_lead:1, dev:7, qa_lead:1, qa:3, pm:1, dm:1 };
 
 function defaultScenario(name){
   return { name: name||'แผนเริ่มต้น', projectStart:'', targetEnd:'', tasks:{}, hidden:{}, epicOrder:[], featureOrder:{}, taskOrder:{}, capacity: Object.assign({}, DEFAULT_CAPACITY) };
