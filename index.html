@@ -108,6 +108,7 @@
     font-family:'IBM Plex Mono'; font-size:9px; font-weight:700; color:#fff; padding:1px 5px;
     border-radius:3px; flex-shrink:0; letter-spacing:.02em;
   }
+  .phase-filter-chips{ display:flex; gap:6px; }
   .epic-list-item .dots{ display:flex; gap:2px; flex-shrink:0; }
   .epic-list-item .dots i{ width:5px; height:5px; border-radius:50%; display:block; }
   .epic-list-empty{ padding:16px 10px; font-size:12.6px; color:var(--ink-faint); text-align:center; }
@@ -306,6 +307,9 @@
     background:var(--surface); color:var(--ink); font-family:inherit;
   }
   .pm-select:focus{ outline:none; border-color:var(--primary); }
+  .pm-parallel-check{ display:flex; align-items:center; gap:5px; font-size:11px; color:var(--ink-faint); white-space:nowrap; cursor:pointer; }
+  .pm-parallel-check input{ cursor:pointer; }
+  .pm-parallel-spacer{ width:126px; flex-shrink:0; }
   ol.flags{ margin:0; padding:0 20px 18px; list-style:none; counter-reset:flag; }
   ol.flags li{
     counter-increment:flag; margin-bottom:10px; padding:12px 14px 12px 42px; position:relative;
@@ -727,6 +731,22 @@ async function setEpicPhase(epicId, phase){
 }
 function getEpicPhase(epicId){ return epicPhases[epicId] || null; }
 
+let epicPhaseParallelExempt = {}; // epicId -> true (exempt from the "phase 3 waits for phase 2" barrier)
+const EPIC_PHASE_PARALLEL_DOC = 'epicPhaseParallelExempt';
+async function loadEpicPhaseParallelExempt(){
+  try{
+    const doc = await db.collection('settings').doc(EPIC_PHASE_PARALLEL_DOC).get();
+    epicPhaseParallelExempt = doc.exists ? (doc.data()||{}) : {};
+  }catch(err){ console.warn('โหลด phase-parallel exempt ไม่สำเร็จ:', err); epicPhaseParallelExempt = {}; }
+}
+async function setEpicPhaseParallelExempt(epicId, exempt){
+  if(exempt) epicPhaseParallelExempt[epicId] = true;
+  else delete epicPhaseParallelExempt[epicId];
+  try{ await db.collection('settings').doc(EPIC_PHASE_PARALLEL_DOC).set(epicPhaseParallelExempt); }
+  catch(err){ showToast('บันทึกไม่สำเร็จ: ' + (err.message||err), 'error'); }
+}
+
+
 const ROLES = [
   { key:'po_ba',    label:'PO/BA' },
   { key:'ux_designer', label:'UX Designer' },
@@ -1123,6 +1143,10 @@ function renderOverview(){
       <div class="phase-manager-row" data-epic-id="${id}">
         <span class="sys-tag">${e.system||''}</span>
         <span class="pm-name" title="${e.name}">${e.name}</span>
+        ${phase===3 ? `<label class="pm-parallel-check">
+          <input type="checkbox" data-epic-parallel-check="${id}" ${epicPhaseParallelExempt[id]?'checked':''}>
+          ขนานกับ Phase 2 ได้
+        </label>` : '<span class="pm-parallel-spacer"></span>'}
         <select class="pm-select" data-epic-phase-select="${id}">
           <option value="" ${!phase?'selected':''}>— ยังไม่กำหนด —</option>
           <option value="1" ${phase===1?'selected':''}>Phase 1</option>
@@ -1138,7 +1162,15 @@ function renderOverview(){
       if(val) await setEpicPhase(epicId, val);
       else { delete epicPhases[epicId]; try{ await db.collection('settings').doc(EPIC_PHASES_DOC).set(epicPhases); }catch(e){} }
       renderEpicList();
+      renderOverview();
       showToast(`ตั้ง ${allEpics()[epicId].name} เป็น ${val?('Phase '+val):'ยังไม่กำหนด phase'} แล้ว`, 'success');
+    });
+  });
+  phaseRowsEl.querySelectorAll('[data-epic-parallel-check]').forEach(cb=>{
+    cb.addEventListener('change', async ()=>{
+      const epicId = cb.dataset.epicParallelCheck;
+      await setEpicPhaseParallelExempt(epicId, cb.checked);
+      showToast(`${allEpics()[epicId].name}: ${cb.checked?'ตั้งให้ขนานกับ Phase 2 ได้แล้ว':'กลับมารอ Phase 2 เหมือนเดิมแล้ว'}`, 'success');
     });
   });
 }
@@ -1419,6 +1451,7 @@ function savePlanState(){
 async function refreshFromCloud(){
   await loadScenariosFromFirestore();
   await loadEpicPhases();
+  await loadEpicPhaseParallelExempt();
   renderTimeline();
   renderEpicList();
 }
@@ -1565,29 +1598,47 @@ function computeSchedule(){
   }
 
   let maxEndIdx = 0;
-  order.forEach(item=>{
-    const p = getTaskPlan(item.key);
-    const manday = p.manday || {};
-    const hasEffort = ROLES.some(r=> Number(manday[r.key]||0) > 0);
-    const cursorIdx = featureCursor[item.featureKey] || 0;
 
-    if(!hasEffort){
-      scheduleMap[item.key] = { start: dayIndexToDate(cursorIdx), end: dayIndexToDate(cursorIdx), duration:0, plan:p };
-      return;
-    }
+  // แบ่ง order เป็น 2 กลุ่ม: กลุ่มที่ไม่มีกำแพง phase (phase 1/2/ยังไม่ติด tag/หรือ phase 3 ที่ติ๊ก "ขนานได้")
+  // กับกลุ่ม phase 3 ที่ต้องรอให้กลุ่มแรกจบก่อนถึงจะเริ่มได้ (บังคับ "phase 2 ต้องเสร็จก่อน phase 3")
+  function epicIdOf(item){ return item.featureKey.split('::')[0]; }
+  function isPhase3Barrier(item){
+    const epicId = epicIdOf(item);
+    const phase = getEpicPhase(epicId) || 2; // ยังไม่ติด tag = นับเป็น phase 2 (ไม่มีกำแพง)
+    return phase===3 && !epicPhaseParallelExempt[epicId];
+  }
+  const nonBarrierItems = order.filter(it=> !isPhase3Barrier(it));
+  const barrierItems = order.filter(it=> isPhase3Barrier(it));
 
-    const duration = Math.max(1, Math.ceil(Math.max(0, ...ROLES.map(r=>Number(manday[r.key]||0)))));
-    const perDayReq = {}; ROLES.forEach(r=> perDayReq[r.key] = Number(manday[r.key]||0)/duration);
+  function schedulePass(items, floorIdx){
+    items.forEach(item=>{
+      const p = getTaskPlan(item.key);
+      const manday = p.manday || {};
+      const hasEffort = ROLES.some(r=> Number(manday[r.key]||0) > 0);
+      const cursorIdx = Math.max(featureCursor[item.featureKey] || 0, floorIdx);
 
-    let startIdx = cursorIdx, guard = 0;
-    while(!feasible(startIdx, duration, perDayReq) && guard < 5000){ startIdx++; guard++; }
-    commit(startIdx, duration, perDayReq);
+      if(!hasEffort){
+        scheduleMap[item.key] = { start: dayIndexToDate(cursorIdx), end: dayIndexToDate(cursorIdx), duration:0, plan:p };
+        return;
+      }
 
-    const endIdx = startIdx + duration;
-    featureCursor[item.featureKey] = endIdx;
-    scheduleMap[item.key] = { start: dayIndexToDate(startIdx), end: dayIndexToDate(endIdx), duration, plan:p };
-    if(endIdx > maxEndIdx) maxEndIdx = endIdx;
-  });
+      const duration = Math.max(1, Math.ceil(Math.max(0, ...ROLES.map(r=>Number(manday[r.key]||0)))));
+      const perDayReq = {}; ROLES.forEach(r=> perDayReq[r.key] = Number(manday[r.key]||0)/duration);
+
+      let startIdx = cursorIdx, guard = 0;
+      while(!feasible(startIdx, duration, perDayReq) && guard < 5000){ startIdx++; guard++; }
+      commit(startIdx, duration, perDayReq);
+
+      const endIdx = startIdx + duration;
+      featureCursor[item.featureKey] = endIdx;
+      scheduleMap[item.key] = { start: dayIndexToDate(startIdx), end: dayIndexToDate(endIdx), duration, plan:p };
+      if(endIdx > maxEndIdx) maxEndIdx = endIdx;
+    });
+  }
+
+  schedulePass(nonBarrierItems, 0);
+  const phase3FloorIdx = maxEndIdx; // phase 3 (ที่ไม่ได้ติ๊กขนาน) ต้องเริ่มไม่ก่อนจุดนี้
+  schedulePass(barrierItems, phase3FloorIdx);
 
   return { tree, order, scheduleMap, projectEnd: maxEndIdx>0 ? dayIndexToDate(maxEndIdx) : projStart };
 }
@@ -1624,6 +1675,7 @@ let collapsedNodes = new Set();   // session-only: which epic/feature keys are c
 let openTaskDetailKey = null;      // session-only: which task's detail is expanded inline (null = none)
 let timelineViewMode = 'input';    // session-only: 'input' (manday entry table) | 'graph' (presentation-style chart)
 let graphViewLevel = 'epic';       // session-only: 'epic' | 'task' — granularity of the graph view
+let timelinePhaseFilter = 'all';   // session-only: 'all' | '1' | '2' | '3' — filter Gantt rows by epic phase
 let planSearchQuery = '';
 const PX_PER_DAY = 26;
 
@@ -1673,6 +1725,8 @@ function renderTimeline(){
         <div class="search-wrap"><input id="planSearch" type="text" placeholder="ค้นหา task…"></div>
         <button class="btn ghost-dashed" id="collapseAllPlan">ยุบทั้งหมด</button>
         <button class="btn ghost-dashed" id="expandAllPlan">ขยายทั้งหมด</button>
+        <div style="flex:1"></div>
+        <div class="phase-filter-chips" id="phaseFilterChips"></div>
       </div>
       <div class="timeline-hint">ลาก ☰ เพื่อจัดลำดับใหม่ (ในกลุ่มเดียวกันเท่านั้น) · กด 👁 เพื่อซ่อน/แสดง · คลิกชื่อ task เพื่อดูรายละเอียด + กรอก manday · ข้อมูลบันทึกอัตโนมัติในเบราว์เซอร์นี้<br>⚙️ Task ใน feature เดียวกันเรียงต่อกันเสมอ · task คนละ feature/epic จะขนานกันอัตโนมัติถ้า Team Capacity พอ · <b>dependency ข้าม feature/epic ไม่ได้ตรวจสอบอัตโนมัติ</b> — เช็คกับ epic-level dependencies เองด้วย</div>
       <div class="og-fixed-header" id="ogFixedHeader"></div>
@@ -1784,6 +1838,7 @@ function renderTimeline(){
     }
   });
   document.getElementById('planSearch').addEventListener('input', e=>{ planSearchQuery = e.target.value.trim().toLowerCase(); renderOutlineGantt(); });
+  renderPhaseFilterChips();
   document.getElementById('collapseAllPlan').addEventListener('click', ()=>{
     const tree = buildOrderedTree();
     tree.forEach(e=>{ collapsedNodes.add(e.key); e.features.forEach(f=>collapsedNodes.add(f.key)); });
@@ -2094,6 +2149,8 @@ function renderOutlineGantt(){
   let expandedDetailHtml = '';
   tree.forEach(epicNode=>{
     const epic = epicNode.data;
+    const epicPhase = getEpicPhase(epicNode.epicId) || 2; // ยังไม่ติด tag = นับรวมเป็น Phase 2
+    if(timelinePhaseFilter!=='all' && String(epicPhase)!==timelinePhaseFilter) return;
     const visibleFeatures = epicNode.features.filter(f=> f.tasks.some(t=>matchesSearch(t) || t.subs.some(s=>matchesSearch(s))));
     if(planSearchQuery && visibleFeatures.length===0) return;
 
@@ -2105,6 +2162,7 @@ function renderOutlineGantt(){
         <span class="og-eye" data-hide-key="${epicNode.key}">${epicNode.hidden?'🚫':'👁'}</span>
         <span class="og-sys">${epic.system||''}</span>
         <span class="og-name" title="${epic.name}">${epic.name}</span>
+        ${getEpicPhase(epicNode.epicId) ? `<span class="phase-badge" style="background:${PHASE_COLORS[getEpicPhase(epicNode.epicId)]}">P${getEpicPhase(epicNode.epicId)}</span>` : ''}
       </div>`;
     barSegs[barSegs.length-1] += `<div class="og-row-bar level-epic" data-node-key="${epicNode.key}">${barHtml(epicRange[epicNode.key], 'var(--primary)')}</div>`;
 
@@ -2188,6 +2246,20 @@ function renderOutlineGantt(){
   allScrollers.forEach(el=>{
     el.addEventListener('scroll', ()=>{
       allScrollers.forEach(other=>{ if(other!==el) other.scrollLeft = el.scrollLeft; });
+    });
+  });
+}
+
+function renderPhaseFilterChips(){
+  const el = document.getElementById('phaseFilterChips');
+  if(!el) return;
+  const opts = [{v:'all', label:'ทุก Phase'}, {v:'1', label:'Phase 1'}, {v:'2', label:'Phase 2'}, {v:'3', label:'Phase 3'}];
+  el.innerHTML = opts.map(o=>`<span class="chip phase-chip ${timelinePhaseFilter===o.v?'active':''}" data-phase-filter="${o.v}">${o.label}</span>`).join('');
+  el.querySelectorAll('[data-phase-filter]').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      timelinePhaseFilter = chip.dataset.phaseFilter;
+      renderPhaseFilterChips();
+      renderOutlineGantt();
     });
   });
 }
@@ -2947,6 +3019,7 @@ async function bootAppForUser(user, welcomeMsg){
   await epicsReadyPromise;
   await loadScenariosFromFirestore();
   await loadEpicPhases();
+  await loadEpicPhaseParallelExempt();
   if(!appBooted){ buildSidebar(); appBooted = true; }
   else { renderEpicList(); }
   switchView('overview'); // ทุกครั้งที่ login ให้ landing ที่ Overview เสมอ
