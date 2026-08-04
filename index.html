@@ -443,6 +443,19 @@
   .graph-paper-wrap{ padding:18px 20px 24px; overflow-x:auto; }
   .graph-paper{ background:#FFFFFF; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,.3); display:inline-block; }
   .graph-paper svg{ display:block; }
+
+  .p1-scroll{ overflow-x:auto; padding:16px 20px 20px; }
+  .p1-header-row{ display:flex; border-bottom:1.5px solid var(--border); padding-bottom:8px; margin-bottom:4px; }
+  .p1-label-spacer{ width:340px; flex-shrink:0; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-faint); }
+  .p1-timeline-head{ position:relative; flex-shrink:0; height:16px; }
+  .p1-month-tick{ position:absolute; top:0; font-size:11px; font-weight:700; color:var(--ink-soft); font-family:'IBM Plex Mono'; white-space:nowrap; }
+  .p1-row{ display:flex; align-items:center; min-height:34px; border-bottom:1px solid var(--border-soft); }
+  .p1-row-epic{ background:var(--surface-sunk); font-weight:700; }
+  .p1-label{ width:340px; flex-shrink:0; display:flex; align-items:center; gap:6px; font-size:12.6px; padding-right:10px; }
+  .p1-label.indent{ padding-left:20px; }
+  .p1-total-badge{ margin-left:auto; font-family:'IBM Plex Mono'; font-size:10.5px; color:var(--ink-faint); flex-shrink:0; }
+  .p1-timeline{ position:relative; flex-shrink:0; height:34px; }
+  .p1-bar{ position:absolute; top:9px; height:16px; border-radius:4px; background:var(--primary); opacity:.85; }
   .timeline-hint{ font-size:12.6px; color:var(--ink-faint); padding:0 20px 14px; }
 
   /* ---- Fixed header (never scrolls vertically; its timeline part scrolls horizontally in sync with body via JS) ---- */
@@ -1717,6 +1730,7 @@ function renderTimeline(){
     <div class="view-mode-toggle">
       <button class="vm-btn" data-vm="input" id="vmBtnInput">📝 กรอกข้อมูล</button>
       <button class="vm-btn" data-vm="graph" id="vmBtnGraph">📊 Graph View</button>
+      <button class="vm-btn" data-vm="phase1" id="vmBtnPhase1">📜 Phase 1 (ประวัติ)</button>
     </div>
 
     <div id="timelineInputModeWrap">
@@ -1748,6 +1762,14 @@ function renderTimeline(){
         <div class="graph-paper-wrap">
           <div class="graph-paper" id="graphPaper"></div>
         </div>
+      </div>
+    </div>
+
+    <div id="timelinePhase1ModeWrap" hidden>
+      <div class="card">
+        <div class="timeline-hint" style="padding-top:16px;">📜 ข้อมูลนี้เป็น <b>static ที่ปรับแก้ไม่ได้จากหน้านี้</b> — เก็บบันทึกว่า Phase 1 (Data &amp; Service Foundation) ใช้ manday ไปเท่าไหร่ต่อ role ในแต่ละ feature ที่ทำเสร็จแล้ว แก้ไขได้เฉพาะในไฟล์ <span class="mono">data/_phase1-historical.js</span></div>
+        <div id="phase1SummaryStrip"></div>
+        <div id="phase1FeatureRows"></div>
       </div>
     </div>
   `;
@@ -1850,12 +1872,16 @@ function renderTimeline(){
   function applyViewMode(){
     document.getElementById('timelineInputModeWrap').hidden = (timelineViewMode!=='input');
     document.getElementById('timelineGraphModeWrap').hidden = (timelineViewMode!=='graph');
+    document.getElementById('timelinePhase1ModeWrap').hidden = (timelineViewMode!=='phase1');
     document.getElementById('vmBtnInput').classList.toggle('active', timelineViewMode==='input');
     document.getElementById('vmBtnGraph').classList.toggle('active', timelineViewMode==='graph');
+    document.getElementById('vmBtnPhase1').classList.toggle('active', timelineViewMode==='phase1');
     if(timelineViewMode==='graph') renderGraphView();
+    if(timelineViewMode==='phase1') renderPhase1History();
   }
   document.getElementById('vmBtnInput').addEventListener('click', ()=>{ timelineViewMode='input'; applyViewMode(); });
   document.getElementById('vmBtnGraph').addEventListener('click', ()=>{ timelineViewMode='graph'; applyViewMode(); });
+  document.getElementById('vmBtnPhase1').addEventListener('click', ()=>{ timelineViewMode='phase1'; applyViewMode(); });
   document.getElementById('graphLevelEpic').addEventListener('click', ()=>{ graphViewLevel='epic'; document.getElementById('graphLevelEpic').classList.add('active'); document.getElementById('graphLevelTask').classList.remove('active'); renderGraphView(); });
   document.getElementById('graphLevelTask').addEventListener('click', ()=>{ graphViewLevel='task'; document.getElementById('graphLevelTask').classList.add('active'); document.getElementById('graphLevelEpic').classList.remove('active'); renderGraphView(); });
   document.getElementById('exportGraphPng').addEventListener('click', exportGraphAsPng);
@@ -2598,6 +2624,81 @@ function exportGraphAsPng(){
   };
   img.onerror = (err)=>{ console.error('SVG image load error:', err); showToast('Export PNG ไม่สำเร็จ — โหลด SVG ไม่ได้', 'error'); };
   img.src = svgDataUri;
+}
+
+// ============================================================================
+// Phase 1 History — static, อ่านอย่างเดียว (ดู data/_phase1-historical.js)
+// ไม่ผูกกับ Firestore/scenario ใดๆ เลย เป็นแค่บันทึกอ้างอิงว่า Phase 1 ใช้ manday ไปเท่าไหร่
+// ============================================================================
+const PHASE1_PX_PER_DAY = 4.2;
+
+function renderPhase1History(){
+  const summaryEl = document.getElementById('phase1SummaryStrip');
+  const rowsEl = document.getElementById('phase1FeatureRows');
+  if(!summaryEl || !rowsEl) return;
+
+  const hist = window.NCBS_PHASE1_HISTORY;
+  if(!hist){
+    rowsEl.innerHTML = `<div class="timeline-hint" style="padding:20px;">ยังไม่พบ data/_phase1-historical.js — เพิ่มไฟล์นี้แล้วรวมไว้ใน data/manifest.json ก่อน</div>`;
+    summaryEl.innerHTML = '';
+    return;
+  }
+
+  const periodStart = new Date(hist.periodStart);
+  const periodEnd = new Date(hist.periodEnd);
+  const totalDays = Math.max(1, Math.ceil((periodEnd-periodStart)/86400000));
+  const dateToX = d => Math.max(0, (new Date(d)-periodStart)/86400000) * PHASE1_PX_PER_DAY;
+  const timelineWidth = totalDays * PHASE1_PX_PER_DAY;
+
+  // สรุป manday รวมต่อ role ทั้ง Phase 1
+  const totals = Object.fromEntries(ROLES.map(r=>[r.key,0]));
+  let grand = 0;
+  hist.epics.forEach(e=> e.features.forEach(f=>{
+    ROLES.forEach(r=>{ const v = Number(f.manday[r.key]||0); totals[r.key]+=v; grand+=v; });
+  }));
+
+  summaryEl.innerHTML = `
+    <div class="timeline-hint" style="font-weight:600; color:var(--ink-soft); padding-bottom:4px;">
+      สรุป manday รวมที่ใช้ไปใน Phase 1 (${fmtDate(periodStart)} → ${fmtDate(periodEnd)}) ${hist.note ? '· <i>'+escapeHtml(hist.note)+'</i>' : ''}
+    </div>
+    <div class="workload-strip">
+      ${ROLES.map((r,i)=>`<div class="workload-seg"><div class="role">${r.label}</div><div class="val" style="color:${ROLE_COLORS[i]}">${totals[r.key]}</div></div>`).join('')}
+      <div class="workload-seg workload-total"><div class="role">รวมทั้งหมด</div><div class="val">${grand}</div></div>
+    </div>
+  `;
+
+  // แถบวันที่ด้านบน (เดือน) — เหมือน Timeline หลักแต่แบบง่าย อ่านอย่างเดียว
+  let monthTicks = '';
+  {
+    let d = new Date(periodStart.getFullYear(), periodStart.getMonth(), 1);
+    while(d <= periodEnd){
+      const x = dateToX(d < periodStart ? periodStart : d);
+      monthTicks += `<div class="p1-month-tick" style="left:${x}px;">${d.toLocaleDateString('en-GB',{month:'short',year:'numeric'})}</div>`;
+      d = new Date(d.getFullYear(), d.getMonth()+1, 1);
+    }
+  }
+
+  let bodyHtml = `<div class="p1-header-row"><div class="p1-label-spacer">Epic / Feature</div><div class="p1-timeline-head" style="width:${timelineWidth}px;">${monthTicks}</div></div>`;
+  hist.epics.forEach(epic=>{
+    bodyHtml += `<div class="p1-row p1-row-epic"><div class="p1-label"><span class="og-sys">${epic.system||''}</span><span class="og-name">${escapeHtml(epic.name)}</span></div><div class="p1-timeline" style="width:${timelineWidth}px;"></div></div>`;
+    epic.features.forEach(f=>{
+      const left = dateToX(f.start);
+      const width = Math.max(4, dateToX(f.end)-left);
+      const total = ROLES.reduce((a,r)=> a+Number(f.manday[r.key]||0), 0);
+      const mandayText = ROLES.filter(r=>Number(f.manday[r.key]||0)>0).map(r=>`${r.label} ${f.manday[r.key]}d`).join(' · ');
+      bodyHtml += `
+        <div class="p1-row p1-row-feature">
+          <div class="p1-label indent" title="${mandayText}">
+            <span class="og-name">${escapeHtml(f.name)}</span>
+            <span class="p1-total-badge">${total}d</span>
+          </div>
+          <div class="p1-timeline" style="width:${timelineWidth}px;">
+            <div class="p1-bar" style="left:${left}px; width:${width}px;" title="${fmtDate(new Date(f.start))} → ${fmtDate(new Date(f.end))} · ${mandayText}"></div>
+          </div>
+        </div>`;
+    });
+  });
+  rowsEl.innerHTML = `<div class="p1-scroll">${bodyHtml}</div>`;
 }
 
 // ============================================================================
