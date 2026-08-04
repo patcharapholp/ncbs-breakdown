@@ -14,8 +14,8 @@ const SKILL_MATRIX_DATA = {
       sources:["concepts/skill-matrix.md Scope Clarification"],
       note:"หลักการชัดเจน: Phase 1 = เตรียม data model + API skeleton ให้ extensible เท่านั้น — ไม่ต้อง build ML/taxonomy เต็มรูปแบบ",
       tasks:[
-        {id:"1.1", task:"Data model เพิ่ม skill dimension (extensible)", desc:"", dep:"Multi-Channel Data Ingestion Epic F7.2", src:"concepts/skill-matrix.md Scope Clarification", c:"yellow", note:"หลักการชัด แต่ไม่มี concrete schema ระบุที่ไหน นอกจาก Skill & Skill Criteria reference table (117 fields) ใน Data Ingestion epic ที่ใกล้เคียงที่สุด"},
-        {id:"1.2", task:"API endpoint skeleton สำหรับ skill-related data", desc:"เตรียมพร้อมสำหรับ Skill Engine ในอนาคต ไม่ต้องมี engine จริง", dep:"1.1", src:"concepts/skill-matrix.md Scope Clarification", c:"yellow"},
+        {id:"1.1", task:"เตรียมโครงสร้างข้อมูลรองรับมิติทักษะที่ขยายได้ (Skill Data Model - Extensible Schema)", desc:"", dep:"Multi-Channel Data Ingestion Epic F7.2", src:"concepts/skill-matrix.md Scope Clarification", c:"yellow", note:"หลักการชัด แต่ไม่มี concrete schema ระบุที่ไหน นอกจาก Skill & Skill Criteria reference table (117 fields) ใน Data Ingestion epic ที่ใกล้เคียงที่สุด"},
+        {id:"1.2", task:"เตรียมโครงร่าง API สำหรับข้อมูลทักษะในอนาคต (Skill Data Model - API Endpoint Skeleton)", desc:"เตรียมพร้อมสำหรับ Skill Engine ในอนาคต ไม่ต้องมี engine จริง", dep:"1.1", src:"concepts/skill-matrix.md Scope Clarification", c:"yellow"},
       ]
     },
     {
@@ -23,17 +23,17 @@ const SKILL_MATRIX_DATA = {
       sources:["concepts/skill-matrix.md Skill Mapping Standard — Open, Reference Standards"],
       note:"⚠️ ไม่ใช่งาน dev — เป็นงาน PM/BA ประสานงานภายนอก ที่ block งานทุกอย่างในโดเมนนี้จนกว่าจะเคาะ",
       tasks:[
-        {id:"2.1", task:"เลือก skill taxonomy standard", desc:"ESCO / O*NET / TPQI / WEF Future of Jobs / ทำเอง", dep:"—", src:"concepts/skill-matrix.md Reference Standards", c:"red", note:"เอกสารเขียนตรงๆ ว่า 'ต้องเลือก หรือทำ taxonomy เอง — รอ Reference Documents' — ไม่มีคำตอบเลย"},
-        {id:"2.2", task:"ประสาน กมอ. เพื่อ endorse Skill Mapping standard", desc:"ตาม Delivery MOM งวด 1 Action 5.3.4", dep:"2.1", src:"concepts/skill-matrix.md Skill Mapping Standard", c:"red", note:"external dependency ที่ไม่มี timeline"},
-        {id:"2.3", task:"ประสาน TPQI (Professional Qualification standard)", desc:"", dep:"2.1", src:"concepts/skill-matrix.md", c:"red"},
-        {id:"2.4", task:"ยืนยันขอบเขต: skill taxonomy definition ไม่ใช่หน้าที่ทีม dev", desc:"ม./อว. เป็นคนกำหนดว่า skill อะไรบ้างที่ต้องเก็บ", dep:"—", src:"concepts/skill-matrix.md Out of Scope", c:"green", note:"เป็น scope boundary ที่ชัดเจนแล้ว — ทีม dev แค่ทำให้ระบบรองรับ ไม่ต้องนั่งออกแบบ taxonomy เอง"},
+        {id:"2.1", task:"เลือกมาตรฐานอ้างอิงทักษะที่จะใช้ในระบบ (Standard Selection - Taxonomy Standard Selection)", desc:"ESCO / O*NET / TPQI / WEF Future of Jobs / ทำเอง", dep:"—", src:"concepts/skill-matrix.md Reference Standards", c:"red", note:"เอกสารเขียนตรงๆ ว่า 'ต้องเลือก หรือทำ taxonomy เอง — รอ Reference Documents' — ไม่มีคำตอบเลย"},
+        {id:"2.2", task:"ประสานงาน กมอ. เพื่อรับรองมาตรฐานการจับคู่ทักษะ (Standard Selection - กมอ. Endorsement Coordination)", desc:"ตาม Delivery MOM งวด 1 Action 5.3.4", dep:"2.1", src:"concepts/skill-matrix.md Skill Mapping Standard", c:"red", note:"external dependency ที่ไม่มี timeline"},
+        {id:"2.3", task:"ประสานงานมาตรฐานคุณวุฒิวิชาชีพ TPQI (Standard Selection - TPQI Coordination)", desc:"", dep:"2.1", src:"concepts/skill-matrix.md", c:"red"},
+        {id:"2.4", task:"ยืนยันว่าการกำหนดชุดทักษะไม่ใช่หน้าที่ทีม dev (Standard Selection - Scope Boundary Confirmation)", desc:"ม./อว. เป็นคนกำหนดว่า skill อะไรบ้างที่ต้องเก็บ", dep:"—", src:"concepts/skill-matrix.md Out of Scope", c:"green", note:"เป็น scope boundary ที่ชัดเจนแล้ว — ทีม dev แค่ทำให้ระบบรองรับ ไม่ต้องนั่งออกแบบ taxonomy เอง"},
       ]
     },
     {
       id:"F3", name:"Skill Database (Sprint #26, Phase 2)",
       sources:["sources/gap-vs-sprint-cross-reference.md"],
       tasks:[
-        {id:"3.1", task:"Skill Database schema + basic CRUD", desc:"", dep:"F1, F2.1", src:"gap-vs-sprint-cross-reference.md §3.3 (มีแค่ schema ยังไม่มี mapping engine)", c:"yellow", note:"ต้องรอ F2.1 (เลือก standard) ก่อนถึงจะออกแบบ schema จริงได้ — ตอนนี้มีแค่ 'partial' ตามที่ cross-reference ระบุ"},
+        {id:"3.1", task:"โครงสร้างฐานข้อมูลทักษะพื้นฐานพร้อมการจัดการเบื้องต้น (Skill Database - Schema & Basic CRUD)", desc:"", dep:"F1, F2.1", src:"gap-vs-sprint-cross-reference.md §3.3 (มีแค่ schema ยังไม่มี mapping engine)", c:"yellow", note:"ต้องรอ F2.1 (เลือก standard) ก่อนถึงจะออกแบบ schema จริงได้ — ตอนนี้มีแค่ 'partial' ตามที่ cross-reference ระบุ"},
       ]
     },
     {
@@ -41,7 +41,7 @@ const SKILL_MATRIX_DATA = {
       sources:["sources/gap-vs-sprint-cross-reference.md"],
       note:"🔴 thin — ชื่อ feature ใน sprint list เท่านั้น ไม่มี spec รายละเอียดที่ไหนเลย",
       tasks:[
-        {id:"4.1", task:"Skill Extractor system integration", desc:"", dep:"F1, F2, F3", src:"gap-vs-sprint-cross-reference.md", c:"red", note:"ไม่มี spec ใดๆ — 'Skill Extractor' คืออะไร/ของใคร ยังไม่มีคำตอบ (คล้ายสถานการณ์เดียวกับ LLRS/Credit Port ใน Blocked Integrations epic)"},
+        {id:"4.1", task:"เชื่อมต่อระบบดึงข้อมูลทักษะจากภายนอก (Skill Extractor - System Integration)", desc:"", dep:"F1, F2, F3", src:"gap-vs-sprint-cross-reference.md", c:"red", note:"ไม่มี spec ใดๆ — 'Skill Extractor' คืออะไร/ของใคร ยังไม่มีคำตอบ (คล้ายสถานการณ์เดียวกับ LLRS/Credit Port ใน Blocked Integrations epic)"},
       ]
     },
   ],

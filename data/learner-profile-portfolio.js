@@ -16,80 +16,80 @@ const LEARNER_PROFILE_PORTFOLIO_DATA = {
       id:"F1", name:"Personal Info & Identity Display",
       sources:["sources/prd-learner-profile-settings.md (Track B, AI Draft — รอ BA/PO)"],
       tasks:[
-        {id:"1.1", task:"Identity Fields display (read-only)", desc:"ชื่อ-สกุล/เลขบัตร(masked)/วันเกิด จาก ThaID/DOPA", dep:"Identity & Auth Epic F3", src:"prd-learner-profile-settings.md UC-PRO-LER-01", c:"green"},
-        {id:"1.2", task:"Contact Fields edit (email/phone/address)", desc:"validate real-time: email regex, phone 10 หลัก, ที่อยู่ ≥10 ตัวอักษร", dep:"1.1", src:"prd-learner-profile-settings.md UC-PRO-LER-01", c:"green"},
-        {id:"1.3", task:"ThaID Verification Badge", desc:"เขียว=verified / เหลือง=รอยืนยัน+CTA", dep:"1.1", src:"prd-learner-profile-settings.md M3", c:"green"},
-        {id:"1.4", task:"Unsaved-changes dialog เมื่อออกจากหน้า", desc:"", dep:"1.2", src:"prd-learner-profile-settings.md Edge Cases", c:"green"},
-        {id:"1.5", task:"Edge cases: ThaID ยังไม่ verify / email ซ้ำ / ThaID API down", desc:"", dep:"1.1-1.3", src:"prd-learner-profile-settings.md Edge Cases", c:"green"},
+        {id:"1.1", task:"แสดงข้อมูลยืนยันตัวตนแบบอ่านอย่างเดียว (Personal Info - Identity Fields Display)", desc:"ชื่อ-สกุล/เลขบัตร(masked)/วันเกิด จาก ThaID/DOPA", dep:"Identity & Auth Epic F3", src:"prd-learner-profile-settings.md UC-PRO-LER-01", c:"green"},
+        {id:"1.2", task:"แก้ไขข้อมูลติดต่อ อีเมล/เบอร์โทร/ที่อยู่ (Personal Info - Contact Fields Edit)", desc:"validate real-time: email regex, phone 10 หลัก, ที่อยู่ ≥10 ตัวอักษร", dep:"1.1", src:"prd-learner-profile-settings.md UC-PRO-LER-01", c:"green"},
+        {id:"1.3", task:"สัญลักษณ์แสดงสถานะยืนยันตัวตนผ่าน ThaID (Personal Info - ThaID Verification Badge)", desc:"เขียว=verified / เหลือง=รอยืนยัน+CTA", dep:"1.1", src:"prd-learner-profile-settings.md M3", c:"green"},
+        {id:"1.4", task:"แจ้งเตือนเมื่อออกจากหน้าโดยไม่บันทึกข้อมูล (Personal Info - Unsaved Changes Dialog)", desc:"", dep:"1.2", src:"prd-learner-profile-settings.md Edge Cases", c:"green"},
+        {id:"1.5", task:"จัดการกรณีพิเศษ เช่น ThaID ยังไม่ยืนยันหรือระบบ ThaID ล่ม (Personal Info - Edge Case Handling)", desc:"", dep:"1.1-1.3", src:"prd-learner-profile-settings.md Edge Cases", c:"green"},
       ]
     },
     {
       id:"F2", name:"Notification Preferences",
       sources:["sources/prd-learner-profile-settings.md UC-PRO-LER-02","decisions/scr-002-notification-channels-sms-removal.md","decisions/scr-003-notification-toggle-matrix.md"],
       tasks:[
-        {id:"2.1", task:"Toggle Matrix (4 ประเภท × ช่องทาง)", desc:"คำร้องเทียบโอน/การชำระเงิน/สถานะหน่วยกิต/ข่าวสาร", dep:"—", src:"prd-learner-profile-settings.md, scr-003", c:"yellow", note:"⚠️ ขัดกันเอง: PRD นี้(30 พ.ค.)ระบุ 3 ช่องทาง(Email/Push/SMS) แต่ SCR-002(31 พ.ค., อนุมัติทีหลัง)ตัด SMS ออกทั้งหมดเหลือ 2 ช่องทาง — ต้องยึด SCR-002/003 เป็นตัวล่าสุด ไม่ใช่ PRD"},
-        {id:"2.2", task:"Auto-save เมื่อ toggle เปลี่ยน", desc:"ไม่ต้องกดปุ่ม save", dep:"2.1", src:"prd-learner-profile-settings.md", c:"green"},
-        {id:"2.3", task:"Edge cases", desc:"ปิดทุกช่องทาง(คำเตือนไม่ block) · push ถูก browser block · autosave fail(rollback+toast)", dep:"2.1", src:"prd-learner-profile-settings.md Edge Cases", c:"green"},
-        {id:"2.4", task:"Default state ต่อประเภท", desc:"Email=ON ทุกประเภท, Push=ON (SMS ตัดออกตาม SCR-002)", dep:"2.1", src:"prd-learner-profile-settings.md, scr-002", c:"green"},
+        {id:"2.1", task:"ตารางตั้งค่าการแจ้งเตือนตามประเภทและช่องทาง (Notification Preferences - Toggle Matrix)", desc:"คำร้องเทียบโอน/การชำระเงิน/สถานะหน่วยกิต/ข่าวสาร", dep:"—", src:"prd-learner-profile-settings.md, scr-003", c:"yellow", note:"⚠️ ขัดกันเอง: PRD นี้(30 พ.ค.)ระบุ 3 ช่องทาง(Email/Push/SMS) แต่ SCR-002(31 พ.ค., อนุมัติทีหลัง)ตัด SMS ออกทั้งหมดเหลือ 2 ช่องทาง — ต้องยึด SCR-002/003 เป็นตัวล่าสุด ไม่ใช่ PRD"},
+        {id:"2.2", task:"บันทึกการตั้งค่าแจ้งเตือนอัตโนมัติโดยไม่ต้องกดปุ่ม (Notification Preferences - Auto-save)", desc:"ไม่ต้องกดปุ่ม save", dep:"2.1", src:"prd-learner-profile-settings.md", c:"green"},
+        {id:"2.3", task:"จัดการกรณีพิเศษ เช่น ปิดทุกช่องทางหรือบันทึกไม่สำเร็จ (Notification Preferences - Edge Case Handling)", desc:"ปิดทุกช่องทาง(คำเตือนไม่ block) · push ถูก browser block · autosave fail(rollback+toast)", dep:"2.1", src:"prd-learner-profile-settings.md Edge Cases", c:"green"},
+        {id:"2.4", task:"กำหนดค่าเริ่มต้นการแจ้งเตือนตามประเภท (Notification Preferences - Default State)", desc:"Email=ON ทุกประเภท, Push=ON (SMS ตัดออกตาม SCR-002)", dep:"2.1", src:"prd-learner-profile-settings.md, scr-002", c:"green"},
       ]
     },
     {
       id:"F3", name:"Password Change (Learner Self-Service)",
       sources:["sources/prd-learner-profile-settings.md UC-PRO-LER-03","decisions/scr-004-change-password-scope.md"],
       tasks:[
-        {id:"3.1", task:"Change password form (current+new+confirm)", desc:"ขั้นต่ำ 8 ตัว + ตัวอักษร+ตัวเลข", dep:"Identity & Auth Epic F2", src:"prd-learner-profile-settings.md", c:"green"},
-        {id:"3.2", task:"Password history check (≠ 5 รหัสล่าสุด)", desc:"", dep:"3.1", src:"prd-learner-profile-settings.md Open Questions #4", c:"yellow", note:"open question จริง: เป็น requirement ตาม PDPA หรือแค่ best practice — ต้องเคาะกับ security team"},
-        {id:"3.3", task:"Rate limit (3 ครั้ง/10 นาที → lock 30 นาที)", desc:"", dep:"3.1", src:"prd-learner-profile-settings.md Business Rules", c:"green"},
-        {id:"3.4", task:"Email notification เมื่อเปลี่ยนสำเร็จ (non-blocking)", desc:"เปลี่ยนสำเร็จแล้วแม้ email ส่งไม่ถึง ไม่ rollback", dep:"3.1, Notification Epic", src:"prd-learner-profile-settings.md Edge Cases", c:"green"},
-        {id:"3.5", task:"Audit log (session ไม่ invalidate หลังเปลี่ยน)", desc:"", dep:"3.1", src:"prd-learner-profile-settings.md Business Rules", c:"green"},
+        {id:"3.1", task:"แบบฟอร์มเปลี่ยนรหัสผ่านด้วยตนเอง (Password Change - Change Password Form)", desc:"ขั้นต่ำ 8 ตัว + ตัวอักษร+ตัวเลข", dep:"Identity & Auth Epic F2", src:"prd-learner-profile-settings.md", c:"green"},
+        {id:"3.2", task:"ตรวจสอบไม่ให้ใช้รหัสผ่านซ้ำกับ 5 รหัสล่าสุด (Password Change - Password History Check)", desc:"", dep:"3.1", src:"prd-learner-profile-settings.md Open Questions #4", c:"yellow", note:"open question จริง: เป็น requirement ตาม PDPA หรือแค่ best practice — ต้องเคาะกับ security team"},
+        {id:"3.3", task:"จำกัดจำนวนครั้งการลองเปลี่ยนรหัสผ่าน (Password Change - Rate Limiting)", desc:"", dep:"3.1", src:"prd-learner-profile-settings.md Business Rules", c:"green"},
+        {id:"3.4", task:"ส่งอีเมลแจ้งเตือนเมื่อเปลี่ยนรหัสผ่านสำเร็จ (Password Change - Success Notification Email)", desc:"เปลี่ยนสำเร็จแล้วแม้ email ส่งไม่ถึง ไม่ rollback", dep:"3.1, Notification Epic", src:"prd-learner-profile-settings.md Edge Cases", c:"green"},
+        {id:"3.5", task:"บันทึกประวัติการเปลี่ยนรหัสผ่าน (Password Change - Audit Log)", desc:"", dep:"3.1", src:"prd-learner-profile-settings.md Business Rules", c:"green"},
       ]
     },
     {
       id:"F4", name:"Avatar / Profile Photo",
       sources:["sources/prd-learner-profile-settings.md M6"],
       tasks:[
-        {id:"4.1", task:"Upload (max 2MB, jpg/png) + preview ก่อนบันทึก", desc:"", dep:"Data & Service Foundation (storage)", src:"prd-learner-profile-settings.md M6", c:"yellow", note:"storage backend (S3/CDN vs base64 in DB) เป็น open question ที่กระทบ cost — ต้องเคาะร่วมกับ infra"},
+        {id:"4.1", task:"อัปโหลดรูปโปรไฟล์พร้อมดูตัวอย่างก่อนบันทึก (Avatar - Photo Upload)", desc:"", dep:"Data & Service Foundation (storage)", src:"prd-learner-profile-settings.md M6", c:"yellow", note:"storage backend (S3/CDN vs base64 in DB) เป็น open question ที่กระทบ cost — ต้องเคาะร่วมกับ infra"},
       ]
     },
     {
       id:"F5", name:"Credit Portfolio View",
       sources:["sources/prd-learner-credit-portfolio.md (Track B, AI Draft — รอ BA/PO) UC-CPF-LER-01"],
       tasks:[
-        {id:"5.1", task:"KPI Cards", desc:"หน่วยกิตรวม, จำนวนวิชา, สถาบัน, GPAX (เฉพาะ Formal เท่านั้น)", dep:"Grade & Credit Management Epic F6", src:"prd-learner-credit-portfolio.md UC-CPF-LER-01", c:"green"},
-        {id:"5.2", task:"Portfolio table (filter ปี/ภาค/ประเภท/สถาบัน)", desc:"client-side filter", dep:"5.1", src:"prd-learner-credit-portfolio.md UC-CPF-LER-01", c:"green"},
-        {id:"5.3", task:"Empty/Loading/Error states", desc:"", dep:"5.1", src:"prd-learner-credit-portfolio.md Edge Cases", c:"green"},
-        {id:"5.4", task:"Status badges (verified/pending/disputed)", desc:"", dep:"5.2", src:"prd-learner-credit-portfolio.md Edge Cases", c:"green"},
+        {id:"5.1", task:"การ์ดสรุปตัวเลขสำคัญ หน่วยกิตรวม/จำนวนวิชา/GPAX (Credit Portfolio - KPI Cards)", desc:"หน่วยกิตรวม, จำนวนวิชา, สถาบัน, GPAX (เฉพาะ Formal เท่านั้น)", dep:"Grade & Credit Management Epic F6", src:"prd-learner-credit-portfolio.md UC-CPF-LER-01", c:"green"},
+        {id:"5.2", task:"ตารางแสดงคลังหน่วยกิตพร้อมตัวกรอง (Credit Portfolio - Portfolio Table)", desc:"client-side filter", dep:"5.1", src:"prd-learner-credit-portfolio.md UC-CPF-LER-01", c:"green"},
+        {id:"5.3", task:"จัดการสถานะไม่มีข้อมูล/กำลังโหลด/เกิดข้อผิดพลาด (Credit Portfolio - Empty/Loading/Error States)", desc:"", dep:"5.1", src:"prd-learner-credit-portfolio.md Edge Cases", c:"green"},
+        {id:"5.4", task:"ป้ายแสดงสถานะ ยืนยันแล้ว/รอตรวจ/มีข้อโต้แย้ง (Credit Portfolio - Status Badges)", desc:"", dep:"5.2", src:"prd-learner-credit-portfolio.md Edge Cases", c:"green"},
       ]
     },
     {
       id:"F6", name:"E-Transcript View",
       sources:["sources/prd-learner-credit-portfolio.md UC-CPF-LER-02"],
       tasks:[
-        {id:"6.1", task:"5-level hierarchy grouping", desc:"University→Faculty→Program→Year→Semester", dep:"5.1, Institution Structure Epic", src:"prd-learner-credit-portfolio.md UC-CPF-LER-02", c:"green"},
-        {id:"6.2", task:"Multi-institution tabs", desc:"เรียงตามหน่วยกิตมาก→น้อย", dep:"6.1", src:"prd-learner-credit-portfolio.md Edge Cases", c:"green"},
-        {id:"6.3", task:"Term GPAX + Cumulative GPAX แยกตาม ม.", desc:"", dep:"6.1, Grade & Credit Mgmt Epic F6", src:"prd-learner-credit-portfolio.md", c:"yellow", note:"open question จริง: สูตรตรงกับระเบียบแต่ละ ม. หรือไม่ — แต่ละ ม. อาจมีรูปแบบต่างกัน"},
-        {id:"6.4", task:"Grade Legend (collapsible, 16 ระดับ)", desc:"", dep:"Grade & Credit Management Epic F6", src:"prd-learner-credit-portfolio.md M5", c:"green"},
-        {id:"6.5", task:"Other Credits section (นอกหลักสูตร)", desc:"", dep:"6.1", src:"prd-learner-credit-portfolio.md M7", c:"green"},
-        {id:"6.6", task:"Expand/Collapse all + default 2 ภาคล่าสุด", desc:"", dep:"6.1", src:"prd-learner-credit-portfolio.md Edge Cases", c:"green"},
+        {id:"6.1", task:"จัดกลุ่มแสดงผลตามลำดับชั้น มหาวิทยาลัย>คณะ>หลักสูตร>ปี>ภาคเรียน (E-Transcript - 5-Level Hierarchy Grouping)", desc:"University→Faculty→Program→Year→Semester", dep:"5.1, Institution Structure Epic", src:"prd-learner-credit-portfolio.md UC-CPF-LER-02", c:"green"},
+        {id:"6.2", task:"แท็บแยกตามสถาบันเมื่อเรียนหลายที่ (E-Transcript - Multi-Institution Tabs)", desc:"เรียงตามหน่วยกิตมาก→น้อย", dep:"6.1", src:"prd-learner-credit-portfolio.md Edge Cases", c:"green"},
+        {id:"6.3", task:"คำนวณเกรดเฉลี่ยรายภาคและสะสมแยกตามสถาบัน (E-Transcript - Term/Cumulative GPAX)", desc:"", dep:"6.1, Grade & Credit Mgmt Epic F6", src:"prd-learner-credit-portfolio.md", c:"yellow", note:"open question จริง: สูตรตรงกับระเบียบแต่ละ ม. หรือไม่ — แต่ละ ม. อาจมีรูปแบบต่างกัน"},
+        {id:"6.4", task:"คำอธิบายสัญลักษณ์เกรดแบบย่อ/ขยายได้ (E-Transcript - Grade Legend)", desc:"", dep:"Grade & Credit Management Epic F6", src:"prd-learner-credit-portfolio.md M5", c:"green"},
+        {id:"6.5", task:"ส่วนแสดงหน่วยกิตที่ได้นอกหลักสูตร (E-Transcript - Other Credits Section)", desc:"", dep:"6.1", src:"prd-learner-credit-portfolio.md M7", c:"green"},
+        {id:"6.6", task:"ปุ่มขยาย/ยุบทั้งหมด แสดงเริ่มต้น 2 ภาคล่าสุด (E-Transcript - Expand/Collapse Control)", desc:"", dep:"6.1", src:"prd-learner-credit-portfolio.md Edge Cases", c:"green"},
       ]
     },
     {
       id:"F7", name:"Course Detail Modal (Learner, + Blockchain)",
       sources:["sources/prd-learner-credit-portfolio.md UC-CPF-LER-03"],
       tasks:[
-        {id:"7.1", task:"Full course detail + CLO list + instructor + assessment type", desc:"", dep:"5.1, Grade & Credit Management Epic F4", src:"prd-learner-credit-portfolio.md UC-CPF-LER-03", c:"green"},
-        {id:"7.2", task:"Blockchain TX Hash display + Verify on Chain", desc:"'รอการบันทึกลง Blockchain' state เมื่อยังไม่ sync", dep:"Credit Transfer Epic F7 (Blockchain Anchoring)", src:"prd-learner-credit-portfolio.md UC-CPF-LER-03", c:"red", note:"ต้องพึ่ง Blockchain Anchoring ที่ยัง 🔴 ใน Credit Transfer epic (chain tech ยังไม่เคาะ) — ทำได้แค่ 'placeholder pending state' ก่อน"},
-        {id:"7.3", task:"Evidence file link + broken-file handling", desc:"", dep:"7.1", src:"prd-learner-credit-portfolio.md Edge Cases", c:"green"},
+        {id:"7.1", task:"หน้าต่างแสดงรายละเอียดวิชาเต็ม พร้อมผู้สอนและวิธีประเมิน (Course Detail Modal - Full Detail Display)", desc:"", dep:"5.1, Grade & Credit Management Epic F4", src:"prd-learner-credit-portfolio.md UC-CPF-LER-03", c:"green"},
+        {id:"7.2", task:"แสดงหมายเลขอ้างอิงบล็อกเชนและปุ่มตรวจสอบ (Course Detail Modal - Blockchain Verify Display)", desc:"'รอการบันทึกลง Blockchain' state เมื่อยังไม่ sync", dep:"Credit Transfer Epic F7 (Blockchain Anchoring)", src:"prd-learner-credit-portfolio.md UC-CPF-LER-03", c:"red", note:"ต้องพึ่ง Blockchain Anchoring ที่ยัง 🔴 ใน Credit Transfer epic (chain tech ยังไม่เคาะ) — ทำได้แค่ 'placeholder pending state' ก่อน"},
+        {id:"7.3", task:"ลิงก์ไฟล์หลักฐานพร้อมจัดการกรณีไฟล์เสีย (Course Detail Modal - Evidence File Link)", desc:"", dep:"7.1", src:"prd-learner-credit-portfolio.md Edge Cases", c:"green"},
       ]
     },
     {
       id:"F8", name:"Export Transcript PDF",
       sources:["sources/prd-learner-credit-portfolio.md UC-CPF-LER-04"],
       tasks:[
-        {id:"8.1", task:"PDF generation จาก E-Transcript", desc:"engine ยังไม่เลือก (server-side vs client-side)", dep:"F6", src:"prd-learner-credit-portfolio.md Open Questions #1", c:"red", note:"open question เขียนไว้ตรงๆ ว่า High impact — client-side อาจมีปัญหาไฟล์ใหญ่ ต้องเคาะก่อน implement"},
-        {id:"8.2", task:"QR code สำหรับตรวจสอบเอกสาร", desc:"", dep:"8.1", src:"prd-learner-credit-portfolio.md Business Rules", c:"green"},
-        {id:"8.3", task:"Multi-institution PDF sectioning", desc:"", dep:"8.1", src:"prd-learner-credit-portfolio.md Edge Cases", c:"green"},
-        {id:"8.4", task:"Progress indicator + mobile auto-download fallback", desc:"", dep:"8.1", src:"prd-learner-credit-portfolio.md Edge Cases", c:"green"},
+        {id:"8.1", task:"สร้างไฟล์ PDF จากใบแสดงผลการเรียน (Export Transcript - PDF Generation)", desc:"engine ยังไม่เลือก (server-side vs client-side)", dep:"F6", src:"prd-learner-credit-portfolio.md Open Questions #1", c:"red", note:"open question เขียนไว้ตรงๆ ว่า High impact — client-side อาจมีปัญหาไฟล์ใหญ่ ต้องเคาะก่อน implement"},
+        {id:"8.2", task:"สร้าง QR Code สำหรับตรวจสอบเอกสาร (Export Transcript - QR Code Generation)", desc:"", dep:"8.1", src:"prd-learner-credit-portfolio.md Business Rules", c:"green"},
+        {id:"8.3", task:"แบ่งส่วนเอกสาร PDF ตามสถาบันเมื่อเรียนหลายที่ (Export Transcript - Multi-Institution PDF Sectioning)", desc:"", dep:"8.1", src:"prd-learner-credit-portfolio.md Edge Cases", c:"green"},
+        {id:"8.4", task:"แถบแสดงความคืบหน้าและดาวน์โหลดสำรองบนมือถือ (Export Transcript - Progress Indicator)", desc:"", dep:"8.1", src:"prd-learner-credit-portfolio.md Edge Cases", c:"green"},
       ]
     },
     {
@@ -97,11 +97,11 @@ const LEARNER_PROFILE_PORTFOLIO_DATA = {
       sources:["decisions/scr-014-public-learning-profile.md"],
       note:"⭐ strategic feature — ตอบ 'value proposition' ที่มหาวิทยาลัยกลุ่ม skeptical ต้องการเห็น (GAP-006) และตรง Regulator policy ('อว. ไม่ใช่ผู้ออก report — เจ้าของข้อมูล display เอง')",
       tasks:[
-        {id:"9.1", task:"Public profile page (/p/{handle})", desc:"learner-owned, เปิด/ปิดจาก Settings", dep:"F1, F5", src:"scr-014 §3 FR-NCBS-LER-08", c:"green"},
-        {id:"9.2", task:"Visibility toggle ต่อองค์ประกอบ", desc:"identity/ThaID badge/summary/skill portfolio/learning records(ต่อ record)/เกรด(default ปิด)/formal-nonformal-informal grouping/verification/contact — ตารางจริงมี 9 แถวแม้เอกสารอื่นเรียก '7 องค์ประกอบ'", dep:"9.1", src:"scr-014 §6", c:"green", note:"เอกสารเขียนไม่ตรงกันเอง: หัวข้อพูดถึง '7 องค์ประกอบ round-trip' แต่ตาราง §6 มี 9 แถว (รวม Contact ที่เพิ่มทีหลัง) — ไม่กระทบ dev ถ้ายึดตาราง §6 เป็นหลัก แต่ควรรู้ไว้เผื่อสับสน"},
-        {id:"9.3", task:"QR + share link generation", desc:"", dep:"9.1", src:"scr-014 §1", c:"green"},
-        {id:"9.4", task:"Verifiable credential display (blockchain verify ไม่เปิดเผย PII อื่น)", desc:"", dep:"9.1, Credit Transfer Epic F7 (Blockchain Anchoring)", src:"scr-014 §3 FR-NCBS-LER-09", c:"red", note:"เดียวกับ 7.2 — พึ่ง Blockchain Anchoring ที่ยัง 🔴 — 'Verify badge = หัวใจ' ตามที่เอกสารเขียนเอง ถ้าไม่มี blockchain จริง ความน่าเชื่อถือต่อ employer หายไปเลย"},
-        {id:"9.5", task:"2-layer PDPA consent (สถาบัน + NCBS)", desc:"", dep:"9.1, PDPA & Compliance Epic", src:"scr-014 §5 Impact Analysis", c:"yellow", note:"high impact ตามที่ระบุเอง แต่รายละเอียด consent flow ยังไม่ลึกเท่า Foreign Identity (SCR-019) — ต้องออกแบบเพิ่ม"},
+        {id:"9.1", task:"หน้าโปรไฟล์สาธารณะของผู้เรียน เปิด/ปิดได้เอง (Public Learning Profile - Public Profile Page)", desc:"learner-owned, เปิด/ปิดจาก Settings", dep:"F1, F5", src:"scr-014 §3 FR-NCBS-LER-08", c:"green"},
+        {id:"9.2", task:"สลับเปิด/ปิดการแสดงผลแต่ละองค์ประกอบในโปรไฟล์ (Public Learning Profile - Visibility Toggle)", desc:"identity/ThaID badge/summary/skill portfolio/learning records(ต่อ record)/เกรด(default ปิด)/formal-nonformal-informal grouping/verification/contact — ตารางจริงมี 9 แถวแม้เอกสารอื่นเรียก '7 องค์ประกอบ'", dep:"9.1", src:"scr-014 §6", c:"green", note:"เอกสารเขียนไม่ตรงกันเอง: หัวข้อพูดถึง '7 องค์ประกอบ round-trip' แต่ตาราง §6 มี 9 แถว (รวม Contact ที่เพิ่มทีหลัง) — ไม่กระทบ dev ถ้ายึดตาราง §6 เป็นหลัก แต่ควรรู้ไว้เผื่อสับสน"},
+        {id:"9.3", task:"สร้าง QR Code และลิงก์แชร์โปรไฟล์ (Public Learning Profile - QR/Share Link Generation)", desc:"", dep:"9.1", src:"scr-014 §1", c:"green"},
+        {id:"9.4", task:"แสดงหลักฐานที่ตรวจสอบได้ผ่านบล็อกเชนโดยไม่เปิดเผยข้อมูลส่วนบุคคลอื่น (Public Learning Profile - Verifiable Credential Display)", desc:"", dep:"9.1, Credit Transfer Epic F7 (Blockchain Anchoring)", src:"scr-014 §3 FR-NCBS-LER-09", c:"red", note:"เดียวกับ 7.2 — พึ่ง Blockchain Anchoring ที่ยัง 🔴 — 'Verify badge = หัวใจ' ตามที่เอกสารเขียนเอง ถ้าไม่มี blockchain จริง ความน่าเชื่อถือต่อ employer หายไปเลย"},
+        {id:"9.5", task:"ขอความยินยอม PDPA 2 ชั้น จากสถาบันและจาก NCBS (Public Learning Profile - 2-Layer Consent)", desc:"", dep:"9.1, PDPA & Compliance Epic", src:"scr-014 §5 Impact Analysis", c:"yellow", note:"high impact ตามที่ระบุเอง แต่รายละเอียด consent flow ยังไม่ลึกเท่า Foreign Identity (SCR-019) — ต้องออกแบบเพิ่ม"},
       ]
     },
   ],

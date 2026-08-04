@@ -12,23 +12,23 @@ const LANDING_CMS_RECOMMENDATION_DATA = {
       id:"F1", name:"Landing Pages (NCBS/UCBS/CTP)",
       sources:["sources/gap-vs-sprint-cross-reference.md §1.2, §3.2, §7.1"],
       tasks:[
-        {id:"1.1", task:"Static course listing page (แทน full search engine)", desc:"reuse ข้อมูลจาก UCBS + University Profile", dep:"Institution Structure Epic", src:"gap-vs-sprint-cross-reference.md §7.1 Action 2", c:"yellow", note:"เอกสารแนะนำชัดเจนว่าไม่ต้องสร้าง search engine เต็ม (20-30 MD) — static listing พอสำหรับ MVP (ประเมินหยาบ 3-5 MD)"},
-        {id:"1.2", task:"Landing page ต่อระบบ (NCBS/UCBS/CTP)", desc:"", dep:"1.1", src:"gap-vs-sprint-cross-reference.md §1.2 (#36-38)", c:"red", note:"ไม่มี use case ละเอียดที่ไหน — มีแค่ชื่อ feature ใน sprint list"},
+        {id:"1.1", task:"หน้ารายการหลักสูตรแบบ static (ยังไม่ใช่ search engine เต็มรูปแบบ) (Landing Pages - Course Listing)", desc:"reuse ข้อมูลจาก UCBS + University Profile", dep:"Institution Structure Epic", src:"gap-vs-sprint-cross-reference.md §7.1 Action 2", c:"yellow", note:"เอกสารแนะนำชัดเจนว่าไม่ต้องสร้าง search engine เต็ม (20-30 MD) — static listing พอสำหรับ MVP (ประเมินหยาบ 3-5 MD)"},
+        {id:"1.2", task:"หน้า Landing หลักของแต่ละระบบ NCBS/UCBS/CTP (Landing Pages - System Homepage)", desc:"", dep:"1.1", src:"gap-vs-sprint-cross-reference.md §1.2 (#36-38)", c:"red", note:"ไม่มี use case ละเอียดที่ไหน — มีแค่ชื่อ feature ใน sprint list"},
       ]
     },
     {
       id:"F2", name:"Full CMS (NCBS/UCBS/CTP, Phase 3)",
       sources:["sources/gap-vs-sprint-cross-reference.md §1.3, §3.3"],
       tasks:[
-        {id:"2.1", task:"Full CMS ต่อระบบ", desc:"", dep:"F1", src:"gap-vs-sprint-cross-reference.md §1.3 (#66-68)", c:"red", note:"Phase 3 — ไม่มี spec ใดๆ นอกชื่อ feature"},
+        {id:"2.1", task:"ระบบจัดการเนื้อหาเต็มรูปแบบสำหรับทุกระบบ (Full CMS - Content Management, Phase 3)", desc:"", dep:"F1", src:"gap-vs-sprint-cross-reference.md §1.3 (#66-68)", c:"red", note:"Phase 3 — ไม่มี spec ใดๆ นอกชื่อ feature"},
       ]
     },
     {
       id:"F3", name:"Personalized Recommendation (BR-NCBS-07)",
       sources:["systems/ncbs-platform.md BR-NCBS-07","sources/gap-vs-sprint-cross-reference.md §1.3, §7.4"],
       tasks:[
-        {id:"3.1", task:"Personalized Dashboard + Recommendation", desc:"", dep:"Dashboards Epic F1", src:"systems/ncbs-platform.md BR-NCBS-07", c:"red", note:"cross-ref Dashboards Epic 1.2/1.5 — ขัดกับนโยบาย 'ไม่มีงบ AI' เดียวกัน"},
-        {id:"3.2", task:"Defer AI Recommendation Engine ไปก่อน", desc:"Rule-based matching ใน CTP เพียงพอสำหรับ 1-2 ปีแรก", dep:"—", src:"gap-vs-sprint-cross-reference.md §7.4 What NOT to Build", c:"green", note:"เป็นการตัดสินใจไม่ทำที่มีเหตุผลรองรับชัดเจนแล้ว — ควรยึดแนวทางนี้"},
+        {id:"3.1", task:"แดชบอร์ดส่วนบุคคลพร้อมคำแนะนำเฉพาะบุคคล (Personalized Recommendation - Dashboard, ต้องเคาะนโยบาย AI ก่อน)", desc:"", dep:"Dashboards Epic F1", src:"systems/ncbs-platform.md BR-NCBS-07", c:"red", note:"cross-ref Dashboards Epic 1.2/1.5 — ขัดกับนโยบาย 'ไม่มีงบ AI' เดียวกัน"},
+        {id:"3.2", task:"ตัดสินใจเลื่อนการพัฒนา AI Recommendation Engine ออกไปก่อน ใช้ rule-based แทน (Personalized Recommendation - Scope Decision)", desc:"Rule-based matching ใน CTP เพียงพอสำหรับ 1-2 ปีแรก", dep:"—", src:"gap-vs-sprint-cross-reference.md §7.4 What NOT to Build", c:"green", note:"เป็นการตัดสินใจไม่ทำที่มีเหตุผลรองรับชัดเจนแล้ว — ควรยึดแนวทางนี้"},
       ]
     },
   ],

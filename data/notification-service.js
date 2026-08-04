@@ -12,33 +12,33 @@ const NOTIFICATION_SERVICE_DATA = {
       sources:["sources/email-delivery-solution.md (real ticket, Jirayu/Artid — Tech)"],
       note:"⭐ ความเชื่อมั่นสูงสุดในทั้ง epic นี้ — สถาปัตยกรรมตัดสินใจแล้วจริง + production SMTP endpoint ยืนยันแล้ว (workD/Zimbra อว., ncbs-noreply@mhesi.go.th, ทดสอบส่งสำเร็จ มี.ค. 69)",
       tasks:[
-        {id:"1.1", task:"Outbox pattern (write ในทรานแซคชันเดียวกับ command)", desc:"", dep:"Data & Service Foundation F5", src:"email-delivery-solution.md Architecture Pipeline", c:"green"},
-        {id:"1.2", task:"OutboxPublisherService (poll ทุก 5s → publish NATS JetStream)", desc:"@Interval decorator", dep:"1.1", src:"email-delivery-solution.md Components", c:"green"},
-        {id:"1.3", task:"EmailPort/SmtpAdapter (Port/Adapter pattern)", desc:"swappable — business logic ขึ้นกับ EmailPort เท่านั้น", dep:"1.2", src:"email-delivery-solution.md", c:"green"},
-        {id:"1.4", task:"5 email types", desc:"invitation(7d), verification(24h), resend-verification, password-reset-request(1h single-use jti), password-reset-confirm", dep:"1.3", src:"email-delivery-solution.md Email Types", c:"green"},
-        {id:"1.5", task:"Production SMTP integration (workD/Zimbra อว.)", desc:"ncbs-noreply@mhesi.go.th — ทดสอบส่งสำเร็จแล้ว", dep:"1.3", src:"email-delivery-solution.md อัปเดต 2026-07-23", c:"green", note:"✅ confirmed จริง ไม่ใช่แค่ design — Mailpit เหลือไว้แค่ dev/test"},
-        {id:"1.6", task:"JWT jti single-use enforcement", desc:"เก็บ used jti ใน outbox/cache", dep:"1.4", src:"email-delivery-solution.md Risks", c:"yellow", note:"ระบุเป็น risk ที่ 'ยังไม่ enforce' ในเอกสารเอง — ต้องปิดก่อน production จริง"},
-        {id:"1.7", task:"NATS retry (3×) → DLQ + onDeadLetter log", desc:"", dep:"1.2", src:"email-delivery-solution.md Risks", c:"yellow"},
-        {id:"1.8", task:"Handlebars template injection escaping", desc:"escape ทุกค่าที่มาจาก user input", dep:"1.4", src:"email-delivery-solution.md Risks", c:"green"},
-        {id:"1.9", task:"Oracle outbox migration", desc:"ต้องเพิ่มใน Phase 1 + block CI ถ้าลืม", dep:"1.1, Data & Service Foundation F1", src:"email-delivery-solution.md Risks", c:"yellow"},
+        {id:"1.1", task:"บันทึกคำสั่งส่งอีเมลพร้อมข้อมูลหลักในทรานแซคชันเดียว (Email Pipeline - Outbox Pattern)", desc:"", dep:"Data & Service Foundation F5", src:"email-delivery-solution.md Architecture Pipeline", c:"green"},
+        {id:"1.2", task:"บริการดึงคิวอีเมลส่งเข้าระบบคิวงานทุก 5 วินาที (Email Pipeline - Outbox Publisher Service)", desc:"@Interval decorator", dep:"1.1", src:"email-delivery-solution.md Components", c:"green"},
+        {id:"1.3", task:"ตัวกลางส่งอีเมลที่สลับผู้ให้บริการได้ (Email Pipeline - Email Port/Adapter)", desc:"swappable — business logic ขึ้นกับ EmailPort เท่านั้น", dep:"1.2", src:"email-delivery-solution.md", c:"green"},
+        {id:"1.4", task:"อีเมล 5 ประเภท เชิญ/ยืนยันตัวตน/ส่งใหม่/ลืมรหัสผ่าน/ยืนยันเปลี่ยนรหัสผ่าน (Email Pipeline - Email Types)", desc:"invitation(7d), verification(24h), resend-verification, password-reset-request(1h single-use jti), password-reset-confirm", dep:"1.3", src:"email-delivery-solution.md Email Types", c:"green"},
+        {id:"1.5", task:"เชื่อมต่อระบบส่งอีเมลจริงของหน่วยงาน (Email Pipeline - Production SMTP Integration)", desc:"ncbs-noreply@mhesi.go.th — ทดสอบส่งสำเร็จแล้ว", dep:"1.3", src:"email-delivery-solution.md อัปเดต 2026-07-23", c:"green", note:"✅ confirmed จริง ไม่ใช่แค่ design — Mailpit เหลือไว้แค่ dev/test"},
+        {id:"1.6", task:"บังคับให้ลิงก์ยืนยันใช้ได้ครั้งเดียวเท่านั้น (Email Pipeline - Single-Use Token Enforcement)", desc:"เก็บ used jti ใน outbox/cache", dep:"1.4", src:"email-delivery-solution.md Risks", c:"yellow", note:"ระบุเป็น risk ที่ 'ยังไม่ enforce' ในเอกสารเอง — ต้องปิดก่อน production จริง"},
+        {id:"1.7", task:"ส่งซ้ำอัตโนมัติเมื่อล้มเหลวและเก็บไว้ตรวจสอบภายหลัง (Email Pipeline - Retry & Dead Letter Queue)", desc:"", dep:"1.2", src:"email-delivery-solution.md Risks", c:"yellow"},
+        {id:"1.8", task:"ป้องกันการแทรกโค้ดอันตรายในเทมเพลตอีเมล (Email Pipeline - Template Injection Escaping)", desc:"escape ทุกค่าที่มาจาก user input", dep:"1.4", src:"email-delivery-solution.md Risks", c:"green"},
+        {id:"1.9", task:"ย้ายข้อมูลคิวอีเมลเข้าฐานข้อมูล Oracle (Email Pipeline - Oracle Outbox Migration)", desc:"ต้องเพิ่มใน Phase 1 + block CI ถ้าลืม", dep:"1.1, Data & Service Foundation F1", src:"email-delivery-solution.md Risks", c:"yellow"},
       ]
     },
     {
       id:"F2", name:"Notification Toggle Matrix (SCR-003)",
       sources:["decisions/scr-003-notification-toggle-matrix.md","decisions/scr-002-notification-channels-sms-removal.md"],
       tasks:[
-        {id:"2.1", task:"4 ประเภท × 2 ช่องทาง matrix", desc:"คำร้องเทียบโอน/การชำระเงิน/สถานะหน่วยกิต/ข่าวสาร × Email/Push (SMS ตัดออกตาม SCR-002)", dep:"—", src:"scr-003", c:"green"},
-        {id:"2.2", task:"Auto-save เมื่อ toggle เปลี่ยน", desc:"ไม่ต้องกดปุ่ม save", dep:"2.1", src:"scr-003", c:"green"},
-        {id:"2.3", task:"Default values", desc:"Email=ON ทุกประเภท, Push=ON ทุกประเภท", dep:"2.1", src:"scr-003", c:"green"},
-        {id:"2.4", task:"All-channels-off warning (ไม่ block)", desc:"", dep:"2.1", src:"scr-003", c:"green"},
+        {id:"2.1", task:"ตารางตั้งค่าการแจ้งเตือน 4 ประเภท × 2 ช่องทาง (Toggle Matrix - Notification Type/Channel Matrix)", desc:"คำร้องเทียบโอน/การชำระเงิน/สถานะหน่วยกิต/ข่าวสาร × Email/Push (SMS ตัดออกตาม SCR-002)", dep:"—", src:"scr-003", c:"green"},
+        {id:"2.2", task:"บันทึกการตั้งค่าอัตโนมัติเมื่อเปลี่ยนแปลง (Toggle Matrix - Auto-save)", desc:"ไม่ต้องกดปุ่ม save", dep:"2.1", src:"scr-003", c:"green"},
+        {id:"2.3", task:"กำหนดค่าเริ่มต้นของการแจ้งเตือนทุกประเภท (Toggle Matrix - Default Values)", desc:"Email=ON ทุกประเภท, Push=ON ทุกประเภท", dep:"2.1", src:"scr-003", c:"green"},
+        {id:"2.4", task:"เตือนเมื่อปิดการแจ้งเตือนทุกช่องทางแต่ไม่บล็อก (Toggle Matrix - All-Channels-Off Warning)", desc:"", dep:"2.1", src:"scr-003", c:"green"},
       ]
     },
     {
       id:"F3", name:"Push Notification Channel",
       sources:["sources/prd-learner-profile-settings.md Open Questions #3"],
       tasks:[
-        {id:"3.1", task:"เลือก engine: Firebase Cloud Messaging vs Web Push API", desc:"", dep:"—", src:"prd-learner-profile-settings.md Open Questions", c:"red", note:"open question ที่ระบุตรงๆ ว่า 'มีผลต่อ implementation effort' — ต้องเคาะก่อน estimate ฟีเจอร์นี้ทั้งหมด"},
-        {id:"3.2", task:"Browser-block detection + warning + disable toggle", desc:"", dep:"3.1", src:"prd-learner-profile-settings.md Edge Cases", c:"green", note:"spec ชัดเจนเมื่อเลือก engine แล้ว"},
+        {id:"3.1", task:"เลือกเทคโนโลยีส่ง Push Notification (Push Channel - Engine Selection)", desc:"", dep:"—", src:"prd-learner-profile-settings.md Open Questions", c:"red", note:"open question ที่ระบุตรงๆ ว่า 'มีผลต่อ implementation effort' — ต้องเคาะก่อน estimate ฟีเจอร์นี้ทั้งหมด"},
+        {id:"3.2", task:"ตรวจจับเมื่อเบราว์เซอร์บล็อกการแจ้งเตือนและแจ้งผู้ใช้ (Push Channel - Browser-Block Detection)", desc:"", dep:"3.1", src:"prd-learner-profile-settings.md Edge Cases", c:"green", note:"spec ชัดเจนเมื่อเลือก engine แล้ว"},
       ]
     },
     {
@@ -46,22 +46,22 @@ const NOTIFICATION_SERVICE_DATA = {
       sources:["decisions/2026-07-embedded-formulas-spec.md §4"],
       note:"trigger กระจายอยู่หลาย epic — ควรรวมเป็น catalog กลางเดียว ไม่ใช่ให้แต่ละ epic implement เอง เพื่อกัน drift ของ business rule เดียวกัน",
       tasks:[
-        {id:"4.1", task:"Transfer status change (ทุก transition)", desc:"", dep:"Credit Transfer Epic F6", src:"embedded-formulas-spec.md §4", c:"green"},
-        {id:"4.2", task:"Docs-requested + เตือนก่อน deadline 3 วัน", desc:"", dep:"Credit Transfer Epic F6", src:"embedded-formulas-spec.md §4", c:"green"},
-        {id:"4.3", task:"คำขอใหม่เข้าคิว / ใกล้ครบ SLA (เจ้าหน้าที่)", desc:"", dep:"Credit Transfer Epic F4", src:"embedded-formulas-spec.md §4", c:"green"},
-        {id:"4.4", task:"สถาบันข้อมูลต่ำกว่าเกณฑ์ (skeleton >40%/ไม่อัปเดต >90 วัน)", desc:"", dep:"Multi-Channel Data Ingestion Epic F7", src:"embedded-formulas-spec.md §4", c:"green"},
-        {id:"4.5", task:"Bulk import เสร็จ/ล้มเหลว", desc:"", dep:"Multi-Channel Data Ingestion Epic F6", src:"embedded-formulas-spec.md §4", c:"green"},
-        {id:"4.6", task:"ผลตรวจสอบตัวตน (Foreign Learner Identity)", desc:"อนุมัติ/ปฏิเสธ/ขอเอกสารเพิ่ม", dep:"Identity & Auth Epic F4", src:"scr-019 §3 A3", c:"green"},
-        {id:"4.7", task:"Learner Identity Linking: claim สำเร็จ/ได้รับข้อมูลใหม่", desc:"", dep:"Learner Identity Linking Epic F7.2", src:"learner-identity-linking-spec-draft.md §5 gap#7", c:"red", note:"ระบุเป็น gap ที่ยังไม่ออกแบบในต้นทาง (Learner Identity Linking epic) — รอที่นั่นก่อน"},
+        {id:"4.1", task:"แจ้งเตือนทุกครั้งที่สถานะคำร้องเทียบโอนเปลี่ยน (Trigger Catalog - Transfer Status Change)", desc:"", dep:"Credit Transfer Epic F6", src:"embedded-formulas-spec.md §4", c:"green"},
+        {id:"4.2", task:"แจ้งเตือนเมื่อขอเอกสารเพิ่มและเตือนก่อนครบกำหนด 3 วัน (Trigger Catalog - Document Request Reminder)", desc:"", dep:"Credit Transfer Epic F6", src:"embedded-formulas-spec.md §4", c:"green"},
+        {id:"4.3", task:"แจ้งเตือนเจ้าหน้าที่เมื่อมีคำขอใหม่หรือใกล้เกิน SLA (Trigger Catalog - New Request/SLA Alert)", desc:"", dep:"Credit Transfer Epic F4", src:"embedded-formulas-spec.md §4", c:"green"},
+        {id:"4.4", task:"แจ้งเตือนเมื่อสถาบันมีคุณภาพข้อมูลต่ำกว่าเกณฑ์ (Trigger Catalog - Institution Data Quality Alert)", desc:"", dep:"Multi-Channel Data Ingestion Epic F7", src:"embedded-formulas-spec.md §4", c:"green"},
+        {id:"4.5", task:"แจ้งเตือนเมื่องานนำเข้าข้อมูลจำนวนมากเสร็จหรือล้มเหลว (Trigger Catalog - Bulk Import Result)", desc:"", dep:"Multi-Channel Data Ingestion Epic F6", src:"embedded-formulas-spec.md §4", c:"green"},
+        {id:"4.6", task:"แจ้งผลการตรวจสอบตัวตนผู้เรียนต่างชาติ (Trigger Catalog - Identity Verification Result)", desc:"อนุมัติ/ปฏิเสธ/ขอเอกสารเพิ่ม", dep:"Identity & Auth Epic F4", src:"scr-019 §3 A3", c:"green"},
+        {id:"4.7", task:"แจ้งเตือนเมื่อผูกข้อมูลผู้เรียนสำเร็จหรือมีข้อมูลใหม่เข้ามา (Trigger Catalog - Identity Linking Notification)", desc:"", dep:"Learner Identity Linking Epic F7.2", src:"learner-identity-linking-spec-draft.md §5 gap#7", c:"red", note:"ระบุเป็น gap ที่ยังไม่ออกแบบในต้นทาง (Learner Identity Linking epic) — รอที่นั่นก่อน"},
       ]
     },
     {
       id:"F5", name:"Template Management",
       sources:["sources/email-delivery-solution.md Impact on Blocked Issues"],
       tasks:[
-        {id:"5.1", task:"Email templates (ไทย, Handlebars .hbs)", desc:"invitation + verification", dep:"F1.4", src:"email-delivery-solution.md 'Still needed'", c:"yellow", note:"ระบุตรงๆ ว่า 'Still needed' แม้ pipeline หลักจะพร้อมแล้ว"},
-        {id:"5.2", task:"In-app notification template registry", desc:"", dep:"F2", src:"—", c:"yellow"},
-        {id:"5.3", task:"CMS-driven template editing (nudge/quality templates)", desc:"เช่น template แจ้งเตือนสถาบันข้อมูลต่ำกว่าเกณฑ์", dep:"5.1, Multi-Channel Data Ingestion Epic F7.2", src:"master-data-onboarding.md §6.3", c:"yellow"},
+        {id:"5.1", task:"เทมเพลตอีเมลภาษาไทยสำหรับเชิญและยืนยันตัวตน (Template Management - Email Templates)", desc:"invitation + verification", dep:"F1.4", src:"email-delivery-solution.md 'Still needed'", c:"yellow", note:"ระบุตรงๆ ว่า 'Still needed' แม้ pipeline หลักจะพร้อมแล้ว"},
+        {id:"5.2", task:"ทะเบียนเทมเพลตการแจ้งเตือนภายในแอป (Template Management - In-App Template Registry)", desc:"", dep:"F2", src:"—", c:"yellow"},
+        {id:"5.3", task:"แก้ไขเทมเพลตแจ้งเตือนผ่านระบบจัดการเนื้อหา (Template Management - CMS-Driven Template Editing)", desc:"เช่น template แจ้งเตือนสถาบันข้อมูลต่ำกว่าเกณฑ์", dep:"5.1, Multi-Channel Data Ingestion Epic F7.2", src:"master-data-onboarding.md §6.3", c:"yellow"},
       ]
     },
   ],

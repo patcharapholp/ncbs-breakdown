@@ -9,9 +9,9 @@ const BLOCKED_INTEGRATIONS_DATA = {
       sources:["external/confluence-prd-summaries/prd-empty-templates-finding.md"],
       note:"🔴 PRD ว่างเปล่ามาตั้งแต่สร้าง (2026-04-02) — เกิน 4 สัปดาห์ไม่มีใครเติม ณ วันที่ finding ถูกเขียน (29 เม.ย. 69)",
       tasks:[
-        {id:"1.1", task:"ยืนยันว่า LLRS คือระบบอะไร (Lifelong Learning Record System?)", desc:"", dep:"—", src:"prd-empty-templates-finding.md Open Questions", c:"red", note:"ไม่มีคำตอบที่ไหนในวิกิ แม้แต่ชื่อเต็มยังเป็นคำถามเปิด"},
-        {id:"1.2", task:"Unblock เจ้าของ PRD (Patcharaphol)", desc:"ส่ง 2 template เปล่าใน 1 วันเดียวกัน — สัญญาณว่า overload หรือ blocked ด้วย dependency บางอย่าง", dep:"—", src:"prd-empty-templates-finding.md Risks", c:"red", note:"เป็นงาน PM/people-management ไม่ใช่งาน dev — ควร escalate หา backup PO/BA"},
-        {id:"1.3", task:"เขียน PRD จริงเมื่อ unblock แล้ว", desc:"", dep:"1.1, 1.2", src:"prd-empty-templates-finding.md", c:"red", note:"ยังไม่มี requirement แม้แต่บรรทัดเดียวให้เริ่ม breakdown"},
+        {id:"1.1", task:"สอบถามยืนยันว่าระบบ LLRS คืออะไร ยังไม่มีคำตอบในเอกสาร (LLRS Integration - Requirement Clarification)", desc:"", dep:"—", src:"prd-empty-templates-finding.md Open Questions", c:"red", note:"ไม่มีคำตอบที่ไหนในวิกิ แม้แต่ชื่อเต็มยังเป็นคำถามเปิด"},
+        {id:"1.2", task:"ติดต่อผู้รับผิดชอบ PRD เพื่อปลดล็อกความคืบหน้า (LLRS Integration - Owner Escalation)", desc:"ส่ง 2 template เปล่าใน 1 วันเดียวกัน — สัญญาณว่า overload หรือ blocked ด้วย dependency บางอย่าง", dep:"—", src:"prd-empty-templates-finding.md Risks", c:"red", note:"เป็นงาน PM/people-management ไม่ใช่งาน dev — ควร escalate หา backup PO/BA"},
+        {id:"1.3", task:"เขียนเอกสารความต้องการจริงหลังปลดล็อกแล้ว (LLRS Integration - PRD Writing)", desc:"", dep:"1.1, 1.2", src:"prd-empty-templates-finding.md", c:"red", note:"ยังไม่มี requirement แม้แต่บรรทัดเดียวให้เริ่ม breakdown"},
       ]
     },
     {
@@ -19,9 +19,9 @@ const BLOCKED_INTEGRATIONS_DATA = {
       sources:["external/confluence-prd-summaries/prd-empty-templates-finding.md","sources/credit-port-api-contract.md"],
       note:"⚠️ Credit Port = ชื่อซ้ำ 2 ความหมาย: (1) PRD ภายในที่ empty template เหมือน LLRS (2) โครงการภายนอกจริง 'MVP Product' ที่มีแผนเชื่อมต่อแต่ PAUSED — อย่าสับสน 2 เรื่องนี้เข้าด้วยกัน",
       tasks:[
-        {id:"2.1", task:"ยืนยันความสัมพันธ์ระหว่าง 'PRD Credit Port Integration' (เปล่า) กับ 'Credit Port = MVP Product' (โครงการอื่น)", desc:"เอกสารเองตั้งคำถามนี้ไว้ตรงๆ", dep:"—", src:"prd-empty-templates-finding.md Open Questions", c:"red"},
-        {id:"2.2", task:"ยืนยัน timeline resume การเชื่อมต่อกับ PO", desc:"ยืนยันแล้ว(2026-06-27)ว่า PAUSED ไม่มีกำหนดรีซูม", dep:"2.1", src:"credit-port-api-contract.md", c:"red", note:"สถานะล่าสุดที่ยืนยันจาก PO คือ 'พักแผนไว้ก่อน' — ไม่ใช่แค่ยังไม่เริ่ม แต่ตั้งใจหยุดชั่วคราว"},
-        {id:"2.3", task:"เก็บ reference contract ไว้ใช้เมื่อ resume", desc:"~16 endpoints มีเอกสารเปรียบเทียบ NCBS Prototype vs MVP Product ให้แล้วจากทีม tech (Kritpavin)", dep:"2.2", src:"credit-port-api-contract.md", c:"yellow", note:"เอกสารมีจริงและละเอียดกว่าที่คาด (16 endpoint mapping) — ถ้า resume จะมีจุดเริ่มต้นที่ดี แต่ 'ห้ามใช้เป็น API spec ของ NCBS' ตามที่ระบุไว้ตรงๆ จนกว่าจะ resume อย่างเป็นทางการ"},
+        {id:"2.1", task:"ยืนยันความสัมพันธ์ระหว่างชื่อ Credit Port ที่ใช้ 2 ความหมายซ้อนกัน (Credit Port Integration - Naming Clarification)", desc:"เอกสารเองตั้งคำถามนี้ไว้ตรงๆ", dep:"—", src:"prd-empty-templates-finding.md Open Questions", c:"red"},
+        {id:"2.2", task:"ยืนยันสถานะและกำหนดการกลับมาทำโปรเจกต์กับผู้รับผิดชอบ (Credit Port Integration - Status Confirmation)", desc:"ยืนยันแล้ว(2026-06-27)ว่า PAUSED ไม่มีกำหนดรีซูม", dep:"2.1", src:"credit-port-api-contract.md", c:"red", note:"สถานะล่าสุดที่ยืนยันจาก PO คือ 'พักแผนไว้ก่อน' — ไม่ใช่แค่ยังไม่เริ่ม แต่ตั้งใจหยุดชั่วคราว"},
+        {id:"2.3", task:"เก็บเอกสารสัญญา API อ้างอิงไว้ใช้เมื่อโปรเจกต์กลับมาทำต่อ (Credit Port Integration - Reference Documentation)", desc:"~16 endpoints มีเอกสารเปรียบเทียบ NCBS Prototype vs MVP Product ให้แล้วจากทีม tech (Kritpavin)", dep:"2.2", src:"credit-port-api-contract.md", c:"yellow", note:"เอกสารมีจริงและละเอียดกว่าที่คาด (16 endpoint mapping) — ถ้า resume จะมีจุดเริ่มต้นที่ดี แต่ 'ห้ามใช้เป็น API spec ของ NCBS' ตามที่ระบุไว้ตรงๆ จนกว่าจะ resume อย่างเป็นทางการ"},
       ]
     },
   ],

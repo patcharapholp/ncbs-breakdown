@@ -13,40 +13,40 @@ const RESULT_UPLOAD_INTEGRATION_DATA = {
       id:"F1", name:"Dual Integration Mode Architecture",
       sources:["decisions/scr-018-result-upload-integration.md §2"],
       tasks:[
-        {id:"1.1", task:"channel flag (in_system | result_upload)", desc:"บน transfer_request — ไม่ต้องเพิ่มตารางใหม่", dep:"Credit Transfer Epic F1 (data model)", src:"scr-018 §3", c:"green"},
-        {id:"1.2", task:"Mode B ไม่แตะ approval/payment UI ในระบบ", desc:"ยื่น/จ่าย/พิจารณาทั้งหมดเกิดนอกระบบ (มหาวิทยาลัยเอง)", dep:"1.1", src:"scr-018 §2", c:"green"},
+        {id:"1.1", task:"เพิ่มเครื่องหมายบอกช่องทางการเทียบโอน ในระบบหรืออัปโหลดผล (Dual Mode Architecture - Channel Flag)", desc:"บน transfer_request — ไม่ต้องเพิ่มตารางใหม่", dep:"Credit Transfer Epic F1 (data model)", src:"scr-018 §3", c:"green"},
+        {id:"1.2", task:"แยกโหมดอัปโหลดผลไม่ให้ยุ่งกับหน้าจออนุมัติ/ชำระเงินในระบบ (Dual Mode Architecture - UI Isolation)", desc:"ยื่น/จ่าย/พิจารณาทั้งหมดเกิดนอกระบบ (มหาวิทยาลัยเอง)", dep:"1.1", src:"scr-018 §2", c:"green"},
       ]
     },
     {
       id:"F2", name:"Result Upload Channels",
       sources:["decisions/scr-018-result-upload-integration.md §2, §3"],
       tasks:[
-        {id:"2.1", task:"File template (.xlsx) import wizard", desc:"3 ขั้น: เลือกช่องทาง → ตรวจสอบ/validate preview → ยืนยัน", dep:"F1", src:"scr-018 §3", c:"green"},
-        {id:"2.2", task:"API bulk POST /transfer-results/import + template download", desc:"", dep:"F1, API Management Epic", src:"scr-018 §3", c:"green"},
+        {id:"2.1", task:"ขั้นตอนนำเข้าไฟล์ผลการเทียบโอนแบบ Excel (Upload Channels - File Template Import Wizard)", desc:"3 ขั้น: เลือกช่องทาง → ตรวจสอบ/validate preview → ยืนยัน", dep:"F1", src:"scr-018 §3", c:"green"},
+        {id:"2.2", task:"API นำเข้าผลการเทียบโอนจำนวนมากพร้อมดาวน์โหลดแบบฟอร์ม (Upload Channels - Bulk API Import)", desc:"", dep:"F1, API Management Epic", src:"scr-018 §3", c:"green"},
       ]
     },
     {
       id:"F3", name:"Data Contract & Validation",
       sources:["decisions/scr-018-result-upload-integration.md §2"],
       tasks:[
-        {id:"3.1", task:"Per-row data contract", desc:"referenceCode, learner id, target course, decision(approved/partial/rejected), awardedCredits/Grade/assessmentMethod(6วิธี), approvedDate, approver, attachments(optional)", dep:"F1", src:"scr-018 §2", c:"green"},
-        {id:"3.2", task:"Validation: learner ต้องมีตัวตนในระบบ", desc:"", dep:"3.1, Learner Identity Linking Epic", src:"scr-018 §2", c:"green"},
-        {id:"3.3", task:"Validation: วิชาปลายทางต้อง data_state ≥ verified", desc:"", dep:"3.1, Multi-Channel Data Ingestion Epic F1.2", src:"scr-018 §2", c:"green"},
-        {id:"3.4", task:"Apply กติกา กมอ. 2565 เหมือน Mode A ทุกข้อ", desc:"cap เพดานเทียบโอน/GPAX exclusion/re-transfer flag", dep:"3.1, Credit Transfer Epic F4.3-4.6", src:"scr-018 §2", c:"yellow", note:"ผูกกับ Credit Transfer epic F4.3 ที่ตัวเองยังมี 6 open question ไม่เคาะ (notation เกรด, หน่วยกิตขาดจัดการยังไง) — ต้องรอ resolve ที่นั่นก่อน"},
+        {id:"3.1", task:"โครงสร้างข้อมูลผลการเทียบโอนต่อแถว (Data Contract - Per-Row Data Contract)", desc:"referenceCode, learner id, target course, decision(approved/partial/rejected), awardedCredits/Grade/assessmentMethod(6วิธี), approvedDate, approver, attachments(optional)", dep:"F1", src:"scr-018 §2", c:"green"},
+        {id:"3.2", task:"ตรวจสอบว่าผู้เรียนมีตัวตนอยู่ในระบบจริง (Data Contract - Learner Existence Validation)", desc:"", dep:"3.1, Learner Identity Linking Epic", src:"scr-018 §2", c:"green"},
+        {id:"3.3", task:"ตรวจสอบว่าวิชาปลายทางมีข้อมูลยืนยันแล้ว (Data Contract - Course Data State Validation)", desc:"", dep:"3.1, Multi-Channel Data Ingestion Epic F1.2", src:"scr-018 §2", c:"green"},
+        {id:"3.4", task:"บังคับใช้กฎ กมอ. 2565 เหมือนกับช่องทางปกติทุกข้อ (Data Contract - Regulatory Rule Enforcement)", desc:"cap เพดานเทียบโอน/GPAX exclusion/re-transfer flag", dep:"3.1, Credit Transfer Epic F4.3-4.6", src:"scr-018 §2", c:"yellow", note:"ผูกกับ Credit Transfer epic F4.3 ที่ตัวเองยังมี 6 open question ไม่เคาะ (notation เกรด, หน่วยกิตขาดจัดการยังไง) — ต้องรอ resolve ที่นั่นก่อน"},
       ]
     },
     {
       id:"F4", name:"Payment Boundary (Mode B ไม่มี Payment ในระบบ)",
       sources:["decisions/scr-018-result-upload-integration.md §4"],
       tasks:[
-        {id:"4.1", task:"ระบุใน spec ว่าระบบกลางไม่ยุ่งเงินของ Mode B", desc:"ค่าธรรมเนียมเก็บนอกระบบโดยมหาวิทยาลัยเอง — ตัดปัญหา settlement", dep:"F1", src:"scr-018 §4.2", c:"green"},
+        {id:"4.1", task:"ระบุชัดเจนว่าระบบกลางไม่เกี่ยวข้องกับการเงินของโหมดนี้ (Payment Boundary - Scope Clarification)", desc:"ค่าธรรมเนียมเก็บนอกระบบโดยมหาวิทยาลัยเอง — ตัดปัญหา settlement", dep:"F1", src:"scr-018 §4.2", c:"green"},
       ]
     },
     {
       id:"F5", name:"Fast-track / Precedent Pool Integration",
       sources:["decisions/scr-018-result-upload-integration.md §4.3"],
       tasks:[
-        {id:"5.1", task:"ผลจาก Mode B เข้า precedent pool เดียวกับ Mode A", desc:"ใช้ทำ recommendation/fast-track ได้", dep:"3.1, Credit Transfer Epic 4.9 (fast-track)", src:"scr-018 §4.3", c:"red", note:"พึ่ง fast-track feature ที่ Credit Transfer epic เองยัง 🔴 ('รอเคาะ 5 คำถามก่อน implement') — ไม่ควร estimate จนกว่าจะปลดล็อกที่ต้นทาง"},
+        {id:"5.1", task:"นำผลจากช่องทางอัปโหลดเข้าคลังข้อมูลอ้างอิงเดียวกัน (Fast-track Integration - Precedent Pool Integration)", desc:"ใช้ทำ recommendation/fast-track ได้", dep:"3.1, Credit Transfer Epic 4.9 (fast-track)", src:"scr-018 §4.3", c:"red", note:"พึ่ง fast-track feature ที่ Credit Transfer epic เองยัง 🔴 ('รอเคาะ 5 คำถามก่อน implement') — ไม่ควร estimate จนกว่าจะปลดล็อกที่ต้นทาง"},
       ]
     },
   ],

@@ -1195,17 +1195,29 @@ function renderOverview(){
 // Mock manday estimator — เดา effort คร่าวๆ จาก keyword + clarity ของแต่ละ task
 // ไม่ใช่ estimate จริงจากทีม — เป็นแค่ตัวเลขตั้งต้นให้เริ่มคุยกันง่ายขึ้น
 // ============================================================================
+// ============================================================================
+// Tier ประเมิน effort — ปรับให้สมจริงขึ้น (คุยกับ Tech Lead/Dev แล้วว่าตัวเลขเดิมต่ำเกินจริงมาก)
+// blockchain แยกเป็น tier พิเศษของตัวเอง เพราะทีมยังไม่มี domain knowledge/expert ด้าน blockchain
+// เลย ต้องใช้เวลาเรียนรู้ + setup เพิ่ม — Tech Lead ประเมินว่าส่วนนี้ใช้เวลาอย่างน้อย ~2 เดือนขึ้นไป
+// ============================================================================
+const BLOCKCHAIN_KEYWORDS = ['blockchain','anchor','distributed ledger','smart contract','hyperledger','on-chain','off-chain','consensus','ledger'];
 const EFFORT_TIERS = [
-  { tier:5, kws:['engine','algorithm','matching','state machine','multi-level','approval chain','blockchain','anchor','workflow','orchestrat','สถาปัตยกรรม','เอนจิน'] },
-  { tier:4, kws:['integration','sync','dashboard','queue','notification','schedul','gateway','ingestion','pipeline','etl','เชื่อมต่อ'] },
-  { tier:3, kws:['model','schema','validation','api','page','form','config','migration','erd','ตรวจสอบ','แบบฟอร์ม'] },
+  { tier:5, kws:['engine','algorithm','matching','state machine','multi-level','approval chain','workflow','orchestrat','สถาปัตยกรรม','เอนจิน'] },
+  { tier:4, kws:['integration','sync','dashboard','queue','notification','schedul','gateway','ingestion','pipeline','etl','เชื่อมต่อ',
+                 'machine learning',' ml ','ml forecast','forecast','ai ','artificial intelligence','model training','predictive','recommendation engine'] },
+  { tier:3, kws:['model','schema','validation','api','page','form','config','migration','erd','ตรวจสอบ','แบบฟอร์ม',
+                 'cms','content management','landing page','website','เว็บไซต์'] },
   { tier:2, kws:['toggle','flag','field','button','display','label','rule','ui:','เพิ่ม','ปรับปรุง','ปุ่ม'] },
 ];
-const TIER_BASE_DEV = { 1:0.5, 2:1, 3:2, 4:3.5, 5:6 };
-const CLARITY_DEV_MULT = { green:1, yellow:1.25, red:1.5 };
+// base dev days ต่อ tier — ปรับขึ้นจากเดิมเยอะ (ของเดิม tier1=0.5, tier5=6 ซึ่งต่ำเกินจริงมาก
+// ของจริง แม้แต่ task ที่ดูง่ายที่สุดก็มักกิน 2-3 วันเป็นอย่างน้อยเมื่อรวม review/test/deploy)
+const TIER_BASE_DEV = { 1:2.5, 2:3.5, 3:5, 4:8, 5:12 };
+const BLOCKCHAIN_BASE_DEV = 45; // ~2+ เดือน ตามที่ Tech Lead ประเมิน (รวมเวลาเรียนรู้/setup ที่ทีมยังไม่ชำนาญ)
+const CLARITY_DEV_MULT = { green:1, yellow:1.2, red:1.4 };
 const CLARITY_POBA_BONUS = { green:0, yellow:0.25, red:0.75 };
-const CLARITY_PM = { green:0.1, yellow:0.25, red:0.5 };
+const CLARITY_PM = { green:0.25, yellow:0.5, red:1 };
 
+function isBlockchainTask(text){ return BLOCKCHAIN_KEYWORDS.some(k=>text.includes(k)); }
 function detectEffortTier(text){
   for(const g of EFFORT_TIERS){ if(g.kws.some(k=>text.includes(k))) return g.tier; }
   return 1;
@@ -1224,18 +1236,24 @@ function generateMockManday(task, isSub){
   if(CEREMONY_MANDAY_OVERRIDES[task.id]) return Object.assign({}, CEREMONY_MANDAY_OVERRIDES[task.id]);
 
   const text = (task.task+' '+(task.desc||'')).toLowerCase();
-  const tier = detectEffortTier(text);
-  let dev = TIER_BASE_DEV[tier];
-  if(isSub) dev *= 0.7; // sub-task มักแคบกว่า parent เสมอแม้ keyword จะจับ tier เดียวกัน
+
+  let dev;
+  if(isBlockchainTask(text)){
+    dev = BLOCKCHAIN_BASE_DEV * (isSub ? 0.6 : 1); // sub-task ของงาน blockchain ยังสูงอยู่ ไม่ใช่ tier ปกติที่ลดสัดส่วนแรงเท่า
+  } else {
+    const tier = detectEffortTier(text);
+    dev = TIER_BASE_DEV[tier];
+    if(isSub) dev *= 0.7; // sub-task มักแคบกว่า parent เสมอแม้ keyword จะจับ tier เดียวกัน
+  }
   dev *= (CLARITY_DEV_MULT[task.c] || 1);
 
   const poba    = roundQuarter(dev*0.15 + (CLARITY_POBA_BONUS[task.c]||0));
   const uxKeywordMatch = /\bui\b|\bux\b|design|wireframe|mockup|หน้าจอ|frontend|portal|landing|cms|banner|dashboard|ฟอร์ม|form/.test(text);
-  const uxDesigner = uxKeywordMatch ? roundQuarter(Math.max(0.5, dev*0.2)) : 0;
-  const techLead= roundQuarter(Math.max(0.25, dev*0.15));
-  const qaLead  = roundQuarter(Math.max(0.25, dev*0.10));
-  const qa      = roundQuarter(dev*0.35);
-  const pm      = roundQuarter(CLARITY_PM[task.c] ?? 0.1);
+  const uxDesigner = uxKeywordMatch ? roundQuarter(Math.max(1, dev*0.15)) : 0;
+  const techLead= roundQuarter(Math.max(0.5, dev*0.18));
+  const qaLead  = roundQuarter(Math.max(0.5, dev*0.12));
+  const qa      = roundQuarter(Math.max(1, dev*0.4));
+  const pm      = roundQuarter(CLARITY_PM[task.c] ?? 0.25);
   const dm      = /sync|migrat|etl|batch|anchor|ซิงค์|ย้ายข้อมูล/.test(text) ? roundQuarter(dev*0.3) : 0;
 
   return { po_ba:poba, ux_designer:uxDesigner, tech_lead:techLead, dev:roundQuarter(dev), qa_lead:qaLead, qa, pm, dm };

@@ -14,47 +14,47 @@ const INSTITUTION_STRUCTURE_DATA = {
       sources:["decisions/scr-021-institution-structure.md","decisions/2026-07-institution-structure-spec-draft.md"],
       note:"⚠️ ทั้งฟีเจอร์นี้เป็น Track B (AI-generated, รอ BA/PO review) — ไม่มี real PRD คู่กันใน Confluence catalog",
       tasks:[
-        {id:"1.1", task:"campus table (ใหม่)", desc:"type enum(main/campus/off_site_center) + province + soft-delete", dep:"Data & Service Foundation", src:"scr-021 §2", c:"green"},
-        {id:"1.2", task:"department table (ใหม่, ชั้น optional)", desc:"faculty_id fk, active+soft-delete", dep:"1.3", src:"scr-021 §2", c:"green"},
-        {id:"1.3", task:"faculty table alter (+unit_type)", desc:"enum(faculty/college/school/institute) default faculty", dep:"1.1", src:"scr-021 §2", c:"green"},
-        {id:"1.4", task:"curriculum table alter — BREAKING", desc:"id→uuid surrogate + checo_code varchar(14) + revision_year + unique(univ,checo,revision) + degree_level enum(6) + status enum(active/no_new_intake/retired)", dep:"1.3", src:"scr-021 §2, spec-draft §2", c:"yellow", note:"breaking change จาก model เดิม (curriculum.id เดิมผูกตรงกับ CHECO code) — ต้องมี migration plan สำหรับข้อมูลเดิมที่มีอยู่ ไม่ใช่แค่สร้างตารางใหม่ — ไม่มีที่ไหนพูดถึง migration script ของจริง"},
-        {id:"1.5", task:"curriculum_campus M:N junction table", desc:"สถานที่จัดสอน", dep:"1.1, 1.4", src:"scr-021 §2", c:"green"},
-        {id:"1.6", task:"curriculum_course M:N junction table", desc:"course_group enum(general_ed/specific/free_elective) + sub_group + required", dep:"1.4", src:"scr-021 §2", c:"green"},
-        {id:"1.7", task:"course table alter — BREAKING", desc:"+owner_faculty_id(บังคับ) +owner_department_id(nullable) · curriculum_id/program_id deprecated แทนด้วย join", dep:"1.3, 1.6", src:"scr-021 §2", c:"yellow", note:"breaking change เดียวกับ 1.4 — ทุก record รายวิชาเดิมต้อง backfill owner_faculty_id ก่อน deploy จริง"},
+        {id:"1.1", task:"สร้างตารางข้อมูลวิทยาเขต (Data Model Migration - Campus Table)", desc:"type enum(main/campus/off_site_center) + province + soft-delete", dep:"Data & Service Foundation", src:"scr-021 §2", c:"green"},
+        {id:"1.2", task:"สร้างตารางข้อมูลภาควิชา (Data Model Migration - Department Table)", desc:"faculty_id fk, active+soft-delete", dep:"1.3", src:"scr-021 §2", c:"green"},
+        {id:"1.3", task:"เพิ่มประเภทหน่วยงานในตารางคณะ (Data Model Migration - Faculty Table Alteration)", desc:"enum(faculty/college/school/institute) default faculty", dep:"1.1", src:"scr-021 §2", c:"green"},
+        {id:"1.4", task:"ปรับโครงสร้างตารางหลักสูตรครั้งใหญ่ กระทบข้อมูลเดิม (Data Model Migration - Curriculum Table Breaking Change)", desc:"id→uuid surrogate + checo_code varchar(14) + revision_year + unique(univ,checo,revision) + degree_level enum(6) + status enum(active/no_new_intake/retired)", dep:"1.3", src:"scr-021 §2, spec-draft §2", c:"yellow", note:"breaking change จาก model เดิม (curriculum.id เดิมผูกตรงกับ CHECO code) — ต้องมี migration plan สำหรับข้อมูลเดิมที่มีอยู่ ไม่ใช่แค่สร้างตารางใหม่ — ไม่มีที่ไหนพูดถึง migration script ของจริง"},
+        {id:"1.5", task:"ตารางเชื่อมโยงหลักสูตรกับวิทยาเขตที่จัดสอน (Data Model Migration - Curriculum-Campus Link Table)", desc:"สถานที่จัดสอน", dep:"1.1, 1.4", src:"scr-021 §2", c:"green"},
+        {id:"1.6", task:"ตารางเชื่อมโยงหลักสูตรกับรายวิชา (Data Model Migration - Curriculum-Course Link Table)", desc:"course_group enum(general_ed/specific/free_elective) + sub_group + required", dep:"1.4", src:"scr-021 §2", c:"green"},
+        {id:"1.7", task:"ปรับโครงสร้างตารางรายวิชาให้ระบุคณะเจ้าของ กระทบข้อมูลเดิม (Data Model Migration - Course Table Breaking Change)", desc:"+owner_faculty_id(บังคับ) +owner_department_id(nullable) · curriculum_id/program_id deprecated แทนด้วย join", dep:"1.3, 1.6", src:"scr-021 §2", c:"yellow", note:"breaking change เดียวกับ 1.4 — ทุก record รายวิชาเดิมต้อง backfill owner_faculty_id ก่อน deploy จริง"},
       ]
     },
     {
       id:"F2", name:"UCBS \"โครงสร้างสถาบัน\" Management UI",
       sources:["decisions/2026-07-institution-structure-spec-draft.md §4"],
       tasks:[
-        {id:"2.1", task:"4-tab structure page", desc:"วิทยาเขต · คณะ/หน่วยงาน(รวม unit_type+ภาควิชา expand) · หลักสูตร(checo_code+revision+สถานะ+สถานที่) · เมนูกลุ่มใหม่ 'จัดการข้อมูล'", dep:"F1", src:"spec-draft §4.1", c:"green"},
-        {id:"2.2", task:"Curriculum CRUD (checo_code+revision_year+status+teaching locations)", desc:"", dep:"2.1, 1.4, 1.5", src:"spec-draft §4.1", c:"green"},
-        {id:"2.3", task:"Lifecycle rules enforcement", desc:"active+soft-delete ทุกชั้น · ห้ามลบเมื่อมีลูก(ใช้'ยกเลิกการใช้งาน'แทน) · แก้มีผลกับ resolution ทันที+audit", dep:"2.1", src:"scr-021 §2 Ownership", c:"yellow", note:"หลักการชัดเจนแต่ 'Enforcement จริงที่ API layer = งาน dev (prototype = mock)' ตามที่ SCR ระบุเอง"},
+        {id:"2.1", task:"หน้าจัดการโครงสร้างสถาบัน 4 แท็บ วิทยาเขต/คณะ/หลักสูตร/เมนูจัดการข้อมูล (Structure Management UI - 4-Tab Structure Page)", desc:"วิทยาเขต · คณะ/หน่วยงาน(รวม unit_type+ภาควิชา expand) · หลักสูตร(checo_code+revision+สถานะ+สถานที่) · เมนูกลุ่มใหม่ 'จัดการข้อมูล'", dep:"F1", src:"spec-draft §4.1", c:"green"},
+        {id:"2.2", task:"เพิ่ม/แก้ไข/ลบข้อมูลหลักสูตร (Structure Management UI - Curriculum CRUD)", desc:"", dep:"2.1, 1.4, 1.5", src:"spec-draft §4.1", c:"green"},
+        {id:"2.3", task:"บังคับใช้กฎการเปิด/ปิดใช้งานข้อมูลโครงสร้าง (Structure Management UI - Lifecycle Rules Enforcement)", desc:"active+soft-delete ทุกชั้น · ห้ามลบเมื่อมีลูก(ใช้'ยกเลิกการใช้งาน'แทน) · แก้มีผลกับ resolution ทันที+audit", dep:"2.1", src:"scr-021 §2 Ownership", c:"yellow", note:"หลักการชัดเจนแต่ 'Enforcement จริงที่ API layer = งาน dev (prototype = mock)' ตามที่ SCR ระบุเอง"},
       ]
     },
     {
       id:"F3", name:"Course Registry Integration",
       sources:["decisions/2026-07-institution-structure-spec-draft.md §4.2"],
       tasks:[
-        {id:"3.1", task:"Course registration + owner faculty/department dropdown", desc:"", dep:"F1, F2", src:"spec-draft §4.2", c:"green"},
-        {id:"3.2", task:"\"ใช้ในหลักสูตร\" panel (จัดการ curriculum_course)", desc:"เพิ่มหลักสูตร+หมวด+กลุ่มย่อยต่อรายวิชา", dep:"3.1, 1.6", src:"spec-draft §4.2", c:"green"},
+        {id:"3.1", task:"ลงทะเบียนรายวิชาพร้อมเลือกคณะ/ภาควิชาเจ้าของ (Course Registry - Course Registration)", desc:"", dep:"F1, F2", src:"spec-draft §4.2", c:"green"},
+        {id:"3.2", task:"จัดการว่ารายวิชาใดถูกใช้ในหลักสูตรใดบ้าง (Course Registry - Curriculum Usage Panel)", desc:"เพิ่มหลักสูตร+หมวด+กลุ่มย่อยต่อรายวิชา", dep:"3.1, 1.6", src:"spec-draft §4.2", c:"green"},
       ]
     },
     {
       id:"F4", name:"NCBS Read-only Institution View + Quality Indicators",
       sources:["decisions/2026-07-institution-structure-spec-draft.md §4.3"],
       tasks:[
-        {id:"4.1", task:"Institution detail \"โครงสร้าง\" tab (drill-down, read-only)", desc:"", dep:"F1-F3", src:"spec-draft §4.3", c:"green"},
-        {id:"4.2", task:"Orphan indicators", desc:"รายวิชาไม่อยู่ในหลักสูตรใด · หลักสูตร active ไม่มีรายวิชา · checo_code ผิดรูปแบบ", dep:"4.1", src:"spec-draft §4.3", c:"green", note:"real quality-metric feature ที่มีคุณค่าจริง ไม่ใช่แค่ UI mock"},
+        {id:"4.1", task:"หน้าดูโครงสร้างสถาบันแบบเจาะลึก อ่านอย่างเดียว (Read-only Institution View - Structure Drill-down Tab)", desc:"", dep:"F1-F3", src:"spec-draft §4.3", c:"green"},
+        {id:"4.2", task:"ตัวชี้วัดคุณภาพข้อมูล เช่น รายวิชาที่ไม่มีหลักสูตรสังกัด (Read-only Institution View - Data Quality Indicators)", desc:"รายวิชาไม่อยู่ในหลักสูตรใด · หลักสูตร active ไม่มีรายวิชา · checo_code ผิดรูปแบบ", dep:"4.1", src:"spec-draft §4.3", c:"green", note:"real quality-metric feature ที่มีคุณค่าจริง ไม่ใช่แค่ UI mock"},
       ]
     },
     {
       id:"F5", name:"Transfer Request Target-Curriculum Resolution",
       sources:["decisions/scr-021-institution-structure.md §2 Resolution chain"],
       tasks:[
-        {id:"5.1", task:"target_curriculum_id field บน transfer_request + item", desc:"", dep:"F1, Credit Transfer Epic (F1 data model)", src:"scr-021 §2", c:"green"},
-        {id:"5.2", task:"Resolution chain logic", desc:"target_curriculum → คณะเจ้าของหลักสูตร → override[faculty] → default · fallback (ไม่มี target curriculum) = คณะเจ้าของรายวิชา", dep:"5.1, 1.7", src:"scr-021 §2", c:"green", note:"logic ชัดเจน แก้ปัญหาเดิมที่ 'พังเมื่อวิชาอยู่หลายหลักสูตร'"},
-        {id:"5.3", task:"CTP UI: เลือกหลักสูตรเป้าหมายเมื่อวิชาอยู่หลายหลักสูตร", desc:"dropdown จาก curriculum_course", dep:"5.2, Credit Transfer Epic F1", src:"spec-draft §4.4", c:"green"},
+        {id:"5.1", task:"เพิ่มฟิลด์ระบุหลักสูตรปลายทางในคำร้องเทียบโอน (Target-Curriculum Resolution - Target Curriculum Field)", desc:"", dep:"F1, Credit Transfer Epic (F1 data model)", src:"scr-021 §2", c:"green"},
+        {id:"5.2", task:"กฎการหาคณะเจ้าของหลักสูตรปลายทางโดยอัตโนมัติ (Target-Curriculum Resolution - Resolution Chain Logic)", desc:"target_curriculum → คณะเจ้าของหลักสูตร → override[faculty] → default · fallback (ไม่มี target curriculum) = คณะเจ้าของรายวิชา", dep:"5.1, 1.7", src:"scr-021 §2", c:"green", note:"logic ชัดเจน แก้ปัญหาเดิมที่ 'พังเมื่อวิชาอยู่หลายหลักสูตร'"},
+        {id:"5.3", task:"หน้าเลือกหลักสูตรเป้าหมายเมื่อวิชาอยู่ในหลายหลักสูตร (Target-Curriculum Resolution - Curriculum Selector UI)", desc:"dropdown จาก curriculum_course", dep:"5.2, Credit Transfer Epic F1", src:"spec-draft §4.4", c:"green"},
       ]
     },
   ],

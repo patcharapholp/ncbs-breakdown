@@ -13,26 +13,26 @@ const LMS_INTEGRATION_DATA = {
       sources:["entities/thai-mooc.md","sources/external-integration-landscape.md"],
       note:"สถานะล่าสุดที่เห็นในวิกิ (23 ก.ค. 69): 'คุยแนวทางแล้ว ก.พ. 69 · ยังไม่มี contract' — เป็นงาน discovery ไม่ใช่งาน dev ในตอนนี้",
       tasks:[
-        {id:"1.1", task:"ยืนยันเจ้าของระบบ Thai MOOC", desc:"สป.อว. โดยตรง หรือ TCU (Thai Cyber University)?", dep:"—", src:"entities/thai-mooc.md Open Questions", c:"red", note:"ยังไม่มีคำตอบที่ไหนในวิกิ"},
-        {id:"1.2", task:"สำรวจ Thai MOOC/TCU API spec (ถ้ามี)", desc:"Course/Completion/Certificate schema, authentication method", dep:"1.1", src:"entities/thai-mooc.md Integration Spec ที่ต้องรู้", c:"red"},
-        {id:"1.3", task:"ยืนยันแนวทาง verify ผลการเรียนนอกระบบผ่าน TCU", desc:"คุยแนวทางแล้ว ก.พ. 69 แต่ยังไม่มี contract — เกี่ยวตรงกับ CTP non-formal path", dep:"1.1", src:"sources/external-integration-landscape.md", c:"red", note:"ล่าสุดที่เห็นในวิกิ (23 ก.ค. 69) — ยังไม่คืบหน้าไปกว่า 'คุยแนวทางแล้ว'"},
-        {id:"1.4", task:"ระบุ Real-time vs Batch push model", desc:"สอบผ่าน → push ทันที หรือ batch?", dep:"1.2", src:"entities/thai-mooc.md", c:"red"},
+        {id:"1.1", task:"สอบถามยืนยันหน่วยงานเจ้าของระบบ Thai MOOC (Thai MOOC Discovery - Owner Confirmation)", desc:"สป.อว. โดยตรง หรือ TCU (Thai Cyber University)?", dep:"—", src:"entities/thai-mooc.md Open Questions", c:"red", note:"ยังไม่มีคำตอบที่ไหนในวิกิ"},
+        {id:"1.2", task:"สำรวจข้อมูล API ของ Thai MOOC ที่มีอยู่ (Thai MOOC Discovery - API Spec Research)", desc:"Course/Completion/Certificate schema, authentication method", dep:"1.1", src:"entities/thai-mooc.md Integration Spec ที่ต้องรู้", c:"red"},
+        {id:"1.3", task:"ยืนยันแนวทางตรวจสอบผลการเรียนนอกระบบผ่าน TCU (Thai MOOC Discovery - Verification Approach)", desc:"คุยแนวทางแล้ว ก.พ. 69 แต่ยังไม่มี contract — เกี่ยวตรงกับ CTP non-formal path", dep:"1.1", src:"sources/external-integration-landscape.md", c:"red", note:"ล่าสุดที่เห็นในวิกิ (23 ก.ค. 69) — ยังไม่คืบหน้าไปกว่า 'คุยแนวทางแล้ว'"},
+        {id:"1.4", task:"ตัดสินใจรูปแบบส่งข้อมูลแบบทันทีหรือเป็นชุด (Thai MOOC Discovery - Push Model Decision)", desc:"สอบผ่าน → push ทันที หรือ batch?", dep:"1.2", src:"entities/thai-mooc.md", c:"red"},
       ]
     },
     {
       id:"F2", name:"Generic LMS Integration Pattern (Design)",
       sources:["entities/thai-mooc.md"],
       tasks:[
-        {id:"2.1", task:"Identity mapping ระหว่าง LMS user ↔ NCBS learner", desc:"ผูกด้วยเลขประชาชน/email", dep:"F1, Learner Identity Linking Epic", src:"entities/thai-mooc.md Integration Spec ที่ต้องรู้", c:"red", note:"ควร reuse pattern เดียวกับ learner_identifier ของ Learner Identity Linking epic แทนคิดใหม่"},
-        {id:"2.2", task:"Course catalog mapping (LMS course ↔ NCBS course_master)", desc:"", dep:"F1, Multi-Channel Data Ingestion Epic F1", src:"entities/thai-mooc.md Open Questions", c:"red"},
-        {id:"2.3", task:"ออกแบบ generic connector สำหรับ 3rd-party LMS ในอนาคต", desc:"Coursera, edX ฯลฯ", dep:"2.1, 2.2", src:"entities/thai-mooc.md Open Questions (Future)", c:"red", note:"ยังไม่มี timeline — เป็นแค่ direction ในอนาคต"},
+        {id:"2.1", task:"จับคู่บัญชีผู้ใช้ระหว่างระบบ LMS กับผู้เรียนใน NCBS (Generic LMS Pattern - Identity Mapping)", desc:"ผูกด้วยเลขประชาชน/email", dep:"F1, Learner Identity Linking Epic", src:"entities/thai-mooc.md Integration Spec ที่ต้องรู้", c:"red", note:"ควร reuse pattern เดียวกับ learner_identifier ของ Learner Identity Linking epic แทนคิดใหม่"},
+        {id:"2.2", task:"จับคู่ข้อมูลรายวิชาระหว่างระบบ LMS กับ NCBS (Generic LMS Pattern - Course Catalog Mapping)", desc:"", dep:"F1, Multi-Channel Data Ingestion Epic F1", src:"entities/thai-mooc.md Open Questions", c:"red"},
+        {id:"2.3", task:"ออกแบบตัวเชื่อมต่อกลางสำหรับ LMS ภายนอกในอนาคต (Generic LMS Pattern - Generic Connector Design)", desc:"Coursera, edX ฯลฯ", dep:"2.1, 2.2", src:"entities/thai-mooc.md Open Questions (Future)", c:"red", note:"ยังไม่มี timeline — เป็นแค่ direction ในอนาคต"},
       ]
     },
     {
       id:"F3", name:"Non-formal Credit Ingestion",
       sources:["entities/thai-mooc.md, systems/ucbs.md BR-UCBS-03"],
       tasks:[
-        {id:"3.1", task:"Ingest ผลการเรียนจาก LMS เข้า course_master pipeline เดียวกัน", desc:"ผลผ่าน Thai MOOC → UCBS → NCBS → เทียบโอนผ่าน CTP", dep:"F1, F2, Multi-Channel Data Ingestion Epic", src:"entities/thai-mooc.md ที่ตั้งใน Learning Hierarchy", c:"red", note:"ต้องรอ F1/F2 มีคำตอบก่อนถึงจะออกแบบ ingestion จริงได้"},
+        {id:"3.1", task:"นำเข้าผลการเรียนจาก LMS ภายนอกเข้าสู่ระบบเทียบโอน (Non-formal Credit Ingestion - LMS Result Ingestion)", desc:"ผลผ่าน Thai MOOC → UCBS → NCBS → เทียบโอนผ่าน CTP", dep:"F1, F2, Multi-Channel Data Ingestion Epic", src:"entities/thai-mooc.md ที่ตั้งใน Learning Hierarchy", c:"red", note:"ต้องรอ F1/F2 มีคำตอบก่อนถึงจะออกแบบ ingestion จริงได้"},
       ]
     },
   ],

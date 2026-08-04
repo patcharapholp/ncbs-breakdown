@@ -13,12 +13,12 @@ const DASHBOARDS_DATA = {
       sources:["external/confluence-prd-summaries/prd-learner-dashboard.md (real PRD link, BA Team)"],
       note:"real PRD มีจริง (15 Use Cases + Mermaid diagram ใน Confluence) แต่เป็น Phase 2 — prototype สร้างล้ำหน้า spec ไปก่อนแล้ว",
       tasks:[
-        {id:"1.1", task:"KPI Cards (หน่วยกิต/วิชา/สถาบัน/สถานะเทียบโอน)", desc:"", dep:"Grade & Credit Management Epic", src:"prd-learner-dashboard.md FR-NCBS-LER-01/03", c:"green"},
-        {id:"1.2", task:"Career Insights (% match เส้นทางอาชีพ)", desc:"", dep:"1.1", src:"prd-learner-dashboard.md FR-NCBS-LER-05", c:"red", note:"⚠️ ไม่มีงบ AI ตามที่ยืนยันซ้ำหลายจุดในวิกิ (course-matching-algorithm-spec เลือก deterministic เพราะเหตุนี้) — feature นี้ implies ต้องมี AI/ML model ซึ่งขัดกับนโยบายงบที่วางไว้ที่อื่น ต้องเคาะให้ชัดก่อน"},
-        {id:"1.3", task:"Skills Analysis (radar/bar chart เทียบตลาดแรงงาน)", desc:"", dep:"1.1", src:"prd-learner-dashboard.md FR-NCBS-LER-05", c:"red", note:"data source ตลาดแรงงานสำหรับเทียบ ไม่มีระบุที่ไหน"},
-        {id:"1.4", task:"Benchmark (peer comparison)", desc:"", dep:"1.1", src:"prd-learner-dashboard.md FR-NCBS-LER-06", c:"red", note:"open question ตรงๆ: 'ดึงข้อมูลจากแหล่งไหน' ไม่มีคำตอบ"},
-        {id:"1.5", task:"AI Recommendations (หลักสูตร/มหาวิทยาลัย/อาชีพ)", desc:"", dep:"1.1", src:"prd-learner-dashboard.md FR-NCBS-LER-06", c:"red", note:"เดียวกับ 1.2 — ขัดกับนโยบาย 'ไม่มีงบ AI' ที่ยืนยันในหลายจุด ต้องเคาะทิศทาง (rule-based ทดแทน หรือของบ AI จริง) ก่อน"},
-        {id:"1.6", task:"FR-NCBS-LER-04 (undefined gap)", desc:"", dep:"—", src:"prd-learner-dashboard.md SRS Traceability", c:"red", note:"ระบุตรงๆ ว่า FR code นี้ไม่เคย define ใน SRS — gap เก่าที่ค้างมาตั้งแต่ต้น"},
+        {id:"1.1", task:"การ์ดแสดงตัวเลขสรุปสำคัญของผู้เรียน หน่วยกิต/วิชา/สถาบัน/สถานะเทียบโอน (Learner Dashboard - KPI Cards)", desc:"", dep:"Grade & Credit Management Epic", src:"prd-learner-dashboard.md FR-NCBS-LER-01/03", c:"green"},
+        {id:"1.2", task:"วิเคราะห์ความสอดคล้องกับเส้นทางอาชีพ (Learner Dashboard - Career Insights, ต้องเคาะนโยบาย AI ก่อน)", desc:"", dep:"1.1", src:"prd-learner-dashboard.md FR-NCBS-LER-05", c:"red", note:"⚠️ ไม่มีงบ AI ตามที่ยืนยันซ้ำหลายจุดในวิกิ (course-matching-algorithm-spec เลือก deterministic เพราะเหตุนี้) — feature นี้ implies ต้องมี AI/ML model ซึ่งขัดกับนโยบายงบที่วางไว้ที่อื่น ต้องเคาะให้ชัดก่อน"},
+        {id:"1.3", task:"วิเคราะห์ทักษะเทียบกับตลาดแรงงาน แบบกราฟเรดาร์/แท่ง (Learner Dashboard - Skills Analysis)", desc:"", dep:"1.1", src:"prd-learner-dashboard.md FR-NCBS-LER-05", c:"red", note:"data source ตลาดแรงงานสำหรับเทียบ ไม่มีระบุที่ไหน"},
+        {id:"1.4", task:"เปรียบเทียบผลการเรียนกับเพื่อนร่วมรุ่น (Learner Dashboard - Peer Benchmark)", desc:"", dep:"1.1", src:"prd-learner-dashboard.md FR-NCBS-LER-06", c:"red", note:"open question ตรงๆ: 'ดึงข้อมูลจากแหล่งไหน' ไม่มีคำตอบ"},
+        {id:"1.5", task:"แนะนำหลักสูตร/มหาวิทยาลัย/อาชีพด้วย AI (Learner Dashboard - AI Recommendations, ต้องเคาะนโยบาย AI ก่อน)", desc:"", dep:"1.1", src:"prd-learner-dashboard.md FR-NCBS-LER-06", c:"red", note:"เดียวกับ 1.2 — ขัดกับนโยบาย 'ไม่มีงบ AI' ที่ยืนยันในหลายจุด ต้องเคาะทิศทาง (rule-based ทดแทน หรือของบ AI จริง) ก่อน"},
+        {id:"1.6", task:"ช่องว่าง spec ที่ยังไม่มีนิยาม FR-NCBS-LER-04 (Learner Dashboard - Undefined Requirement)", desc:"", dep:"—", src:"prd-learner-dashboard.md SRS Traceability", c:"red", note:"ระบุตรงๆ ว่า FR code นี้ไม่เคย define ใน SRS — gap เก่าที่ค้างมาตั้งแต่ต้น"},
       ]
     },
     {
@@ -26,8 +26,8 @@ const DASHBOARDS_DATA = {
       sources:["systems/ncbs-platform.md BR-NCBS-04"],
       note:"🔴 thin — ไม่มี PRD ไม่มี prototype ไม่มี SCR",
       tasks:[
-        {id:"2.1", task:"Executive dashboard สำหรับผู้บริหาร อว.", desc:"", dep:"Grade & Credit Management Epic", src:"systems/ncbs-platform.md BR-NCBS-04", c:"red", note:"มีแค่ 1 บรรทัดใน BR — ไม่มี use case/wireframe ใดๆ"},
-        {id:"2.2", task:"ML forecast สำหรับ Skill Matrix", desc:"", dep:"Skill Matrix Epic", src:"systems/ncbs-platform.md BR-NCBS-04, concepts/skill-matrix.md", c:"red", note:"concepts/skill-matrix.md (พ.ค. 69) แก้ข้อขัดแย้งเดิมแล้ว: Skill Matrix ยืนยัน in-scope แต่ Phase 1 = 'Design-ready ≠ Build-complete' (แค่เตรียม data model/API ให้ extensible) — ML forecasting เต็มรูปแบบเป็นงานเฟสถัดไป ไม่ใช่ Phase 1"},
+        {id:"2.1", task:"แดชบอร์ดสรุปภาพรวมสำหรับผู้บริหาร อว. (Intelligence Dashboard - Executive Summary)", desc:"", dep:"Grade & Credit Management Epic", src:"systems/ncbs-platform.md BR-NCBS-04", c:"red", note:"มีแค่ 1 บรรทัดใน BR — ไม่มี use case/wireframe ใดๆ"},
+        {id:"2.2", task:"พยากรณ์แนวโน้มทักษะด้วย Machine Learning สำหรับ Skill Matrix (Intelligence Dashboard - ML Forecast, งานเฟสถัดไปไม่ใช่ Phase 1)", desc:"", dep:"Skill Matrix Epic", src:"systems/ncbs-platform.md BR-NCBS-04, concepts/skill-matrix.md", c:"red", note:"concepts/skill-matrix.md (พ.ค. 69) แก้ข้อขัดแย้งเดิมแล้ว: Skill Matrix ยืนยัน in-scope แต่ Phase 1 = 'Design-ready ≠ Build-complete' (แค่เตรียม data model/API ให้ extensible) — ML forecasting เต็มรูปแบบเป็นงานเฟสถัดไป ไม่ใช่ Phase 1"},
       ]
     },
     {
@@ -35,7 +35,7 @@ const DASHBOARDS_DATA = {
       sources:["systems/ucbs.md BR-UCBS-04"],
       note:"🔴 thin — Sprint #59 Phase 2, ยังไม่เริ่ม",
       tasks:[
-        {id:"3.1", task:"สถิติผู้เรียน + แนวโน้มเทียบโอนต่อสถาบัน", desc:"สำหรับผู้บริหาร/เจ้าหน้าที่ ม.", dep:"Institution Structure Epic, Credit Transfer Epic", src:"systems/ucbs.md BR-UCBS-04", c:"red", note:"ไม่มี use case ละเอียด ต้องออกแบบใหม่ทั้งหมด"},
+        {id:"3.1", task:"สถิติจำนวนผู้เรียนและแนวโน้มการเทียบโอนต่อสถาบัน (Institute Dashboard - Statistics)", desc:"สำหรับผู้บริหาร/เจ้าหน้าที่ ม.", dep:"Institution Structure Epic, Credit Transfer Epic", src:"systems/ucbs.md BR-UCBS-04", c:"red", note:"ไม่มี use case ละเอียด ต้องออกแบบใหม่ทั้งหมด"},
       ]
     },
     {
@@ -43,7 +43,7 @@ const DASHBOARDS_DATA = {
       sources:["sources/gap-vs-sprint-cross-reference.md Sprint #60"],
       note:"🔴 thin — Sprint #60 Phase 2, ยังไม่เริ่ม",
       tasks:[
-        {id:"4.1", task:"สถิติ workflow เทียบโอน", desc:"", dep:"Credit Transfer Epic", src:"gap-vs-sprint-cross-reference.md", c:"red", note:"ไม่มี spec ใดๆ นอกชื่อ feature ใน sprint list"},
+        {id:"4.1", task:"สถิติภาพรวมขั้นตอนการเทียบโอนหน่วยกิต (CTP Dashboard - Workflow Statistics)", desc:"", dep:"Credit Transfer Epic", src:"gap-vs-sprint-cross-reference.md", c:"red", note:"ไม่มี spec ใดๆ นอกชื่อ feature ใน sprint list"},
       ]
     },
   ],

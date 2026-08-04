@@ -15,26 +15,26 @@ const STRATEGIC_GAPS_DATA = {
       sources:["sources/gap-vs-sprint-cross-reference.md §3.3, §7, §8"],
       note:"🚨 severity สูงสุดตามที่เอกสารจัดอันดับไว้ — 'ไม่มีใน Sprint Plan' ทั้งที่ block API integration ของทุกมหาวิทยาลัย",
       tasks:[
-        {id:"1.1", task:"Steering Committee ตัดสินใจ: PIM 6-code model vs Custom MHESI taxonomy vs Defer", desc:"", dep:"—", src:"gap-vs-sprint-cross-reference.md §8.1", c:"red", note:"เอกสารแนะนำ 'A→B' (เริ่ม PIM model แล้ว evolve เป็น MHESI standard) แต่ยังไม่มีมติจริง"},
-        {id:"1.2", task:"Static mapping table เบื้องต้น (ใช้ PIM 6 codes: CE/CP/CS/CT/CX/CN)", desc:"", dep:"1.1", src:"gap-vs-sprint-cross-reference.md §7.1 Action 1", c:"yellow", note:"เอกสารประเมินหยาบไว้ 5-10 MD — เป็น T-shirt size ไม่ใช่ breakdown ละเอียด"},
-        {id:"1.3", task:"Mapping UI/Workflow ให้มหาวิทยาลัย map หลักสูตรตัวเอง", desc:"", dep:"1.2", src:"gap-vs-sprint-cross-reference.md §3.3 (Effort: XL)", c:"red", note:"ไม่มี UI นี้เลยแม้แต่แบบร่าง"},
-        {id:"1.4", task:"Evolve เป็น National Taxonomy มาตรฐานเต็มรูปแบบ", desc:"", dep:"1.3", src:"gap-vs-sprint-cross-reference.md §8.1", c:"red", note:"long-term — ไม่ใช่ Phase 1/2"},
+        {id:"1.1", task:"ให้คณะกรรมการกำกับตัดสินใจเลือกมาตรฐานเทียบวิชาระดับชาติ (Taxonomy Engine - Steering Committee Decision)", desc:"", dep:"—", src:"gap-vs-sprint-cross-reference.md §8.1", c:"red", note:"เอกสารแนะนำ 'A→B' (เริ่ม PIM model แล้ว evolve เป็น MHESI standard) แต่ยังไม่มีมติจริง"},
+        {id:"1.2", task:"สร้างตารางจับคู่รหัสวิชาเบื้องต้นตามมาตรฐาน PIM (Taxonomy Engine - Initial Static Mapping Table)", desc:"", dep:"1.1", src:"gap-vs-sprint-cross-reference.md §7.1 Action 1", c:"yellow", note:"เอกสารประเมินหยาบไว้ 5-10 MD — เป็น T-shirt size ไม่ใช่ breakdown ละเอียด"},
+        {id:"1.3", task:"หน้าจอให้มหาวิทยาลัยจับคู่หลักสูตรของตัวเอง (Taxonomy Engine - Mapping UI/Workflow)", desc:"", dep:"1.2", src:"gap-vs-sprint-cross-reference.md §3.3 (Effort: XL)", c:"red", note:"ไม่มี UI นี้เลยแม้แต่แบบร่าง"},
+        {id:"1.4", task:"พัฒนาต่อยอดเป็นมาตรฐานเทียบวิชาระดับชาติเต็มรูปแบบ (Taxonomy Engine - Full National Standard)", desc:"", dep:"1.3", src:"gap-vs-sprint-cross-reference.md §8.1", c:"red", note:"long-term — ไม่ใช่ Phase 1/2"},
       ]
     },
     {
       id:"F2", name:"Federated SSO / Multi-IDP Bridge",
       sources:["sources/gap-vs-sprint-cross-reference.md §3.3, §7.2, §7.4"],
       tasks:[
-        {id:"2.1", task:"ออกแบบ architecture สำหรับ LDAP/AD/NDID/ICEHR bridge", desc:"3 มหาวิทยาลัยหลักต้องการ: Chula(NDID)/PIM(AD)/TU(ICEHR)", dep:"Identity & Auth Epic F3", src:"gap-vs-sprint-cross-reference.md §7.2 Action 8", c:"red", note:"เสนอให้ 'ออกแบบ architecture ก่อน implement ทีหลัง' — เป็น medium-term (Q3-Q4) ไม่ใช่เร่งด่วน"},
-        {id:"2.2", task:"Defer การ implement จริงจนกว่าจะมี 5+ มหาวิทยาลัยต้องการ", desc:"", dep:"2.1", src:"gap-vs-sprint-cross-reference.md §7.4 What NOT to Build", c:"green", note:"เป็นการตัดสินใจไม่ทำตอนนี้ที่มีเหตุผลชัดเจน (ปัจจุบันมีแค่ 2-3 ม.) — เอกสารระบุ 'ThaiID เพียงพอ' สำหรับตอนนี้"},
+        {id:"2.1", task:"ออกแบบสถาปัตยกรรมเชื่อมต่อระบบยืนยันตัวตนหลายแหล่ง (Federated SSO - Multi-IDP Architecture Design)", desc:"3 มหาวิทยาลัยหลักต้องการ: Chula(NDID)/PIM(AD)/TU(ICEHR)", dep:"Identity & Auth Epic F3", src:"gap-vs-sprint-cross-reference.md §7.2 Action 8", c:"red", note:"เสนอให้ 'ออกแบบ architecture ก่อน implement ทีหลัง' — เป็น medium-term (Q3-Q4) ไม่ใช่เร่งด่วน"},
+        {id:"2.2", task:"ตัดสินใจเลื่อนการพัฒนาจริงจนกว่าจะมีความต้องการมากพอ (Federated SSO - Deferral Decision)", desc:"", dep:"2.1", src:"gap-vs-sprint-cross-reference.md §7.4 What NOT to Build", c:"green", note:"เป็นการตัดสินใจไม่ทำตอนนี้ที่มีเหตุผลชัดเจน (ปัจจุบันมีแค่ 2-3 ม.) — เอกสารระบุ 'ThaiID เพียงพอ' สำหรับตอนนี้"},
       ]
     },
     {
       id:"F3", name:"MOU Rule-Based Transfer Engine",
       sources:["sources/gap-vs-sprint-cross-reference.md §3.3, §7.2"],
       tasks:[
-        {id:"3.1", task:"เพิ่ม MOU configuration rules ต่อยอดจาก Credit Transfer Review (#7)", desc:"ที่มี AI Match % อยู่แล้ว", dep:"Credit Transfer Epic F2", src:"gap-vs-sprint-cross-reference.md §7.2 Action 5", c:"red", note:"ไม่มีใน Sprint Plan เลย — closest feature คือ Credit Transfer Review ที่เป็น criteria-based ไม่ใช่ MOU-based"},
-        {id:"3.2", task:"รองรับ TU Transfer Consortium + SUT MOU Network + PIM cross-institution", desc:"", dep:"3.1", src:"gap-vs-sprint-cross-reference.md §3.3", c:"red", note:"Effort: L ตามประเมินหยาบ"},
+        {id:"3.1", task:"เพิ่มกฎการตั้งค่า MOU ต่อยอดจากระบบตรวจสอบเทียบโอนที่มีอยู่ (MOU Engine - MOU Configuration Rules)", desc:"ที่มี AI Match % อยู่แล้ว", dep:"Credit Transfer Epic F2", src:"gap-vs-sprint-cross-reference.md §7.2 Action 5", c:"red", note:"ไม่มีใน Sprint Plan เลย — closest feature คือ Credit Transfer Review ที่เป็น criteria-based ไม่ใช่ MOU-based"},
+        {id:"3.2", task:"รองรับเครือข่ายความร่วมมือเทียบโอนระหว่างมหาวิทยาลัย (MOU Engine - Multi-Consortium Support)", desc:"", dep:"3.1", src:"gap-vs-sprint-cross-reference.md §3.3", c:"red", note:"Effort: L ตามประเมินหยาบ"},
       ]
     },
     {
@@ -42,11 +42,11 @@ const STRATEGIC_GAPS_DATA = {
       sources:["sources/gap-vs-sprint-cross-reference.md §5.3, §7"],
       note:"🔴🔴 severity สูงสุด (double-red) — 'Sprint Plan ไม่มี Turnkey Mode' เลย — Sprint Plan ทั้งหมดออกแบบสำหรับ ม. ที่มีระบบอยู่แล้ว (Segment A)",
       tasks:[
-        {id:"4.1", task:"Manual Entry UI (MVP สำหรับ Segment C)", desc:"1-2 หน้าง่ายๆ สำหรับข้อมูลนักศึกษา/ผลการเรียน", dep:"Multi-Channel Data Ingestion Epic", src:"gap-vs-sprint-cross-reference.md §7.1 Action 4", c:"yellow", note:"ประเมินหยาบ 3-5 MD — เป็น quick win ที่แนะนำให้ทำก่อน (Q2 2026)"},
-        {id:"4.2", task:"University Self-Assessment Portal (ใช้ Google Form/Sheet)", desc:"0 MD — ไม่ต้องสร้างระบบ", dep:"—", src:"gap-vs-sprint-cross-reference.md §7.3 Action 10", c:"green", note:"ข้อเสนอที่ฉลาด — ลด effort จาก 30-50 MD เหลือ 0 โดยใช้เครื่องมือสำเร็จรูป"},
-        {id:"4.3", task:"Full UCBS CMS + Portal (Zero-IT mode)", desc:"", dep:"4.1, 4.2", src:"gap-vs-sprint-cross-reference.md §5.3, §7.3 Action 9", c:"red", note:"long-term (2027+) — ยังไม่มี design ใดๆ นอกจากคำแนะนำระดับ direction"},
-        {id:"4.4", task:"Training + onboarding system (ไม่มีบุคลากรพร้อม)", desc:"", dep:"4.3", src:"gap-vs-sprint-cross-reference.md §5.3", c:"red"},
-        {id:"4.5", task:"Full Workflow Automation (ปัจจุบัน Manual 100%)", desc:"", dep:"4.3", src:"gap-vs-sprint-cross-reference.md §5.3", c:"red"},
+        {id:"4.1", task:"หน้าจอกรอกข้อมูลด้วยตนเองสำหรับมหาวิทยาลัยที่ยังไม่มีระบบ (Segment C SaaS - Manual Entry UI MVP)", desc:"1-2 หน้าง่ายๆ สำหรับข้อมูลนักศึกษา/ผลการเรียน", dep:"Multi-Channel Data Ingestion Epic", src:"gap-vs-sprint-cross-reference.md §7.1 Action 4", c:"yellow", note:"ประเมินหยาบ 3-5 MD — เป็น quick win ที่แนะนำให้ทำก่อน (Q2 2026)"},
+        {id:"4.2", task:"ใช้ Google Form/Sheet เป็นช่องทางประเมินตนเองของมหาวิทยาลัย (Segment C SaaS - Self-Assessment via External Tool)", desc:"0 MD — ไม่ต้องสร้างระบบ", dep:"—", src:"gap-vs-sprint-cross-reference.md §7.3 Action 10", c:"green", note:"ข้อเสนอที่ฉลาด — ลด effort จาก 30-50 MD เหลือ 0 โดยใช้เครื่องมือสำเร็จรูป"},
+        {id:"4.3", task:"ระบบ CMS และ Portal เต็มรูปแบบสำหรับมหาวิทยาลัยที่ไม่มีทีม IT (Segment C SaaS - Full Zero-IT Mode Platform)", desc:"", dep:"4.1, 4.2", src:"gap-vs-sprint-cross-reference.md §5.3, §7.3 Action 9", c:"red", note:"long-term (2027+) — ยังไม่มี design ใดๆ นอกจากคำแนะนำระดับ direction"},
+        {id:"4.4", task:"ระบบฝึกอบรมและปฐมนิเทศการใช้งานสำหรับมหาวิทยาลัยกลุ่มนี้ (Segment C SaaS - Training & Onboarding)", desc:"", dep:"4.3", src:"gap-vs-sprint-cross-reference.md §5.3", c:"red"},
+        {id:"4.5", task:"ระบบอัตโนมัติเต็มรูปแบบแทนขั้นตอนที่ยังทำมือทั้งหมด (Segment C SaaS - Full Workflow Automation)", desc:"", dep:"4.3", src:"gap-vs-sprint-cross-reference.md §5.3", c:"red"},
       ]
     },
   ],

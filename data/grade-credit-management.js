@@ -15,55 +15,55 @@ const GRADE_CREDIT_MANAGEMENT_DATA = {
       id:"F1", name:"Central Admin Search Views (3 Tabs)",
       sources:["external/confluence-prd-summaries/prd-grade-credit-management.md (real PRD, Nattaya — 'core domain')"],
       tasks:[
-        {id:"1.1", task:"Tab 1: View by Institution", desc:"ม. dropdown autocomplete + รหัสนศ./ปชช. — ดึงจาก UCBS sync", dep:"—", src:"prd-grade-credit-management.md UC1", c:"green"},
-        {id:"1.2", task:"Tab 2: View by Individual (Lifelong Record)", desc:"เลข ปชช. 13 หลัก หรือชื่อ-สกุล — ข้ามสถาบัน National Transcript", dep:"—", src:"prd-grade-credit-management.md UC2", c:"green", note:"⭐ unique capability — Central Admin เท่านั้นที่เห็นข้าม-สถาบันได้"},
-        {id:"1.3", task:"Tab 3: View by External LMS/System", desc:"Thai MOOC, GenEd — ชื่อ Platform dropdown + ปชช./ชื่อ", dep:"—", src:"prd-grade-credit-management.md UC3", c:"green"},
+        {id:"1.1", task:"ค้นหาข้อมูลตามสถาบันการศึกษา (Central Admin Search - By Institution)", desc:"ม. dropdown autocomplete + รหัสนศ./ปชช. — ดึงจาก UCBS sync", dep:"—", src:"prd-grade-credit-management.md UC1", c:"green"},
+        {id:"1.2", task:"ค้นหาข้อมูลรายบุคคลข้ามสถาบัน ดูประวัติการเรียนตลอดชีวิต (Central Admin Search - By Individual, National Transcript)", desc:"เลข ปชช. 13 หลัก หรือชื่อ-สกุล — ข้ามสถาบัน National Transcript", dep:"—", src:"prd-grade-credit-management.md UC2", c:"green", note:"⭐ unique capability — Central Admin เท่านั้นที่เห็นข้าม-สถาบันได้"},
+        {id:"1.3", task:"ค้นหาข้อมูลจากระบบ LMS ภายนอก เช่น Thai MOOC (Central Admin Search - By External LMS)", desc:"Thai MOOC, GenEd — ชื่อ Platform dropdown + ปชช./ชื่อ", dep:"—", src:"prd-grade-credit-management.md UC3", c:"green"},
       ]
     },
     {
       id:"F2", name:"Institution Admin Search Views (2 Tabs)",
       sources:["external/confluence-prd-summaries/prd-grade-credit-management.md"],
       tasks:[
-        {id:"2.1", task:"Tab 1: By Curriculum/Course", desc:"รหัสวิชา/ชื่อวิชา/หลักสูตร + filter ปีการศึกษา/ภาคเรียน — เฉพาะสถาบันตัวเอง", dep:"—", src:"prd-grade-credit-management.md UC4", c:"green"},
-        {id:"2.2", task:"Tab 2: By Individual (institution-scoped)", desc:"เลข ปชช./รหัสนักศึกษา/ชื่อ — เฉพาะของสถาบันตัวเอง", dep:"—", src:"prd-grade-credit-management.md UC5", c:"green"},
+        {id:"2.1", task:"ค้นหาข้อมูลตามหลักสูตร/รายวิชาของสถาบันตัวเอง (Institution Admin Search - By Curriculum/Course)", desc:"รหัสวิชา/ชื่อวิชา/หลักสูตร + filter ปีการศึกษา/ภาคเรียน — เฉพาะสถาบันตัวเอง", dep:"—", src:"prd-grade-credit-management.md UC4", c:"green"},
+        {id:"2.2", task:"ค้นหาข้อมูลรายบุคคลเฉพาะภายในสถาบันตัวเอง (Institution Admin Search - By Individual, Institution-Scoped)", desc:"เลข ปชช./รหัสนักศึกษา/ชื่อ — เฉพาะของสถาบันตัวเอง", dep:"—", src:"prd-grade-credit-management.md UC5", c:"green"},
       ]
     },
     {
       id:"F3", name:"Cross-Institution Privacy Enforcement",
       sources:["external/confluence-prd-summaries/prd-grade-credit-management.md Critical Data Privacy Rules"],
       tasks:[
-        {id:"3.1", task:"Institution Admin ห้ามเห็น credit ข้ามสถาบัน", desc:"แม้ learner เคยเรียน ม.นี้มาก่อน", dep:"F2", src:"prd-grade-credit-management.md", c:"green"},
-        {id:"3.2", task:"No-existence-disclosure", desc:"ค้นไม่พบ → 'ไม่พบข้อมูลในสังกัดสถาบันท่าน' — ห้ามบอกว่า learner ไปเรียนที่ไหน", dep:"3.1", src:"prd-grade-credit-management.md", c:"green"},
-        {id:"3.3", task:"Citizen ID always masked", desc:"xxx-x-xxxx-x123-4", dep:"—", src:"prd-grade-credit-management.md (cross-ref PDPA Epic)", c:"green"},
-        {id:"3.4", task:"URL parameter tampering defense", desc:"ตรวจสิทธิ์ทุกครั้งที่กดเข้า detail", dep:"3.1", src:"prd-grade-credit-management.md", c:"green"},
+        {id:"3.1", task:"ป้องกันไม่ให้ผู้ดูแลสถาบันเห็นข้อมูลข้ามสถาบัน (Privacy Enforcement - Cross-Institution Access Block)", desc:"แม้ learner เคยเรียน ม.นี้มาก่อน", dep:"F2", src:"prd-grade-credit-management.md", c:"green"},
+        {id:"3.2", task:"ไม่เปิดเผยว่าผู้เรียนมีข้อมูลอยู่ที่สถาบันอื่นหรือไม่ (Privacy Enforcement - No-Existence-Disclosure)", desc:"ค้นไม่พบ → 'ไม่พบข้อมูลในสังกัดสถาบันท่าน' — ห้ามบอกว่า learner ไปเรียนที่ไหน", dep:"3.1", src:"prd-grade-credit-management.md", c:"green"},
+        {id:"3.3", task:"ปิดบังเลขบัตรประชาชนเสมอในทุกหน้าจอ (Privacy Enforcement - Citizen ID Masking)", desc:"xxx-x-xxxx-x123-4", dep:"—", src:"prd-grade-credit-management.md (cross-ref PDPA Epic)", c:"green"},
+        {id:"3.4", task:"ป้องกันการเข้าถึงข้อมูลผ่านการแก้ไข URL โดยตรง (Privacy Enforcement - URL Tampering Defense)", desc:"ตรวจสิทธิ์ทุกครั้งที่กดเข้า detail", dep:"3.1", src:"prd-grade-credit-management.md", c:"green"},
       ]
     },
     {
       id:"F4", name:"Credit Record Detail Page (Drill-down)",
       sources:["external/confluence-prd-summaries/prd-grade-credit-management.md UC6"],
       tasks:[
-        {id:"4.1", task:"Full detail display", desc:"รายวิชา/ผลการเรียน/ประเภทการศึกษา/สถาบัน", dep:"F1, F2", src:"prd-grade-credit-management.md UC6", c:"green"},
-        {id:"4.2", task:"Transfer history display (source↔target)", desc:"", dep:"4.1, Credit Transfer Epic", src:"prd-grade-credit-management.md UC6", c:"green"},
-        {id:"4.3", task:"Evidence file display (Transcript/Certificate)", desc:"", dep:"4.1", src:"prd-grade-credit-management.md UC6", c:"green"},
-        {id:"4.4", task:"Edge cases", desc:"record ถูกลบระหว่างเปิดดู · URL tampering block · broken evidence file (ปุ่ม download disabled)", dep:"4.1-4.3", src:"prd-grade-credit-management.md Edge cases", c:"green"},
+        {id:"4.1", task:"แสดงรายละเอียดเต็มของประวัติการเรียน (Credit Record Detail - Full Detail Display)", desc:"รายวิชา/ผลการเรียน/ประเภทการศึกษา/สถาบัน", dep:"F1, F2", src:"prd-grade-credit-management.md UC6", c:"green"},
+        {id:"4.2", task:"แสดงประวัติการเทียบโอนต้นทาง-ปลายทาง (Credit Record Detail - Transfer History Display)", desc:"", dep:"4.1, Credit Transfer Epic", src:"prd-grade-credit-management.md UC6", c:"green"},
+        {id:"4.3", task:"แสดงไฟล์หลักฐานประกอบ เช่น Transcript/Certificate (Credit Record Detail - Evidence File Display)", desc:"", dep:"4.1", src:"prd-grade-credit-management.md UC6", c:"green"},
+        {id:"4.4", task:"จัดการกรณีพิเศษ เช่น ข้อมูลถูกลบระหว่างเปิดดู หรือไฟล์เสีย (Credit Record Detail - Edge Case Handling)", desc:"record ถูกลบระหว่างเปิดดู · URL tampering block · broken evidence file (ปุ่ม download disabled)", dep:"4.1-4.3", src:"prd-grade-credit-management.md Edge cases", c:"green"},
       ]
     },
     {
       id:"F5", name:"Export",
       sources:["external/confluence-prd-summaries/prd-grade-credit-management.md Export"],
       tasks:[
-        {id:"5.1", task:"PDF export (เอกสารราชการ สป.อว.)", desc:"", dep:"F1-F4", src:"prd-grade-credit-management.md", c:"green"},
-        {id:"5.2", task:"Excel export", desc:"", dep:"F1-F4", src:"prd-grade-credit-management.md", c:"green"},
-        {id:"5.3", task:"Export ตาม role permission + rate limit", desc:"", dep:"5.1, 5.2, Role & Access Epic", src:"prd-grade-credit-management.md Open Questions", c:"yellow", note:"เดียวกับ flag ใน User Management epic 6.2 — rate limit ยังไม่มีค่า ควรเคาะร่วมกัน (policy กลางไม่ใช่ต่อ epic)"},
+        {id:"5.1", task:"ส่งออกข้อมูลเป็น PDF สำหรับเอกสารราชการ (Export - PDF Export)", desc:"", dep:"F1-F4", src:"prd-grade-credit-management.md", c:"green"},
+        {id:"5.2", task:"ส่งออกข้อมูลเป็นไฟล์ Excel (Export - Excel Export)", desc:"", dep:"F1-F4", src:"prd-grade-credit-management.md", c:"green"},
+        {id:"5.3", task:"จำกัดสิทธิ์และจำนวนครั้งการส่งออกตาม role (Export - Permission & Rate Limit)", desc:"", dep:"5.1, 5.2, Role & Access Epic", src:"prd-grade-credit-management.md Open Questions", c:"yellow", note:"เดียวกับ flag ใน User Management epic 6.2 — rate limit ยังไม่มีค่า ควรเคาะร่วมกัน (policy กลางไม่ใช่ต่อ epic)"},
       ]
     },
     {
       id:"F6", name:"Grade System & GPAX",
       sources:["concepts/grade-system.md"],
       tasks:[
-        {id:"6.1", task:"16-grade data model", desc:"8 GPA(A-F) + 8 Non-GPA(S/U/P/W/V/I/IP)", dep:"—", src:"grade-system.md", c:"green"},
-        {id:"6.2", task:"GPAX calculation", desc:"ผลรวม(GPA×หน่วยกิต)/ผลรวมหน่วยกิต — exclude non-GPA grades", dep:"6.1", src:"grade-system.md GPAX Calculation", c:"green"},
-        {id:"6.3", task:"Grade legend UI (collapsible, แยกกลุ่ม GPA/Non-GPA)", desc:"", dep:"6.1", src:"grade-system.md", c:"green"},
+        {id:"6.1", task:"โครงสร้างข้อมูลระบบเกรด 16 ระดับ (Grade System - 16-Grade Data Model)", desc:"8 GPA(A-F) + 8 Non-GPA(S/U/P/W/V/I/IP)", dep:"—", src:"grade-system.md", c:"green"},
+        {id:"6.2", task:"คำนวณเกรดเฉลี่ยสะสม GPAX (Grade System - GPAX Calculation)", desc:"ผลรวม(GPA×หน่วยกิต)/ผลรวมหน่วยกิต — exclude non-GPA grades", dep:"6.1", src:"grade-system.md GPAX Calculation", c:"green"},
+        {id:"6.3", task:"หน้าจอคำอธิบายสัญลักษณ์เกรดแบบย่อ/ขยายได้ (Grade System - Grade Legend UI)", desc:"", dep:"6.1", src:"grade-system.md", c:"green"},
       ]
     },
     {
@@ -71,11 +71,11 @@ const GRADE_CREDIT_MANAGEMENT_DATA = {
       sources:["decisions/scr-009-credit-data-fields.md"],
       note:"⚠️ ทั้งฟีเจอร์นี้ยัง status=proposed ไม่ใช่ implemented — ต่างจาก F1-F6 ที่มาจาก real PRD ที่ 'In Progress' จริง อย่าประเมินมั่นใจเท่ากัน",
       tasks:[
-        {id:"7.1", task:"grade_method field", desc:"วิธีตัดเกรดต่างกันแต่ละมหาลัย (เช่น ลาดกระบังใช้ขั้นต่ำ C+ ภายนอก vs C ภายใน)", dep:"Data Dictionary v2→v2.1 approval", src:"scr-009 §3", c:"yellow", note:"ยัง proposed — รอ approve เข้า Data Dictionary v2.1 ก่อน"},
-        {id:"7.2", task:"curriculum_version + curriculum_year fields", desc:"snapshot ตาม version หลักสูตร ณ เวลาเทียบโอน", dep:"7.1, Institution Structure Epic", src:"scr-009 §3", c:"yellow"},
-        {id:"7.3", task:"credit_validity_years/expiry_date (configurable ต่อสถาบัน)", desc:"เช่น แพทย์มหิดล ≤5 ปี + warning UI เมื่อใกล้หมด", dep:"7.1", src:"scr-009 §3, §4", c:"yellow", note:"มีแค่ field เสนอ ยังไม่มี policy engine ว่า 'ใกล้หมด' เตือนยังไง/expired แล้วเกิดอะไรกับ credit นั้น"},
-        {id:"7.4", task:"faculty_department_id field", desc:"สำหรับ revenue split ส่วนกลาง vs คณะ", dep:"7.1, Institution Structure Epic", src:"scr-009 §3", c:"red", note:"downstream consumer หลัก (SCR-011 Faculty Revenue Split) ถูกระบุใน Phase 1 inventory ว่า 'prototype build cut' แล้ว — field นี้อาจไม่มีที่ใช้จริงในเร็วๆ นี้ ควรเช็คก่อนลงทุน"},
-        {id:"7.5", task:"course_syllabus_url field", desc:"ใช้ทั้ง GAP-003 (syllabus link ใน review modal) และ GAP-004", dep:"7.1", src:"scr-009 §3, §10", c:"yellow", note:"ผูกกับ Credit Transfer Epic 2.x (matching algorithm SCR-013 fallback) — ทำคู่กันได้"},
+        {id:"7.1", task:"เพิ่มข้อมูลวิธีการตัดเกรดที่แตกต่างกันของแต่ละมหาวิทยาลัย (Extended Credit Fields - Grade Method Field)", desc:"วิธีตัดเกรดต่างกันแต่ละมหาลัย (เช่น ลาดกระบังใช้ขั้นต่ำ C+ ภายนอก vs C ภายใน)", dep:"Data Dictionary v2→v2.1 approval", src:"scr-009 §3", c:"yellow", note:"ยัง proposed — รอ approve เข้า Data Dictionary v2.1 ก่อน"},
+        {id:"7.2", task:"เพิ่มข้อมูลเวอร์ชันและปีของหลักสูตร ณ เวลาเทียบโอน (Extended Credit Fields - Curriculum Version Field)", desc:"snapshot ตาม version หลักสูตร ณ เวลาเทียบโอน", dep:"7.1, Institution Structure Epic", src:"scr-009 §3", c:"yellow"},
+        {id:"7.3", task:"เพิ่มข้อมูลอายุความถูกต้องของหน่วยกิตที่ตั้งค่าได้ต่อสถาบัน (Extended Credit Fields - Credit Validity/Expiry Field)", desc:"เช่น แพทย์มหิดล ≤5 ปี + warning UI เมื่อใกล้หมด", dep:"7.1", src:"scr-009 §3, §4", c:"yellow", note:"มีแค่ field เสนอ ยังไม่มี policy engine ว่า 'ใกล้หมด' เตือนยังไง/expired แล้วเกิดอะไรกับ credit นั้น"},
+        {id:"7.4", task:"เพิ่มข้อมูลรหัสคณะสำหรับแบ่งรายได้ระหว่างส่วนกลางกับคณะ (Extended Credit Fields - Faculty/Department ID Field)", desc:"สำหรับ revenue split ส่วนกลาง vs คณะ", dep:"7.1, Institution Structure Epic", src:"scr-009 §3", c:"red", note:"downstream consumer หลัก (SCR-011 Faculty Revenue Split) ถูกระบุใน Phase 1 inventory ว่า 'prototype build cut' แล้ว — field นี้อาจไม่มีที่ใช้จริงในเร็วๆ นี้ ควรเช็คก่อนลงทุน"},
+        {id:"7.5", task:"เพิ่มลิงก์เอกสารประมวลรายวิชาต่อวิชา (Extended Credit Fields - Course Syllabus URL Field)", desc:"ใช้ทั้ง GAP-003 (syllabus link ใน review modal) และ GAP-004", dep:"7.1", src:"scr-009 §3, §10", c:"yellow", note:"ผูกกับ Credit Transfer Epic 2.x (matching algorithm SCR-013 fallback) — ทำคู่กันได้"},
       ]
     },
   ],
